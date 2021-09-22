@@ -10,8 +10,13 @@ import static Server.Common.Trace.info;
 
 
 public class Middleware extends ResourceManager extends Client implements IResourceManager {
+//All in one MiddleWare that acts as Client to RM for Flights/Cars/Rooms, and Server to Client.
 
     protected String middlewareName;
+    protected  Middleware() throws RemoteException{
+      super();
+    }
+
 
     public Middleware(String name) {
         try {

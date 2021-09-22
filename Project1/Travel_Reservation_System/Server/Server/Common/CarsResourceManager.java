@@ -171,27 +171,8 @@ public class CarsResourceManager implements IResourceManager {
     // NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
     public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice) throws RemoteException
     {
-        info("RM::addFlight(" + xid + ", " + flightNum + ", " + flightSeats + ", $" + flightPrice + ") called");
-        Flight curObj = (Flight)readData(xid, Flight.getKey(flightNum));
-        if (curObj == null)
-        {
-            // Doesn't exist yet, add it
-            Flight newObj = new Flight(flightNum, flightSeats, flightPrice);
-            writeData(xid, newObj.getKey(), newObj);
-            info("RM::addFlight(" + xid + ") created new flight " + flightNum + ", seats=" + flightSeats + ", price=$" + flightPrice);
-        }
-        else
-        {
-            // Add seats to existing flight and update the price if greater than zero
-            curObj.setCount(curObj.getCount() + flightSeats);
-            if (flightPrice > 0)
-            {
-                curObj.setPrice(flightPrice);
-            }
-            writeData(xid, curObj.getKey(), curObj);
-            info("RM::addFlight(" + xid + ") modified existing flight " + flightNum + ", seats=" + curObj.getCount() + ", price=$" + flightPrice);
-        }
-        return true;
+      throw RemoteException("You made a wrong Turn. At Server CarsResourceManager");
+      return false;
     }
 
     // Create a new car location or add cars to an existing location
@@ -225,31 +206,15 @@ public class CarsResourceManager implements IResourceManager {
     // NOTE: if price <= 0 and the room location already exists, it maintains its current price
     public boolean addRooms(int xid, String location, int count, int price) throws RemoteException
     {
-        info("RM::addRooms(" + xid + ", " + location + ", " + count + ", $" + price + ") called");
-        Room curObj = (Room)readData(xid, Room.getKey(location));
-        if (curObj == null)
-        {
-            // Room location doesn't exist yet, add it
-            Room newObj = new Room(location, count, price);
-            writeData(xid, newObj.getKey(), newObj);
-            info("RM::addRooms(" + xid + ") created new room location " + location + ", count=" + count + ", price=$" + price);
-        } else {
-            // Add count to existing object and update price if greater than zero
-            curObj.setCount(curObj.getCount() + count);
-            if (price > 0)
-            {
-                curObj.setPrice(price);
-            }
-            writeData(xid, curObj.getKey(), curObj);
-            info("RM::addRooms(" + xid + ") modified existing location " + location + ", count=" + curObj.getCount() + ", price=$" + price);
-        }
-        return true;
+      throw RemoteException("You made a wrong Turn. At Server CarsResourceManager");
+      return false;
     }
 
     // Deletes flight
     public boolean deleteFlight(int xid, int flightNum) throws RemoteException
     {
-        return deleteItem(xid, Flight.getKey(flightNum));
+      throw RemoteException("You made a wrong Turn. At Server CarsResourceManager");
+      return false;
     }
 
     // Delete cars at a location
@@ -261,13 +226,15 @@ public class CarsResourceManager implements IResourceManager {
     // Delete rooms at a location
     public boolean deleteRooms(int xid, String location) throws RemoteException
     {
-        return deleteItem(xid, Room.getKey(location));
+      throw RemoteException("You made a wrong Turn. At Server CarsResourceManager");
+      return false;
     }
 
     // Returns the number of empty seats in this flight
     public int queryFlight(int xid, int flightNum) throws RemoteException
     {
-        return queryNum(xid, Flight.getKey(flightNum));
+      throw RemoteException("You made a wrong Turn. At Server CarsResourceManager");
+      return false;
     }
 
     // Returns the number of cars available at a location
@@ -279,13 +246,15 @@ public class CarsResourceManager implements IResourceManager {
     // Returns the amount of rooms available at a location
     public int queryRooms(int xid, String location) throws RemoteException
     {
-        return queryNum(xid, Room.getKey(location));
+      throw RemoteException("You made a wrong Turn. At Server CarsResourceManager");
+      return false;
     }
 
     // Returns price of a seat in this flight
     public int queryFlightPrice(int xid, int flightNum) throws RemoteException
     {
-        return queryPrice(xid, Flight.getKey(flightNum));
+      throw RemoteException("You made a wrong Turn. At Server CarsResourceManager");
+      return false;
     }
 
     // Returns price of cars at this location
@@ -297,7 +266,8 @@ public class CarsResourceManager implements IResourceManager {
     // Returns room price at this location
     public int queryRoomsPrice(int xid, String location) throws RemoteException
     {
-        return queryPrice(xid, Room.getKey(location));
+      throw RemoteException("You made a wrong Turn. At Server CarsResourceManager");
+      return false;
     }
 
     public String queryCustomerInfo(int xid, int customerID) throws RemoteException
@@ -383,7 +353,8 @@ public class CarsResourceManager implements IResourceManager {
     // Adds flight reservation to this customer
     public boolean reserveFlight(int xid, int customerID, int flightNum) throws RemoteException
     {
-        return reserveItem(xid, customerID, Flight.getKey(flightNum), String.valueOf(flightNum));
+      throw RemoteException("You made a wrong Turn. At Server CarsResourceManager");
+      return false;
     }
 
     // Adds car reservation to this customer
@@ -395,7 +366,8 @@ public class CarsResourceManager implements IResourceManager {
     // Adds room reservation to this customer
     public boolean reserveRoom(int xid, int customerID, String location) throws RemoteException
     {
-        return reserveItem(xid, customerID, Room.getKey(location), location);
+      throw RemoteException("You made a wrong Turn. At Server CarsResourceManager");
+      return false;
     }
 
     @Override
