@@ -14,7 +14,8 @@ public class RMIMiddleware extends Middleware {
     private static int rmiMiddlewareRegistryPortNum;
     private static int rmiMiddlewareExportPortNum;
 
-    public RMIMiddleware(String name) {
+    public RMIMiddleware(String name)
+    {
         super(name);
     }
 
@@ -54,7 +55,7 @@ public class RMIMiddleware extends Middleware {
                     tmpRegistry = LocateRegistry.getRegistry(rmiMiddlewareRegistryPortNum);
                 }
                 final Registry rmiMiddlewareRegistry = tmpRegistry;
-                rmiMiddlewareRegistry.bind(rmiMiddlewareServerPrefix + rmiMiddlewareServerName, resourceManager);
+                rmiMiddlewareRegistry.rebind(rmiMiddlewareServerPrefix + rmiMiddlewareServerName, resourceManager);
 
                 // unbinding registry when rmi middleware server shuts down
                 getRuntime().addShutdownHook(new Thread(() -> {
