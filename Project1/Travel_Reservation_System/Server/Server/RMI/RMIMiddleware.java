@@ -13,6 +13,7 @@ public class RMIMiddleware extends Middleware {
     private static String rmiMiddlewareServerPrefix;
     private static int rmiMiddlewareRegistryPortNum;
     private static int rmiMiddlewareExportPortNum;
+    IResourceManager m_resourceManager = null;
 
     public RMIMiddleware(String name) {
         super(name);

@@ -46,6 +46,7 @@ public class RMIMiddlewareClient extends Middleware
       RMIMiddlewareClient client = new RMIMiddlewareClient();
       //MARK:Do we need different functionality to connect to different clients?
       // Or is this sufficient, with more terminal args?
+      // OR Do we pass three different Server locations in Make??
       client.connectServer();
       client.start();
     }
