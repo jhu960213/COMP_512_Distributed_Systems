@@ -18,7 +18,7 @@ public class FlightsResourceManager implements IResourceManager {
             this.name = name;
             this.data = new RMHashMap();
         } catch (Exception e) {
-            System.out.println("\n*** Flight resource manager error: " + e.getMessage() + " ***\n");
+            System.out.println("\n*** Flight resource manager initialization error: " + e.getMessage() + " ***\n");
         }
     }
 

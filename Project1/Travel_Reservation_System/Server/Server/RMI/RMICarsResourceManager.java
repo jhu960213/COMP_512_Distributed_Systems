@@ -34,11 +34,11 @@ public class RMICarsResourceManager extends CarsResourceManager {
             try
             {
                 // create RMI carsResourceManager server object
-                RMICarsResourceManager rmiCarsResourceManager = new RMICarsResourceManager(rmiCarsResourceManagerServerName);
+                RMICarsResourceManager rmiCarsResourceManagerServer = new RMICarsResourceManager(rmiCarsResourceManagerServerName);
 
                 // dynamically generated the stub (client proxy)
                 IResourceManager resourceManager =
-                        (IResourceManager) UnicastRemoteObject.exportObject(rmiCarsResourceManager, rmiCarsResourceManagerExportPortNum);
+                        (IResourceManager) UnicastRemoteObject.exportObject(rmiCarsResourceManagerServer, rmiCarsResourceManagerExportPortNum);
 
                 // Bind the remote object's stub in the rmi carsResourceManager server registry
                 Registry tmpRegistry;

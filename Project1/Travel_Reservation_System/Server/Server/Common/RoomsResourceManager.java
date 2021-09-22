@@ -18,7 +18,7 @@ public class RoomsResourceManager implements IResourceManager {
             this.name = name;
             this.data = new RMHashMap();
         } catch (Exception e) {
-            System.out.println("\n*** Rooms resource manager error: " + e.getMessage() + " ***\n");
+            System.out.println("\n*** Rooms resource manager initialization error: " + e.getMessage() + " ***\n");
         }
     }
 

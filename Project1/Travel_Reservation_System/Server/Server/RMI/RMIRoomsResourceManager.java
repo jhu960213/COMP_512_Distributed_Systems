@@ -36,11 +36,11 @@ public class RMIRoomsResourceManager extends RoomsResourceManager {
             try
             {
                 // create RMI roomsResourceManager server object
-                RMIRoomsResourceManager rmiRoomsResourceManager = new RMIRoomsResourceManager(rmiRoomsResourceManagerServerName);
+                RMIRoomsResourceManager rmiRoomsResourceManagerServer = new RMIRoomsResourceManager(rmiRoomsResourceManagerServerName);
 
                 // dynamically generated the stub (client proxy)
                 IResourceManager resourceManager =
-                        (IResourceManager) UnicastRemoteObject.exportObject(rmiRoomsResourceManager, rmiRoomsResourceManagerExportPortNum);
+                        (IResourceManager) UnicastRemoteObject.exportObject(rmiRoomsResourceManagerServer, rmiRoomsResourceManagerExportPortNum);
 
                 // Bind the remote object's stub in the rmi roomsResourceManager server registry
                 Registry tmpRegistry;

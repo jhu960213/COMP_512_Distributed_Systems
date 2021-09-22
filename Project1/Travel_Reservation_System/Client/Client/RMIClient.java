@@ -56,11 +56,13 @@ public class RMIClient extends Client
 
 	public RMIClient()
 	{
+
 		super();
 	}
 
 	public void connectServer()
 	{
+
 		connectServer(s_serverHost, s_serverPort, s_serverName);
 	}
 

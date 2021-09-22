@@ -34,11 +34,11 @@ public class RMIFlightsResourceManager extends FlightsResourceManager {
             try
             {
                 // create RMI flightsResourceManager server object
-                RMIFlightsResourceManager rmiFlightsResourceManager = new RMIFlightsResourceManager(rmiFlightsResourceManagerServerName);
+                RMIFlightsResourceManager rmiFlightsResourceManagerServer = new RMIFlightsResourceManager(rmiFlightsResourceManagerServerName);
 
                 // dynamically generated the stub (client proxy)
                 IResourceManager resourceManager =
-                        (IResourceManager) UnicastRemoteObject.exportObject(rmiFlightsResourceManager, rmiFlightsResourceManagerExportPortNum);
+                        (IResourceManager) UnicastRemoteObject.exportObject(rmiFlightsResourceManagerServer, rmiFlightsResourceManagerExportPortNum);
 
                 // Bind the remote object's stub in the rmi flightsResourceManager server registry
                 Registry tmpRegistry;
