@@ -24,6 +24,7 @@ public class RMIMiddleware extends Middleware {
         if (args.length == 4)
         {
             // scan commandline args in the format of "serverName, serverPrefix, serverRegistryPortNum, serverExportPortNum"
+
             rmiMiddlewareServerName = args[0];
             rmiMiddlewareServerPrefix = args[1];
             rmiMiddlewareRegistryPortNum = Integer.parseInt(args[2]);
