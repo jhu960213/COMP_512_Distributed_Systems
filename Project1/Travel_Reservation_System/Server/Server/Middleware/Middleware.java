@@ -9,7 +9,7 @@ import java.util.Vector;
 import static Server.Common.Trace.info;
 
 
-public class Middleware implements IResourceManager {
+public class Middleware extends ResourceManager extends Client implements IResourceManager {
 
     protected String middlewareName;
 
