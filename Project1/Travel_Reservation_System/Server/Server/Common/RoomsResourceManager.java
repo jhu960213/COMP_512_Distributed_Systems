@@ -320,15 +320,16 @@ public class RoomsResourceManager implements IResourceManager {
 
     public int newCustomer(int xid) throws RemoteException
     {
-        info("RM::newCustomer(" + xid + ") called");
-        // Generate a globally unique ID for the new customer
-        int cid = Integer.parseInt(String.valueOf(xid) +
-                String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
-                String.valueOf(Math.round(Math.random() * 100 + 1)));
-        Customer customer = new Customer(cid);
-        writeData(xid, customer.getKey(), customer);
-        info("RM::newCustomer(" + cid + ") returns ID=" + cid);
-        return cid;
+      throw RemoteException("RM::newCustomer(" + xid  + " RoomsServer) failed--this function should not be called");
+//        info("RM::newCustomer(" + xid + ") called");
+//        // Generate a globally unique ID for the new customer
+//        int cid = Integer.parseInt(String.valueOf(xid) +
+//                String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
+//                String.valueOf(Math.round(Math.random() * 100 + 1)));
+//        Customer customer = new Customer(cid);
+//        writeData(xid, customer.getKey(), customer);
+//        info("RM::newCustomer(" + cid + ") returns ID=" + cid);
+//        return cid;
     }
 
     public boolean newCustomer(int xid, int customerID) throws RemoteException
