@@ -11,8 +11,9 @@ import static Server.Common.Trace.info;
 
 public class Middleware implements IResourceManager {
 //All in one MiddleWare that acts as Client to RM for Flights/Cars/Rooms, and Server to Client.
-
-    protected String middlewareName;
+  Map<String, Map<String, Value>> bookMap = new HashMap<String, HashMap<String, Value>>();
+  Map<String, Value> userMap = new HashMap<String, Value>();
+  protected String middlewareName;
     protected  Middleware() throws RemoteException{
       super();
     }
@@ -25,12 +26,42 @@ public class Middleware implements IResourceManager {
             System.out.println("\n*** Middleware error: " + e.getMessage() + " ***\n");
         }
     }
+  public void connectServer(String server, int port, String name, String booking)
+  {
+    try {
+      boolean first = true;
+      while (true) {
+        try {
+          Registry registry = LocateRegistry.getRegistry(server, port);
+          m_resourceManager = (IResourceManager)registry.lookup(s_rmiPrefix + name);
+          System.out.println("Connected to '" + name + "' server [" + server + ":" + port + "/" + s_rmiPrefix + name + "]");
+          userMap.put(name, m_resourceManager);
+          userName = name;
+          bookMap.put(booking, userMap);
+          //Use a hashmap of a hashmap to retreive multiple servers, in case we want to scale.
+          break;
+        }
+        catch (NotBoundException|RemoteException e) {
+          if (first) {
+            System.out.println("Waiting for '" + name + "' server [" + server + ":" + port + "/" + s_rmiPrefix + name + "]");
+            first = false;
+          }
+        }
+        Thread.sleep(500);
+      }
+    }
+    catch (Exception e) {
+      System.err.println((char)27 + "[31;1mServer exception: " + (char)27 + "[0mUncaught exception");
+      e.printStackTrace();
+      System.exit(1);
+    }
+  }
 
     // Create a new flight, or add seats to existing flight
     // NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
     public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice) throws RemoteException
     {
-
+      m_resourceManager =
       return m_resourceManager.addFlight(xid, flightNum, flightSeats, flightPrice);
     }
 
@@ -104,18 +135,18 @@ public class Middleware implements IResourceManager {
 
     public String queryCustomerInfo(int xid, int customerID) throws RemoteException
     {
-      return m_resourceManager.queryCustomerInfo(id, customerID);
+      return m_resourceManager.queryCustomerInfo(xid, customerID);
     }
 
     public int newCustomer(int xid) throws RemoteException
     {
-      m_resourceManager.newCustomer(id);
+      m_resourceManager.newCustomer(xid);
         // Generate a globally unique ID for the new customer
     }
 
     public boolean newCustomer(int xid, int customerID) throws RemoteException
     {
-      return m_resourceManager.newCustomer(id, customerID);
+      return m_resourceManager.newCustomer(xid, customerID);
     }
 
     public boolean deleteCustomer(int xid, int customerID) throws RemoteException
@@ -132,13 +163,13 @@ public class Middleware implements IResourceManager {
     // Adds car reservation to this customer
     public boolean reserveCar(int xid, int customerID, String location) throws RemoteException
     {
-        return (m_resourceManager.reserveCar(id, customerID, location));
+        return (m_resourceManager.reserveCar(xid, customerID, location));
     }
 
     // Adds room reservation to this customer
     public boolean reserveRoom(int xid, int customerID, String location) throws RemoteException
     {
-        return (m_resourceManager.reserveRoom(id, customerID, location));
+        return (m_resourceManager.reserveRoom(xid, customerID, location));
     }
 
     // Reserve bundle
