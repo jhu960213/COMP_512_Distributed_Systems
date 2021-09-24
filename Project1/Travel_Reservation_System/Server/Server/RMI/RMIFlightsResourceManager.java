@@ -22,6 +22,7 @@ public class RMIFlightsResourceManager extends FlightsResourceManager {
     // start the rmi registry for the flights resource manager server and export remote flights resource manager object reference to clients
     public static void main(String args[])
     {
+        System.setProperty("java.rmi.server.hostname", "localhost");
         if (args.length == 4)
         {
             // scan commandline args in the format of "serverName, serverPrefix, serverRegistryPortNum, serverExportPortNum"

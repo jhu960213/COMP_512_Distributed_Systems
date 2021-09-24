@@ -36,7 +36,7 @@ public class Middleware implements IResourceManager {
         try {
             Registry registry = LocateRegistry.getRegistry(serverName, serverPortNum);
             IResourceManager m_resourceManager = (IResourceManager)registry.lookup(serverProxyName);
-            System.out.println("\nMiddleware connected to '" + serverName + "' server " +
+            System.out.println("Middleware connected to '" + serverName + "' server " +
                     "[" + serverName + ":" + serverPortNum + "/" + serverProxyName + "]");
             this.getResources().put(serverName, m_resourceManager);
         }

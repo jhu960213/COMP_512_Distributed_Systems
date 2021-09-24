@@ -17,8 +17,14 @@ public class RMIMiddleware extends Middleware {
 
     // for connection to resource managers: A = carManager, B = roomManager, C = flightManager
     private static String resourceAServerName;
+    private static String resourceAHostName;
+
     private static String resourceBServerName;
+    private static String resourceBHostName;
+
     private static String resourceCServerName;
+    private static String resourceCHostName;
+
     private static int resourceAPortNum;
     private static int resourceBPortNum;
     private static int resourceCPortNum;
@@ -31,7 +37,8 @@ public class RMIMiddleware extends Middleware {
     // start the rmi registry for the middleware server and export remote middleware object reference to clients
     public static void main(String args[])
     {
-        if (args.length == 10)
+        System.setProperty("java.rmi.server.hostname", "localhost");
+        if (args.length == 13)
         {
             // commandline args in the format of "serverName, serverPrefix, serverRegistryPortNum, serverExportPortNum"
             rmiMiddlewareServerName = args[0];
@@ -41,11 +48,17 @@ public class RMIMiddleware extends Middleware {
 
             // commandline args in the format of serverAName, serverAPort, serverBName, serverBPort, serverCName, serverCPort
             resourceAServerName = args[4];
-            resourceAPortNum = Integer.parseInt(args[5]);
-            resourceBServerName = args[6];
-            resourceBPortNum = Integer.parseInt(args[7]);
-            resourceCServerName = args [8];
-            resourceCPortNum = Integer.parseInt(args[9]);
+            resourceAHostName = args[5];
+            resourceAPortNum = Integer.parseInt(args[6]);
+
+            resourceBServerName = args[7];
+            resourceBHostName = args[8];
+            resourceBPortNum = Integer.parseInt(args[9]);
+
+            resourceCServerName = args [10];
+            resourceCHostName = args[11];
+            resourceCPortNum = Integer.parseInt(args[12]);
+
 
             // create RMI server entry for middleware
             try
@@ -75,17 +88,17 @@ public class RMIMiddleware extends Middleware {
                 rmiMiddlewareRegistry.rebind(rmiMiddlewareServerPrefix + rmiMiddlewareServerName, resourceManager);
 
                 // connect to resource A
-                rmiMiddlewareServer.connectToResourceServer(resourceAServerName, resourceAPortNum, rmiMiddlewareServerPrefix + resourceAServerName);
+                rmiMiddlewareServer.connectToResourceServer(resourceAHostName, resourceAPortNum, rmiMiddlewareServerPrefix + resourceAServerName);
 
-//                Thread.sleep(1000); // miliseconds?
-//
-//                // connect to resource B
-//                rmiMiddlewareServer.connectToResourceServer(resourceBServerName, resourceBPortNum, rmiMiddlewareServerPrefix + resourceBServerName);
-//
-//                Thread.sleep(1000);
-//
-//                // connect to resource C
-//                rmiMiddlewareServer.connectToResourceServer(resourceCServerName, resourceCPortNum, rmiMiddlewareServerPrefix + resourceCServerName);
+                Thread.sleep(1000); // miliseconds?
+
+                // connect to resource B
+                rmiMiddlewareServer.connectToResourceServer(resourceBHostName, resourceBPortNum, rmiMiddlewareServerPrefix + resourceBServerName);
+
+                Thread.sleep(1000);
+
+                // connect to resource C
+                rmiMiddlewareServer.connectToResourceServer(resourceCHostName, resourceCPortNum, rmiMiddlewareServerPrefix + resourceCServerName);
 
                 // unbinding registry when rmi middleware server shuts down
                 getRuntime().addShutdownHook(new Thread(() -> {

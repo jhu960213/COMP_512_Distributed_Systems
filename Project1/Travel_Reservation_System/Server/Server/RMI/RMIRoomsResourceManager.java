@@ -24,6 +24,7 @@ public class RMIRoomsResourceManager extends RoomsResourceManager {
     // start the rmi registry for the room resource manager server and export remote room resource manager object reference to clients
     public static void main(String args[])
     {
+        System.setProperty("java.rmi.server.hostname", "localhost");
         if (args.length == 4)
         {
             // scan commandline args in the format of "serverName, serverPrefix, serverRegistryPortNum, serverExportPortNum"

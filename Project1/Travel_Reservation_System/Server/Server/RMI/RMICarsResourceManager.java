@@ -22,6 +22,7 @@ public class RMICarsResourceManager extends CarsResourceManager {
     // start the rmi registry for the car resource manager server and export remote car resource manager object reference to clients
     public static void main(String args[])
     {
+        System.setProperty("java.rmi.server.hostname", "localhost");
         if (args.length == 4)
         {
             // scan commandline args in the format of "serverName, serverPrefix, serverRegistryPortNum, serverExportPortNum"

@@ -1,8 +1,8 @@
 # 1st define args for use in RMIFlightsResourceManager
 a=flightServer # server name
 b=group_04_ # server prefix
-c=1082 # start registry port num
-d=1083 # registry export port num
+c=1044 # start registry port num
+d=1021 # registry export port num
 
 # 2nd scan commandline args from user
 echo "flight manager server name: $a"
