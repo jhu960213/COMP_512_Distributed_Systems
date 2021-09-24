@@ -11,7 +11,12 @@ import static Server.Common.Trace.info;
 
 public class Middleware implements IResourceManager {
 
+    protected IResourceManager m_flightsResourceManager = null;
+    protected IResourceManager m_carsResourceManager = null;
+    protected IResourceManager m_roomsResourceManager = null;
+
     protected String middlewareName;
+    protected RMHashMap middlewareData = new RMHashMap();
 
     public Middleware(String name) {
         try {
@@ -149,27 +154,8 @@ public class Middleware implements IResourceManager {
     // NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
     public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice) throws RemoteException
     {
-        info("RM::addFlight(" + xid + ", " + flightNum + ", " + flightSeats + ", $" + flightPrice + ") called");
-        Flight curObj = (Flight)readData(xid, Flight.getKey(flightNum));
-        if (curObj == null)
-        {
-            // Doesn't exist yet, add it
-            Flight newObj = new Flight(flightNum, flightSeats, flightPrice);
-            writeData(xid, newObj.getKey(), newObj);
-            info("RM::addFlight(" + xid + ") created new flight " + flightNum + ", seats=" + flightSeats + ", price=$" + flightPrice);
-        }
-        else
-        {
-            // Add seats to existing flight and update the price if greater than zero
-            curObj.setCount(curObj.getCount() + flightSeats);
-            if (flightPrice > 0)
-            {
-                curObj.setPrice(flightPrice);
-            }
-            writeData(xid, curObj.getKey(), curObj);
-            info("RM::addFlight(" + xid + ") modified existing flight " + flightNum + ", seats=" + curObj.getCount() + ", price=$" + flightPrice);
-        }
-        return true;
+        info("MW::addFlight(" + xid + ", " + flightNum + ", " + flightSeats + ", $" + flightPrice + ") called");
+        return m_flightsResourceManager.addFlight(xid, flightNum, flightSeats, flightPrice);
     }
 
     // Create a new car location or add cars to an existing location

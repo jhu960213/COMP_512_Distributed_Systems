@@ -13,11 +13,11 @@ import java.io.*;
 public class RMIClient extends Client
 {
 	private static String s_serverHost = "localhost";
-	private static int s_serverPort = 1099;
+	private static int s_serverPort = 1031;
 	private static String s_serverName = "Server";
 
 	//TODO: ADD YOUR GROUP NUMBER TO COMPILE
-	//private static String s_rmiPrefix = "group_xx_";
+	private static String s_rmiPrefix = "group_04_";
 
 	public static void main(String args[])
 	{	
