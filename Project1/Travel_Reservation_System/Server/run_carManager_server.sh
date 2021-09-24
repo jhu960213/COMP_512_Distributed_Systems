@@ -1,12 +1,14 @@
-# 1st start rmi for car manager
-desiredPortNum=1102
-./run_rmi_carManager.sh desiredPortNum > /dev/null
+# 1st define for use in RMICarsResourceManager
+a=carServer # server name
+b=group_04_ # server prefix
+c=1080 # start registry port num
+d=1081 # registry export port num
 
 # 2nd scan commandline args from user
-echo "car manager server name: $1"
-echo "car manager server prefix: $2"
-echo "car manager server registry port num: $3"
-echo "car manager server registry export port num: $4"
+echo "car manager server name: $a"
+echo "car manager server prefix: $b"
+echo "car manager server registry port num: $c"
+echo "car manager server registry export port num: $d"
 
 # 3rd start the car manager server
-java -Djava.security.policy=java.policy -Djava.rmi.server.codebase=file:$(pwd)/ Server.RMI.RMICarsResourceManager $1 $2 $3 $4
+java -Djava.security.policyrun=server.policy -Djava.rmi.server.codebase=file:$(pwd)/ Server.RMI.RMICarsResourceManager $a $b $c $d

@@ -1,18 +1,12 @@
 package Server.Middleware;
 
-import Server.Common.*;
 import Server.Interface.IResourceManager;
-import org.graalvm.util.EconomicMap;
-
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Vector;
-import java.util.ArrayList;
-import static Server.Common.Trace.info;
 
 
 public class Middleware implements IResourceManager {
@@ -47,7 +41,7 @@ public class Middleware implements IResourceManager {
             this.getResources().put(serverName, m_resourceManager);
         }
         catch (Exception e) {
-            System.out.println("\nRMI middleware connection error with other servers: " + e.getMessage() + "\n");
+            System.out.println("\nRMI middleware failed to connect with server: " + serverName + ":" + serverPortNum + ":\n" + e.getLocalizedMessage() + "\n");
         }
     }
 

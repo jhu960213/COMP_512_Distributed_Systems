@@ -77,15 +77,15 @@ public class RMIMiddleware extends Middleware {
                 // connect to resource A
                 rmiMiddlewareServer.connectToResourceServer(resourceAServerName, resourceAPortNum, rmiMiddlewareServerPrefix + resourceAServerName);
 
-                Thread.sleep(1000); // miliseconds?
-
-                // connect to resource B
-                rmiMiddlewareServer.connectToResourceServer(resourceBServerName, resourceBPortNum, rmiMiddlewareServerPrefix + resourceBServerName);
-
-                Thread.sleep(1000);
-
-                // connect to resource C
-                rmiMiddlewareServer.connectToResourceServer(resourceCServerName, resourceCPortNum, rmiMiddlewareServerPrefix + resourceCServerName);
+//                Thread.sleep(1000); // miliseconds?
+//
+//                // connect to resource B
+//                rmiMiddlewareServer.connectToResourceServer(resourceBServerName, resourceBPortNum, rmiMiddlewareServerPrefix + resourceBServerName);
+//
+//                Thread.sleep(1000);
+//
+//                // connect to resource C
+//                rmiMiddlewareServer.connectToResourceServer(resourceCServerName, resourceCPortNum, rmiMiddlewareServerPrefix + resourceCServerName);
 
                 // unbinding registry when rmi middleware server shuts down
                 getRuntime().addShutdownHook(new Thread(() -> {

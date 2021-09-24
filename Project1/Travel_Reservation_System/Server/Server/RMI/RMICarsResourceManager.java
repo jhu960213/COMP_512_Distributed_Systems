@@ -67,7 +67,7 @@ public class RMICarsResourceManager extends CarsResourceManager {
                         e.printStackTrace();
                     }
                 }));
-                System.out.println("'" + rmiCarsResourceManagerServerName + "' resource manager server ready and bound to '"
+                System.out.println("'" + rmiCarsResourceManagerServerName + "' car manager server ready and bound to '"
                         + rmiCarsResourceManagerServerPrefix + rmiCarsResourceManagerServerName + "'");
 
             }
