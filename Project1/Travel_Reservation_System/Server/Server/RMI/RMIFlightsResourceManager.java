@@ -17,15 +17,6 @@ public class RMIFlightsResourceManager extends FlightsResourceManager {
 
     public static void main(String args[])
     {
-        if (args.length > 0)
-        {
-            s_serverName = args[0];
-        }
-        if (args.length > 1)
-        {
-            s_portNum = Integer.parseInt(args[1]);
-        }
-
         // Create the RMI server entry
         try {
             // Create a new Server object

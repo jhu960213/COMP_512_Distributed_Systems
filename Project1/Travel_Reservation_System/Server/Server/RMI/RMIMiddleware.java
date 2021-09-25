@@ -13,8 +13,7 @@ public class RMIMiddleware extends Middleware {
 
     private static String rmiMiddlewareServerName = "Middleware";
     private static String rmiMiddlewareServerPrefix = "group_04_";;
-    private static int rmiMiddlewareRegistryPortNum = 1090;
-
+    private static int rmiMiddlewareRegistryPortNum = 1004;
 
     private static String flightsResourceServerHost = "localhost";
     private static int flightsResourceServerPort = 2004;
@@ -37,16 +36,16 @@ public class RMIMiddleware extends Middleware {
     // start the rmi registry for the middleware server and export remote middleware object reference to clients
     public static void main(String args[])
     {
-        if (args.length == 8)
+        if (args.length > 3)
         {
-            rmiMiddlewareServerName = args[0];
-            rmiMiddlewareRegistryPortNum = Integer.parseInt(args[1]);
-            flightsResourceServerHost = args[2];
-            flightsResourceServerPort = Integer.parseInt(args[3]);
-            carsResourceServerHost = args[4];
-            carsResourceServerPort = Integer.parseInt(args[5]);
-            roomsResourceServerHost = args[6];
-            roomsResourceServerPort = Integer.parseInt(args[7]);
+            flightsResourceServerHost = args[0];
+            carsResourceServerHost = args[1];
+            roomsResourceServerHost = args[2];
+            rmiMiddlewareServerName = args[3];
+            if (args.length > 4) flightsResourceServerPort = Integer.parseInt(args[4]);
+            if (args.length > 5) carsResourceServerPort = Integer.parseInt(args[5]);
+            if (args.length > 6) roomsResourceServerPort = Integer.parseInt(args[6]);
+            if (args.length > 7) rmiMiddlewareRegistryPortNum = Integer.parseInt(args[7]);
 
             try {
                 // create RMI middleware server object
