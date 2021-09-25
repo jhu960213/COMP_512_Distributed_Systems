@@ -9,7 +9,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class RMIRoomsResourceManager extends  RoomsResourceManager {
-    private static String s_serverName = "FlightsServer";
+    private static String s_serverName = "RoomsServer";
     private static int s_portNum = 4004;
     //TODO: ADD YOUR GROUP NUMBER TO COMPLETE
     private static String s_rmiPrefix = "group_04_";
