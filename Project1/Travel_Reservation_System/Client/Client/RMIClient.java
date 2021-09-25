@@ -9,6 +9,7 @@ import java.rmi.NotBoundException;
 public class RMIClient extends Client
 {
 	private static String serverHostName;
+	private static String serverName;
 	private static int serverHostPortNum;
 	private static String rmiServerHostPrefix;
 
@@ -19,16 +20,16 @@ public class RMIClient extends Client
 
 	public void connectServer()
 	{
-		connectServer(serverHostName, serverHostPortNum, rmiServerHostPrefix);
+		connectServer(serverHostName, serverHostPortNum, rmiServerHostPrefix, serverName);
 	}
 
-	public void connectServer(String serverName, int portNum, String serverPrefix)
+	public void connectServer(String serverHostName, int portNum, String serverPrefix, String serverName)
 	{
 		try {
 			boolean first = true;
 			while (true) {
 				try {
-					Registry registry = LocateRegistry.getRegistry(serverName, portNum);
+					Registry registry = LocateRegistry.getRegistry(serverHostName, portNum);
 					m_resourceManager = (IResourceManager)registry.lookup(serverPrefix + serverName);
 					System.out.println("Connected to '" + serverName + "' server [" + serverName + ":" + portNum + "/" + serverPrefix + serverName + "]");
 					break;
@@ -51,10 +52,11 @@ public class RMIClient extends Client
 
 	public static void main(String args[])
 	{	
-		if (args.length == 3) {
+		if (args.length == 4) {
 			serverHostName = args[0];
-			serverHostPortNum = Integer.parseInt(args[1]);
-			rmiServerHostPrefix = args[2];
+			serverName = args[1];
+			serverHostPortNum = Integer.parseInt(args[2]);
+			rmiServerHostPrefix = args[3];
 		} else {
 			System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0mUsage: java client.RMIClient [server_hostname [server_rmiobject]]");
 			System.exit(1);
