@@ -287,36 +287,38 @@ public class FlightsResourceManager implements IResourceManager {
         }
     }
 
-    public int newCustomer(int xid) throws RemoteException
-    {
-        info("RM::newCustomer(" + xid + ") called");
-        // Generate a globally unique ID for the new customer
-        int cid = Integer.parseInt(String.valueOf(xid) +
-                String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
-                String.valueOf(Math.round(Math.random() * 100 + 1)));
-        Customer customer = new Customer(cid);
-        writeData(xid, customer.getKey(), customer);
-        info("RM::newCustomer(" + cid + ") returns ID=" + cid);
-        return cid;
-    }
+  public int newCustomer(int xid) throws RemoteException
+  {
+    throw RemoteException("RM::newCustomer(" + xid  + " FlightServer) failed--this function should not be called");
+//      Trace.warn("RM::newCustomer(" + xid  + " FlightServer) failed--this function should not be called");
+//        info("RM::newCustomer(" + xid + ") called");
+//        // Generate a globally unique ID for the new customer
+//        int cid = Integer.parseInt(String.valueOf(xid) +
+//                String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
+//                String.valueOf(Math.round(Math.random() * 100 + 1)));
+//        Customer customer = new Customer(cid);
+//        writeData(xid, customer.getKey(), customer);
+//        info("RM::newCustomer(" + cid + ") returns ID=" + cid);
+//        return cid;
+  }
 
-    public boolean newCustomer(int xid, int customerID) throws RemoteException
+  public boolean newCustomer(int xid, int customerID) throws RemoteException
+  {
+    info("RM::newCustomer(" + xid + ", " + customerID + ") called");
+    Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
+    if (customer == null)
     {
-        info("RM::newCustomer(" + xid + ", " + customerID + ") called");
-        Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-        if (customer == null)
-        {
-            customer = new Customer(customerID);
-            writeData(xid, customer.getKey(), customer);
-            info("RM::newCustomer(" + xid + ", " + customerID + ") created a new customer");
-            return true;
-        }
-        else
-        {
-            info("INFO: RM::newCustomer(" + xid + ", " + customerID + ") failed--customer already exists");
-            return false;
-        }
+      customer = new Customer(customerID);
+      writeData(xid, customer.getKey(), customer);
+      info("RM::newCustomer(" + xid + ", " + customerID + ") created a new customer");
+      return true;
     }
+    else
+    {
+      info("INFO: RM::newCustomer(" + xid + ", " + customerID + ") failed--customer already exists");
+      return false;
+    }
+  }
 
     public boolean deleteCustomer(int xid, int customerID) throws RemoteException
     {
