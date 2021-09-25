@@ -6,14 +6,29 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import static java.lang.Runtime.*;
+import java.rmi.RemoteException;
+import java.rmi.NotBoundException;
 
 public class RMIMiddleware extends Middleware {
 
-    private static String rmiMiddlewareServerName;
-    private static String rmiMiddlewareServerPrefix;
-    private static int rmiMiddlewareRegistryPortNum;
-    private static int rmiMiddlewareExportPortNum;
-    IResourceManager m_resourceManager = null;
+    private static String rmiMiddlewareServerName = "Middleware";
+    private static String rmiMiddlewareServerPrefix = "group_04_";;
+    private static int rmiMiddlewareRegistryPortNum = 1090;
+
+
+    private static String flightsResourceServerHost = "localhost";
+    private static int flightsResourceServerPort = 2004;
+    private static String flightsResourceServerName = "FlightsServer";
+
+    private static String carsResourceServerHost = "localhost";
+    private static int carsResourceServerPort = 3004;
+    private static String carsResourceServerName = "CarsServer";
+
+    private static String roomsResourceServerHost = "localhost";
+    private static int roomsResourceServerPort = 4004;
+    private static String roomsResourceServerName = "RoomsServer";
+
+    private static String s_rmiPrefix = "group_04_";
 
     public RMIMiddleware(String name) {
         super(name);
@@ -22,26 +37,30 @@ public class RMIMiddleware extends Middleware {
     // start the rmi registry for the middleware server and export remote middleware object reference to clients
     public static void main(String args[])
     {
-        if (args.length == 4)
+        if (args.length == 8)
         {
-            // scan commandline args in the format of "serverName, serverPrefix, serverRegistryPortNum, serverExportPortNum"
-
             rmiMiddlewareServerName = args[0];
-            rmiMiddlewareServerPrefix = args[1];
-            rmiMiddlewareRegistryPortNum = Integer.parseInt(args[2]);
-            rmiMiddlewareExportPortNum = Integer.parseInt(args[3]);
+            rmiMiddlewareRegistryPortNum = Integer.parseInt(args[1]);
+            flightsResourceServerHost = args[2];
+            flightsResourceServerPort = Integer.parseInt(args[3]);
+            carsResourceServerHost = args[4];
+            carsResourceServerPort = Integer.parseInt(args[5]);
+            roomsResourceServerHost = args[6];
+            roomsResourceServerPort = Integer.parseInt(args[7]);
 
-            // create RMI server entry for middleware
-            try
-            {
+            try {
                 // create RMI middleware server object
                 RMIMiddleware rmiMiddlewareServer = new RMIMiddleware(rmiMiddlewareServerName);
 
+                rmiMiddlewareServer.m_flightsResourceManager = rmiMiddlewareServer.connectServer(flightsResourceServerHost, flightsResourceServerPort, flightsResourceServerName);
+                rmiMiddlewareServer.m_carsResourceManager = rmiMiddlewareServer.connectServer(carsResourceServerHost, carsResourceServerPort, carsResourceServerName);
+                rmiMiddlewareServer.m_roomsResourceManager = rmiMiddlewareServer.connectServer(roomsResourceServerHost, roomsResourceServerPort, roomsResourceServerName);
+
                 // dynamically generated the stub (client proxy)
                 IResourceManager resourceManager =
-                        (IResourceManager) UnicastRemoteObject.exportObject(rmiMiddlewareServer, rmiMiddlewareExportPortNum);
+                        (IResourceManager) UnicastRemoteObject.exportObject(rmiMiddlewareServer, rmiMiddlewareRegistryPortNum);
 
-                // Bind the remote object's stub in the rmi middleware server registry
+                // Bind the remte object's stub in the rmi middleware server registry
                 Registry tmpRegistry;
                 try
                 {
@@ -93,5 +112,33 @@ public class RMIMiddleware extends Middleware {
                     "to start the RMI middlware server! ***\n");
             System.exit(1);
         }
+    }
+
+    public IResourceManager connectServer(String server, int port, String name)
+    {
+        try {
+            boolean first = true;
+            while (true) {
+                try {
+                    Registry registry = LocateRegistry.getRegistry(server, port);
+                    IResourceManager m_resourceManager = (IResourceManager)registry.lookup(s_rmiPrefix + name);
+                    System.out.println("Connected to '" + name + "' server [" + server + ":" + port + "/" + s_rmiPrefix + name + "]");
+                    return m_resourceManager;
+                }
+                catch (NotBoundException|RemoteException e) {
+                    if (first) {
+                        System.out.println("Waiting for '" + name + "' server [" + server + ":" + port + "/" + s_rmiPrefix + name + "]");
+                        first = false;
+                    }
+                }
+                Thread.sleep(500);
+            }
+        }
+        catch (Exception e) {
+            System.err.println((char)27 + "[31;1mServer exception: " + (char)27 + "[0mUncaught exception");
+            e.printStackTrace();
+            System.exit(1);
+        }
+        return null;
     }
 }
