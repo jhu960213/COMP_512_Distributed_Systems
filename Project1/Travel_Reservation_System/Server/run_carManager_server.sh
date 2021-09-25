@@ -1,8 +1,11 @@
+# run rmi for car server
+./run_rmi.sh 3040
+
 # 1st define for use in RMICarsResourceManager
 a=carServer # server name
 b=group_04_ # server prefix
-c=1040 # start registry port num
-d=1081 # registry export port num
+c=3040 # start registry port num
+d=2041 # registry export port num
 
 # 2nd scan commandline args from user
 echo "car manager server name: $a"

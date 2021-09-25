@@ -2,6 +2,8 @@ package Server.RMI;
 
 import Server.Common.CarsResourceManager;
 import Server.Interface.IResourceManager;
+
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -22,7 +24,7 @@ public class RMICarsResourceManager extends CarsResourceManager {
     // start the rmi registry for the car resource manager server and export remote car resource manager object reference to clients
     public static void main(String args[])
     {
-        System.setProperty("java.rmi.server.hostname", "localhost");
+        //System.setProperty("java.rmi.server.hostname", "localhost");
         if (args.length == 4)
         {
             // scan commandline args in the format of "serverName, serverPrefix, serverRegistryPortNum, serverExportPortNum"
@@ -42,19 +44,27 @@ public class RMICarsResourceManager extends CarsResourceManager {
                         (IResourceManager) UnicastRemoteObject.exportObject(rmiCarsResourceManagerServer, rmiCarsResourceManagerExportPortNum);
 
                 // Bind the remote object's stub in the rmi carsResourceManager server registry
-                Registry tmpRegistry;
-                try
-                {
-                    tmpRegistry = LocateRegistry.createRegistry(rmiCarsResourceManagerRegistryPortNum);
-                }
-                catch (Exception e)
-                {
-                    System.out.println("\n*** RMI car resource manager error: Failed to export and " +
-                            "create registry instance on localhost," +
-                            " an existing registry may have already been " +
-                            "exported and created on port:" + rmiCarsResourceManagerRegistryPortNum + "! ***\n");
+                Registry tmpRegistry = null;
+                try {
                     tmpRegistry = LocateRegistry.getRegistry(rmiCarsResourceManagerRegistryPortNum);
                 }
+                catch (RemoteException e) {
+                    System.err.println((char) 27 + "[31;1mRMI car resource manager server exception: " + (char) 27 + "[0mUncaught exception");
+                    e.printStackTrace();
+                }
+
+//                try
+//                {
+//                    tmpRegistry = LocateRegistry.createRegistry(rmiCarsResourceManagerRegistryPortNum);
+//                }
+//                catch (RemoteException e)
+//                {
+//                    System.out.println("\n*** RMI car resource manager error: Failed to export and " +
+//                            "create registry instance on localhost," +
+//                            " an existing registry may have already been " +
+//                            "exported and created on port:" + rmiCarsResourceManagerRegistryPortNum + "! ***\n");
+//                    tmpRegistry = LocateRegistry.getRegistry(rmiCarsResourceManagerRegistryPortNum);
+//                }
                 final Registry rmiCarResourceManagerRegistry = tmpRegistry;
                 rmiCarResourceManagerRegistry.rebind(rmiCarsResourceManagerServerPrefix + rmiCarsResourceManagerServerName, resourceManager);
 

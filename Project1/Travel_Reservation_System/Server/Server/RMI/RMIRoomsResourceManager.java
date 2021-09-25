@@ -3,6 +3,7 @@ package Server.RMI;
 import Server.Common.RoomsResourceManager;
 import Server.Interface.IResourceManager;
 
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -24,7 +25,7 @@ public class RMIRoomsResourceManager extends RoomsResourceManager {
     // start the rmi registry for the room resource manager server and export remote room resource manager object reference to clients
     public static void main(String args[])
     {
-        System.setProperty("java.rmi.server.hostname", "localhost");
+        //System.setProperty("java.rmi.server.hostname", "localhost");
         if (args.length == 4)
         {
             // scan commandline args in the format of "serverName, serverPrefix, serverRegistryPortNum, serverExportPortNum"
@@ -49,7 +50,7 @@ public class RMIRoomsResourceManager extends RoomsResourceManager {
                 {
                     tmpRegistry = LocateRegistry.createRegistry(rmiRoomsResourceManagerRegistryPortNum);
                 }
-                catch (Exception e)
+                catch (RemoteException e)
                 {
                     System.out.println("\n*** RMI room resource manager error: Failed to export and " +
                             "create registry instance on localhost," +

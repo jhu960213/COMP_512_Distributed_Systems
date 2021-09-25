@@ -31,17 +31,29 @@ public class Middleware implements IResourceManager {
         this.resources = resources;
     }
 
-    public void connectToResourceServer(String serverName, int serverPortNum, String serverProxyName) throws RemoteException, NotBoundException
+    public void connectToResourceServer(String serverHost, String serverName, int serverPortNum, String serverProxyName) throws RemoteException
     {
         try {
-            Registry registry = LocateRegistry.getRegistry(serverName, serverPortNum);
-            IResourceManager m_resourceManager = (IResourceManager)registry.lookup(serverProxyName);
-            System.out.println("Middleware connected to '" + serverName + "' server " +
-                    "[" + serverName + ":" + serverPortNum + "/" + serverProxyName + "]");
-            this.getResources().put(serverName, m_resourceManager);
+            while(true) {
+                try {
+                    Registry registry = LocateRegistry.getRegistry(serverHost, serverPortNum);
+                    IResourceManager m_resourceManager = (IResourceManager)registry.lookup(serverProxyName);
+                    System.out.println("\nMiddleware connected to '" + serverHost + "' server " +
+                            "[" + serverHost + ":" + serverPortNum + "/" + serverProxyName + "]");
+                    this.getResources().put(serverName, m_resourceManager);
+                    System.out.println("Hashed the " + serverName + "'s proxy server object into storage!\n");
+                    break;
+                }
+                catch (Exception e) {
+                    System.out.println("\nRMI middleware failed to connect with server: " + serverName + ":" + serverPortNum + ":\n" + e.getLocalizedMessage() + " waiting to connect again....\n");
+                }
+                Thread.sleep(500);
+            }
         }
         catch (Exception e) {
-            System.out.println("\nRMI middleware failed to connect with server: " + serverName + ":" + serverPortNum + ":\n" + e.getLocalizedMessage() + "\n");
+            System.err.println((char)27 + "[31;1mRMI Middleware server exception: " + (char)27 + "[0mUncaught exception");
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 

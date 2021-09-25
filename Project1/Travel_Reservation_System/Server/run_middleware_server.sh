@@ -1,17 +1,20 @@
 # 1st define args for use in RMIMiddleware
 a=middlewareServer
 b=group_04_
-c=1070
+c=1004
 d=1071
 
+# car server
 e=localhost
 f=carServer
-g=1040
+g=3040
 
+# room server
 h=localhost
 i=roomServer
-j=1085
+j=4040
 
+# flight server
 k=localhost
 l=flightServer
 m=1044

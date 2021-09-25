@@ -1,3 +1,6 @@
+# run rmi for flight server
+./run_rmi.sh 1044
+
 # 1st define args for use in RMIFlightsResourceManager
 a=flightServer # server name
 b=group_04_ # server prefix

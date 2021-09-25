@@ -1,7 +1,10 @@
+# run rmi for room server
+./run_rmi.sh 4040
+
 # 1st define args for use in RMIRoomsResourceManager
 a=roomServer # server name
 b=group_04_ # server prefix
-c=1085 # start registry port num
+c=4040 # start registry port num
 d=1086 # registry export port num
 
 # 2nd scan commandline args from user

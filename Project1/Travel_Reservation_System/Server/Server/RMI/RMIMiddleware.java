@@ -37,7 +37,7 @@ public class RMIMiddleware extends Middleware {
     // start the rmi registry for the middleware server and export remote middleware object reference to clients
     public static void main(String args[])
     {
-        System.setProperty("java.rmi.server.hostname", "localhost");
+        //System.setProperty("java.rmi.server.hostname", "localhost");
         if (args.length == 13)
         {
             // commandline args in the format of "serverName, serverPrefix, serverRegistryPortNum, serverExportPortNum"
@@ -66,6 +66,18 @@ public class RMIMiddleware extends Middleware {
                 // create RMI middleware server object
                 RMIMiddleware rmiMiddlewareServer = new RMIMiddleware(rmiMiddlewareServerName);
 
+                // connect to resource A
+                rmiMiddlewareServer.connectToResourceServer(resourceAHostName, resourceAServerName, resourceAPortNum, rmiMiddlewareServerPrefix + resourceAServerName);
+                Thread.sleep(1000); // miliseconds?
+
+                // connect to resource B
+                rmiMiddlewareServer.connectToResourceServer(resourceBHostName, resourceBServerName, resourceBPortNum, rmiMiddlewareServerPrefix + resourceBServerName);
+                Thread.sleep(1000);
+
+                // connect to resource C
+                rmiMiddlewareServer.connectToResourceServer(resourceCHostName, resourceCServerName, resourceCPortNum, rmiMiddlewareServerPrefix + resourceCServerName);
+
+
                 // dynamically generated the stub (client proxy)
                 IResourceManager resourceManager =
                         (IResourceManager) UnicastRemoteObject.exportObject(rmiMiddlewareServer, rmiMiddlewareExportPortNum);
@@ -87,18 +99,6 @@ public class RMIMiddleware extends Middleware {
                 final Registry rmiMiddlewareRegistry = tmpRegistry;
                 rmiMiddlewareRegistry.rebind(rmiMiddlewareServerPrefix + rmiMiddlewareServerName, resourceManager);
 
-                // connect to resource A
-                rmiMiddlewareServer.connectToResourceServer(resourceAHostName, resourceAPortNum, rmiMiddlewareServerPrefix + resourceAServerName);
-
-                Thread.sleep(1000); // miliseconds?
-
-                // connect to resource B
-                rmiMiddlewareServer.connectToResourceServer(resourceBHostName, resourceBPortNum, rmiMiddlewareServerPrefix + resourceBServerName);
-
-                Thread.sleep(1000);
-
-                // connect to resource C
-                rmiMiddlewareServer.connectToResourceServer(resourceCHostName, resourceCPortNum, rmiMiddlewareServerPrefix + resourceCServerName);
 
                 // unbinding registry when rmi middleware server shuts down
                 getRuntime().addShutdownHook(new Thread(() -> {
@@ -112,7 +112,6 @@ public class RMIMiddleware extends Middleware {
                 }));
                 System.out.println("'" + rmiMiddlewareServerName + "' middleware server ready and bound to '"
                         + rmiMiddlewareServerPrefix + rmiMiddlewareServerName + "'");
-
             }
             catch (Exception e)
             {
