@@ -74,7 +74,7 @@ public class FlightsResourceManager implements IResourceManager {
     // Deletes the encar item
     protected boolean deleteItem(int xid, String key)
     {
-        info("RM::deleteItem(" + xid + ", " + key + ") called");
+        Trace.info("RM::deleteItem(" + xid + ", " + key + ") called");
         ReservableItem curObj = (ReservableItem)readData(xid, key);
         // Check if there is such an item in the storage
         if (curObj == null)
@@ -87,12 +87,12 @@ public class FlightsResourceManager implements IResourceManager {
             if (curObj.getReserved() == 0)
             {
                 removeData(xid, curObj.getKey());
-                info("RM::deleteItem(" + xid + ", " + key + ") item deleted");
+                Trace.info("RM::deleteItem(" + xid + ", " + key + ") item deleted");
                 return true;
             }
             else
             {
-                info("RM::deleteItem(" + xid + ", " + key + ") item can't be deleted because some customers have reserved it");
+                Trace.info("RM::deleteItem(" + xid + ", " + key + ") item can't be deleted because some customers have reserved it");
                 return false;
             }
         }
@@ -101,35 +101,35 @@ public class FlightsResourceManager implements IResourceManager {
     // Query the number of available seats/rooms/cars
     protected int queryNum(int xid, String key)
     {
-        info("RM::queryNum(" + xid + ", " + key + ") called");
+        Trace.info("RM::queryNum(" + xid + ", " + key + ") called");
         ReservableItem curObj = (ReservableItem)readData(xid, key);
         int value = 0;
         if (curObj != null)
         {
             value = curObj.getCount();
         }
-        info("RM::queryNum(" + xid + ", " + key + ") returns count=" + value);
+        Trace.info("RM::queryNum(" + xid + ", " + key + ") returns count=" + value);
         return value;
     }
 
     // Query the price of an item
     protected int queryPrice(int xid, String key)
     {
-        info("RM::queryPrice(" + xid + ", " + key + ") called");
+        Trace.info("RM::queryPrice(" + xid + ", " + key + ") called");
         ReservableItem curObj = (ReservableItem)readData(xid, key);
         int value = 0;
         if (curObj != null)
         {
             value = curObj.getPrice();
         }
-        info("RM::queryPrice(" + xid + ", " + key + ") returns cost=$" + value);
+        Trace.info("RM::queryPrice(" + xid + ", " + key + ") returns cost=$" + value);
         return value;
     }
 
     // Reserve an item
     protected boolean reserveItem(int xid, int customerID, String key, String location)
     {
-        info("RM::reserveItem(" + xid + ", customer=" + customerID + ", " + key + ", " + location + ") called" );
+        Trace.info("RM::reserveItem(" + xid + ", customer=" + customerID + ", " + key + ", " + location + ") called" );
         // Read customer object if it exists (and read lock it)
         Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
         if (customer == null)
@@ -160,24 +160,23 @@ public class FlightsResourceManager implements IResourceManager {
             item.setReserved(item.getReserved() + 1);
             writeData(xid, item.getKey(), item);
 
-            info("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") succeeded");
+            Trace.info("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") succeeded");
             return true;
         }
     }
-
 
     // Create a new flight, or add seats to existing flight
     // NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
     public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice) throws RemoteException
     {
-        info("RM::addFlight(" + xid + ", " + flightNum + ", " + flightSeats + ", $" + flightPrice + ") called");
+        Trace.info("RM::addFlight(" + xid + ", " + flightNum + ", " + flightSeats + ", $" + flightPrice + ") called");
         Flight curObj = (Flight)readData(xid, Flight.getKey(flightNum));
         if (curObj == null)
         {
             // Doesn't exist yet, add it
             Flight newObj = new Flight(flightNum, flightSeats, flightPrice);
             writeData(xid, newObj.getKey(), newObj);
-            info("RM::addFlight(" + xid + ") created new flight " + flightNum + ", seats=" + flightSeats + ", price=$" + flightPrice);
+            Trace.info("RM::addFlight(" + xid + ") created new flight " + flightNum + ", seats=" + flightSeats + ", price=$" + flightPrice);
         }
         else
         {
@@ -188,7 +187,7 @@ public class FlightsResourceManager implements IResourceManager {
                 curObj.setPrice(flightPrice);
             }
             writeData(xid, curObj.getKey(), curObj);
-            info("RM::addFlight(" + xid + ") modified existing flight " + flightNum + ", seats=" + curObj.getCount() + ", price=$" + flightPrice);
+            Trace.info("RM::addFlight(" + xid + ") modified existing flight " + flightNum + ", seats=" + curObj.getCount() + ", price=$" + flightPrice);
         }
         return true;
     }
@@ -197,14 +196,52 @@ public class FlightsResourceManager implements IResourceManager {
     // NOTE: if price <= 0 and the location already exists, it maintains its current price
     public boolean addCars(int xid, String location, int count, int price) throws RemoteException
     {
-      throw new RemoteException("You made a wrong Turn. At Server FlightsResourceManager");
+        Trace.info("RM::addCars(" + xid + ", " + location + ", " + count + ", $" + price + ") called");
+        Car curObj = (Car)readData(xid, Car.getKey(location));
+        if (curObj == null)
+        {
+            // Car location doesn't exist yet, add it
+            Car newObj = new Car(location, count, price);
+            writeData(xid, newObj.getKey(), newObj);
+            Trace.info("RM::addCars(" + xid + ") created new location " + location + ", count=" + count + ", price=$" + price);
+        }
+        else
+        {
+            // Add count to existing car location and update price if greater than zero
+            curObj.setCount(curObj.getCount() + count);
+            if (price > 0)
+            {
+                curObj.setPrice(price);
+            }
+            writeData(xid, curObj.getKey(), curObj);
+            Trace.info("RM::addCars(" + xid + ") modified existing location " + location + ", count=" + curObj.getCount() + ", price=$" + price);
+        }
+        return true;
     }
 
     // Create a new room location or add rooms to an existing location
     // NOTE: if price <= 0 and the room location already exists, it maintains its current price
     public boolean addRooms(int xid, String location, int count, int price) throws RemoteException
     {
-      throw new RemoteException("You made a wrong Turn. At Server FlightsResourceManager");
+        Trace.info("RM::addRooms(" + xid + ", " + location + ", " + count + ", $" + price + ") called");
+        Room curObj = (Room)readData(xid, Room.getKey(location));
+        if (curObj == null)
+        {
+            // Room location doesn't exist yet, add it
+            Room newObj = new Room(location, count, price);
+            writeData(xid, newObj.getKey(), newObj);
+            Trace.info("RM::addRooms(" + xid + ") created new room location " + location + ", count=" + count + ", price=$" + price);
+        } else {
+            // Add count to existing object and update price if greater than zero
+            curObj.setCount(curObj.getCount() + count);
+            if (price > 0)
+            {
+                curObj.setPrice(price);
+            }
+            writeData(xid, curObj.getKey(), curObj);
+            Trace.info("RM::addRooms(" + xid + ") modified existing location " + location + ", count=" + curObj.getCount() + ", price=$" + price);
+        }
+        return true;
     }
 
     // Deletes flight
@@ -216,13 +253,13 @@ public class FlightsResourceManager implements IResourceManager {
     // Delete cars at a location
     public boolean deleteCars(int xid, String location) throws RemoteException
     {
-      throw new RemoteException("You made a wrong Turn. At Server FlightsResourceManager");
+        return deleteItem(xid, Car.getKey(location));
     }
 
     // Delete rooms at a location
     public boolean deleteRooms(int xid, String location) throws RemoteException
     {
-      throw new RemoteException("You made a wrong Turn. At Server FlightsResourceManager");
+        return deleteItem(xid, Room.getKey(location));
     }
 
     // Returns the number of empty seats in this flight
@@ -234,13 +271,13 @@ public class FlightsResourceManager implements IResourceManager {
     // Returns the number of cars available at a location
     public int queryCars(int xid, String location) throws RemoteException
     {
-      throw new RemoteException("You made a wrong Turn. At Server FlightsResourceManager");
+        return queryNum(xid, Car.getKey(location));
     }
 
     // Returns the amount of rooms available at a location
     public int queryRooms(int xid, String location) throws RemoteException
     {
-      throw new RemoteException("You made a wrong Turn. At Server FlightsResourceManager");
+        return queryNum(xid, Room.getKey(location));
     }
 
     // Returns price of a seat in this flight
@@ -252,18 +289,18 @@ public class FlightsResourceManager implements IResourceManager {
     // Returns price of cars at this location
     public int queryCarsPrice(int xid, String location) throws RemoteException
     {
-      throw new RemoteException("You made a wrong Turn. At Server FlightsResourceManager");
+        return queryPrice(xid, Car.getKey(location));
     }
 
     // Returns room price at this location
     public int queryRoomsPrice(int xid, String location) throws RemoteException
     {
-      throw new RemoteException("You made a wrong Turn. At Server FlightsResourceManager");
+        return queryPrice(xid, Room.getKey(location));
     }
 
     public String queryCustomerInfo(int xid, int customerID) throws RemoteException
     {
-        info("RM::queryCustomerInfo(" + xid + ", " + customerID + ") called");
+        Trace.info("RM::queryCustomerInfo(" + xid + ", " + customerID + ") called");
         Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
         if (customer == null)
         {
@@ -273,48 +310,46 @@ public class FlightsResourceManager implements IResourceManager {
         }
         else
         {
-            info("RM::queryCustomerInfo(" + xid + ", " + customerID + ")");
+            Trace.info("RM::queryCustomerInfo(" + xid + ", " + customerID + ")");
             System.out.println(customer.getBill());
             return customer.getBill();
         }
     }
 
-  public int newCustomer(int xid) throws RemoteException
-  {
-    throw new RemoteException("RM::newCustomer(" + xid  + " FlightServer) failed--this function should not be called");
-//      Trace.warn("RM::newCustomer(" + xid  + " FlightServer) failed--this function should not be called");
-//        info("RM::newCustomer(" + xid + ") called");
-//        // Generate a globally unique ID for the new customer
-//        int cid = Integer.parseInt(String.valueOf(xid) +
-//                String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
-//                String.valueOf(Math.round(Math.random() * 100 + 1)));
-//        Customer customer = new Customer(cid);
-//        writeData(xid, customer.getKey(), customer);
-//        info("RM::newCustomer(" + cid + ") returns ID=" + cid);
-//        return cid;
-  }
+    public int newCustomer(int xid) throws RemoteException
+    {
+        Trace.info("RM::newCustomer(" + xid + ") called");
+        // Generate a globally unique ID for the new customer
+        int cid = Integer.parseInt(String.valueOf(xid) +
+                String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
+                String.valueOf(Math.round(Math.random() * 100 + 1)));
+        Customer customer = new Customer(cid);
+        writeData(xid, customer.getKey(), customer);
+        Trace.info("RM::newCustomer(" + cid + ") returns ID=" + cid);
+        return cid;
+    }
 
-  public boolean newCustomer(int xid, int customerID) throws RemoteException
-  {
-    info("RM::newCustomer(" + xid + ", " + customerID + ") called");
-    Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-    if (customer == null)
+    public boolean newCustomer(int xid, int customerID) throws RemoteException
     {
-      customer = new Customer(customerID);
-      writeData(xid, customer.getKey(), customer);
-      info("RM::newCustomer(" + xid + ", " + customerID + ") created a new customer");
-      return true;
+        Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") called");
+        Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
+        if (customer == null)
+        {
+            customer = new Customer(customerID);
+            writeData(xid, customer.getKey(), customer);
+            Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") created a new customer");
+            return true;
+        }
+        else
+        {
+            Trace.info("INFO: RM::newCustomer(" + xid + ", " + customerID + ") failed--customer already exists");
+            return false;
+        }
     }
-    else
-    {
-      info("INFO: RM::newCustomer(" + xid + ", " + customerID + ") failed--customer already exists");
-      return false;
-    }
-  }
 
     public boolean deleteCustomer(int xid, int customerID) throws RemoteException
     {
-        info("RM::deleteCustomer(" + xid + ", " + customerID + ") called");
+        Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") called");
         Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
         if (customer == null)
         {
@@ -328,9 +363,9 @@ public class FlightsResourceManager implements IResourceManager {
             for (String reservedKey : reservations.keySet())
             {
                 ReservedItem reserveditem = customer.getReservedItem(reservedKey);
-                info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times");
+                Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times");
                 ReservableItem item  = (ReservableItem)readData(xid, reserveditem.getKey());
-                info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " which is reserved " +  item.getReserved() +  " times and is still available " + item.getCount() + " times");
+                Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " which is reserved " +  item.getReserved() +  " times and is still available " + item.getCount() + " times");
                 item.setReserved(item.getReserved() - reserveditem.getCount());
                 item.setCount(item.getCount() + reserveditem.getCount());
                 writeData(xid, item.getKey(), item);
@@ -338,7 +373,7 @@ public class FlightsResourceManager implements IResourceManager {
 
             // Remove the customer from the storage
             removeData(xid, customer.getKey());
-            info("RM::deleteCustomer(" + xid + ", " + customerID + ") succeeded");
+            Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") succeeded");
             return true;
         }
     }
@@ -352,18 +387,18 @@ public class FlightsResourceManager implements IResourceManager {
     // Adds car reservation to this customer
     public boolean reserveCar(int xid, int customerID, String location) throws RemoteException
     {
-      throw new RemoteException("You made a wrong Turn. At Server FlightsResourceManager");
+        return reserveItem(xid, customerID, Car.getKey(location), location);
     }
 
     // Adds room reservation to this customer
     public boolean reserveRoom(int xid, int customerID, String location) throws RemoteException
     {
-      throw new RemoteException("You made a wrong Turn. At Server FlightsResourceManager");
+        return reserveItem(xid, customerID, Room.getKey(location), location);
     }
 
-    @Override
-    public boolean bundle(int id, int customerID, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException {
+    // Reserve bundle
+    public boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException
+    {
         return false;
     }
-
 }
