@@ -2,7 +2,6 @@ package Server.Middleware;
 
 import Server.Common.*;
 import Server.Interface.IResourceManager;
-import jdk.internal.vm.compiler.collections.EconomicMap;
 
 import java.rmi.RemoteException;
 import java.util.Calendar;
@@ -20,9 +19,9 @@ public class Middleware implements IResourceManager {
     public Middleware(String name) {
         try {
             this.middlewareName = name;
-            this.m_carsResourceManager = null;
-            this.m_carsResourceManager = null;
             this.m_flightsResourceManager = null;
+            this.m_carsResourceManager = null;
+            this.m_roomsResourceManager = null;
         } catch (Exception e) {
             System.out.println("\n*** Middleware error: " + e.getMessage() + " ***\n");
         }
