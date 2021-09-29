@@ -12,7 +12,7 @@ import java.rmi.NotBoundException;
 public class RMIMiddleware extends Middleware {
 
     private static String rmiMiddlewareServerName = "Middleware";
-    private static String rmiMiddlewareServerPrefix = "group_04_";;
+    private static String rmiMiddlewareServerPrefix = "group_04_";
     private static int rmiMiddlewareRegistryPortNum = 5004;
 
     private static String flightsResourceServerHost = "localhost";
