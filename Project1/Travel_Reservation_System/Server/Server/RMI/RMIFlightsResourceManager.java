@@ -2,7 +2,6 @@ package Server.RMI;
 
 import Server.Common.FlightsResourceManager;
 import Server.Interface.IResourceManager;
-
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -12,7 +11,6 @@ public class RMIFlightsResourceManager extends FlightsResourceManager {
 
     private static String s_serverName = "FlightsServer";
     private static int s_portNum = 2004;
-    //TODO: ADD YOUR GROUP NUMBER TO COMPLETE
     private static String s_rmiPrefix = "group_04_";
 
     public static void main(String args[])

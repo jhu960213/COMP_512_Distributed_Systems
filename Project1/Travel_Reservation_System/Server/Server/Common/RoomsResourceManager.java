@@ -318,64 +318,17 @@ public class RoomsResourceManager implements IResourceManager {
 
     public int newCustomer(int xid) throws RemoteException
     {
-        Trace.info("RM::newCustomer(" + xid + ") called");
-        // Generate a globally unique ID for the new customer
-        int cid = Integer.parseInt(String.valueOf(xid) +
-                String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
-                String.valueOf(Math.round(Math.random() * 100 + 1)));
-        Customer customer = new Customer(cid);
-        writeData(xid, customer.getKey(), customer);
-        Trace.info("RM::newCustomer(" + cid + ") returns ID=" + cid);
-        return cid;
+        throw new RemoteException("\n*** Adding new customers is handled in the middleware! ***\n");
     }
 
     public boolean newCustomer(int xid, int customerID) throws RemoteException
     {
-        Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") called");
-        Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-        if (customer == null)
-        {
-            customer = new Customer(customerID);
-            writeData(xid, customer.getKey(), customer);
-            Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") created a new customer");
-            return true;
-        }
-        else
-        {
-            Trace.info("INFO: RM::newCustomer(" + xid + ", " + customerID + ") failed--customer already exists");
-            return false;
-        }
+        throw new RemoteException("\n*** Adding new customers is handled in the middleware! ***\n");
     }
 
     public boolean deleteCustomer(int xid, int customerID) throws RemoteException
     {
-        Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") called");
-        Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-        if (customer == null)
-        {
-            Trace.warn("RM::deleteCustomer(" + xid + ", " + customerID + ") failed--customer doesn't exist");
-            return false;
-        }
-        else
-        {
-            // Increase the reserved numbers of all reservable items which the customer reserved.
-            RMHashMap reservations = customer.getReservations();
-            for (String reservedKey : reservations.keySet())
-            {
-                ReservedItem reserveditem = customer.getReservedItem(reservedKey);
-                Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times");
-                ReservableItem item  = (ReservableItem)readData(xid, reserveditem.getKey());
-                Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " which is reserved " +  item.getReserved() +  " times and is still available " + item.getCount() + " times");
-                item.setReserved(item.getReserved() - reserveditem.getCount());
-                item.setCount(item.getCount() + reserveditem.getCount());
-                writeData(xid, item.getKey(), item);
-            }
-
-            // Remove the customer from the storage
-            removeData(xid, customer.getKey());
-            Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") succeeded");
-            return true;
-        }
+        throw new RemoteException("\n*** Deleting new customers is handled in the middleware! ***\n");
     }
 
     // Adds flight reservation to this customer

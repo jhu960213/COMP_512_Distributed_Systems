@@ -1,4 +1,4 @@
-./run_rmi.sh > /dev/null
+# Usage: ./run_middleware.sh FlightsServerHost CarsServerHost RoomsServerHost MiddlewareServerName FlightsPort CarsPort RoomsPort MiddlewarePort
 
 echo "Edit file run_middleware.sh to include instructions for launching the middleware"
 echo '  $1 - Flights server host name'

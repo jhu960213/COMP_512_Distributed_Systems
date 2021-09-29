@@ -14,6 +14,7 @@ public class Middleware implements IResourceManager {
     protected IResourceManager m_flightsResourceManager;
     protected IResourceManager m_carsResourceManager;
     protected IResourceManager m_roomsResourceManager;
+    protected RMHashMap customersList;
     protected String middlewareName;
 
     public Middleware(String name) {
@@ -22,8 +23,45 @@ public class Middleware implements IResourceManager {
             this.m_flightsResourceManager = null;
             this.m_carsResourceManager = null;
             this.m_roomsResourceManager = null;
+            this.customersList = new RMHashMap();
         } catch (Exception e) {
             System.out.println("\n*** Middleware error: " + e.getMessage() + " ***\n");
+        }
+    }
+
+    public RMHashMap getCustomersList() {
+        return customersList;
+    }
+
+    public void setCustomersList(RMHashMap customersList) {
+        this.customersList = customersList;
+    }
+
+    // Reads a data item
+    protected RMItem readData(int xid, String key)
+    {
+        synchronized(this.customersList) {
+            RMItem item = this.customersList.get(key);
+            if (item != null) {
+                return (RMItem)item.clone();
+            }
+            return null;
+        }
+    }
+
+    // Writes a data item
+    protected void writeData(int xid, String key, RMItem value)
+    {
+        synchronized(this.customersList) {
+            this.customersList.put(key, value);
+        }
+    }
+
+    // Remove the item out of storage
+    protected void removeData(int xid, String key)
+    {
+        synchronized(this.customersList) {
+            this.customersList.remove(key);
         }
     }
 
@@ -196,17 +234,13 @@ public class Middleware implements IResourceManager {
   {
       int cid = 0; // 0 will be the default value returned if it failed to add customers in all 3 resource servers
       try {
+          Trace.info("RM::newCustomer(" + xid + ") called");
           cid = Integer.parseInt(String.valueOf(xid) +
                   String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
                   String.valueOf(Math.round(Math.random() * 100 + 1)));
-          boolean tmp1 = m_roomsResourceManager.newCustomer(xid, cid);
-          boolean tmp2 = m_carsResourceManager.newCustomer(xid, cid);
-          boolean tmp3 = m_flightsResourceManager.newCustomer(xid, cid);
-          if (tmp1 && tmp2 && tmp3) {
-              Trace.info("RM::newCustomer(Successfully added new customers to all 3 resource servers!)");
-          } else {
-              Trace.info("RM::newCustomer(At least 1 or more resource servers failed to add a new customer!)");
-          }
+          Customer customer = new Customer(cid);
+          writeData(xid, customer.getKey(), customer);
+          Trace.info("RM::newCustomer(" + cid + ") returns ID=" + cid);
           return cid;
       } catch (Exception e) {
           System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -217,14 +251,18 @@ public class Middleware implements IResourceManager {
   public boolean newCustomer(int xid, int customerID) throws RemoteException
   {
       try {
-          boolean tmp1 = this.m_carsResourceManager.newCustomer(xid, customerID);
-          boolean tmp2 = this.m_roomsResourceManager.newCustomer(xid, customerID);
-          boolean tmp3 = this.m_flightsResourceManager.newCustomer(xid, customerID);
-          if (tmp1 && tmp2 && tmp3) {
-              Trace.info("RM::newCustomer(Successfully added new customers to all 3 resource servers!)");
+          Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") called");
+          Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
+          if (customer == null)
+          {
+              customer = new Customer(customerID);
+              writeData(xid, customer.getKey(), customer);
+              Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") created a new customer");
               return true;
-          } else {
-              Trace.info("RM::newCustomer(At least 1 or more resource servers failed to add a new customer!)");
+          }
+          else
+          {
+              Trace.info("INFO: RM::newCustomer(" + xid + ", " + customerID + ") failed--customer already exists");
               return false;
           }
       } catch (Exception e) {
@@ -236,13 +274,32 @@ public class Middleware implements IResourceManager {
   public boolean deleteCustomer(int xid, int customerID) throws RemoteException
   {
       try {
-          boolean tmp1 = this.m_carsResourceManager.deleteCustomer(xid, customerID);
-          boolean tmp2 = this.m_roomsResourceManager.deleteCustomer(xid, customerID);
-          boolean tmp3 = this.m_flightsResourceManager.deleteCustomer(xid, customerID);
-          if (tmp1 && tmp2 && tmp3) {
-              return true;
-          } else {
+          Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") called");
+          Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
+          if (customer == null)
+          {
+              Trace.warn("RM::deleteCustomer(" + xid + ", " + customerID + ") failed--customer doesn't exist");
               return false;
+          }
+          else
+          {
+              // Increase the reserved numbers of all reservable items which the customer reserved.
+              RMHashMap reservations = customer.getReservations();
+              for (String reservedKey : reservations.keySet())
+              {
+                  ReservedItem reserveditem = customer.getReservedItem(reservedKey);
+                  Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times");
+                  ReservableItem item  = (ReservableItem)readData(xid, reserveditem.getKey());
+                  Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " which is reserved " +  item.getReserved() +  " times and is still available " + item.getCount() + " times");
+                  item.setReserved(item.getReserved() - reserveditem.getCount());
+                  item.setCount(item.getCount() + reserveditem.getCount());
+                  writeData(xid, item.getKey(), item);
+              }
+
+              // Remove the customer from the storage
+              removeData(xid, customer.getKey());
+              Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") succeeded");
+              return true;
           }
       } catch (Exception e) {
           System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
