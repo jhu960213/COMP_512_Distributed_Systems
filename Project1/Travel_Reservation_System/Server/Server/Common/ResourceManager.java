@@ -272,9 +272,17 @@ public class ResourceManager implements IResourceManager
 		throw new RemoteException("\n*** Calling a wrong server! ***\n");
 	}
 
-	public Collection<RMItem> queryReservableItems(int xid) throws RemoteException {
-		
-		return this.m_data.values();
+
+	public String queryReservableFlights(int xid) throws RemoteException {
+		throw new RemoteException("\n*** Calling a wrong server! ***\n");
+	}
+
+	public String queryReservableCars(int xid) throws RemoteException {
+		throw new RemoteException("\n*** Calling a wrong server! ***\n");
+	}
+
+	public String queryReservableRooms(int xid) throws RemoteException {
+		throw new RemoteException("\n*** Calling a wrong server! ***\n");
 	}
 
 	public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms) throws RemoteException {

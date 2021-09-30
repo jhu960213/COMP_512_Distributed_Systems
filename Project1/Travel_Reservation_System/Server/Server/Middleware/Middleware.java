@@ -438,8 +438,16 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
-    public Collection<RMItem> queryReservableItems(int xid) throws RemoteException {
-        return null;
+    public String queryReservableFlights(int xid) throws RemoteException {
+        throw new RemoteException("\n*** queryReservableFlights is handled in the specific ResourceManager! ***\n");
+    }
+
+    public String queryReservableCars(int xid) throws RemoteException {
+        throw new RemoteException("\n*** queryReservableCars is handled in the specific ResourceManager! ***\n");
+    }
+
+    public String queryReservableRooms(int xid) throws RemoteException {
+        throw new RemoteException("\n*** queryReservableRooms is handled in the specific ResourceManager! ***\n");
     }
 
     public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms) throws RemoteException {
@@ -448,30 +456,15 @@ public class Middleware implements IResourceManager {
         try {
             if (flights)
             {
-                Collection<RMItem> items = m_flightsResourceManager.queryReservableItems(xid);
-                for (RMItem item:items)
-                {
-                    Flight flight = (Flight)item;
-                    response += "Flight: FlightNum:"+flight.getFlightNumber()+" Seats:"+flight.getCount()+" Price:"+flight.getPrice()+"\n";
-                }
+                response += "Flights:\n" + m_flightsResourceManager.queryReservableFlights(xid);
             }
             if (cars)
             {
-                Collection<RMItem> items = m_carsResourceManager.queryReservableItems(xid);
-                for (RMItem item:items)
-                {
-                    Car car = (Car) item;
-                    response += "Car: Location:"+car.getLocation()+" Counts:"+car.getCount()+" Price:"+car.getPrice()+"\n";
-                }
+                response += "Cars:\n" + m_carsResourceManager.queryReservableCars(xid);
             }
             if (rooms)
             {
-                Collection<RMItem> items = m_roomsResourceManager.queryReservableItems(xid);
-                for (RMItem item:items)
-                {
-                    Room room = (Room) item;
-                    response += "Room: Location:"+room.getLocation()+" Counts:"+room.getCount()+" Price:"+room.getPrice()+"\n";
-                }
+                response += "Rooms:\n" + m_roomsResourceManager.queryReservableRooms(xid);
             }
             Trace.info("RM::queryReservableItems(" + xid + ", " + flights + ", " + cars + ", " + rooms + ") succeed");
         } catch (Exception e) {

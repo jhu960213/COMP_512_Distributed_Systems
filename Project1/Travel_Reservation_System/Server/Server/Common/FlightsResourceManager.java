@@ -72,4 +72,14 @@ public class FlightsResourceManager extends ResourceManager {
         }
         return prices;
     }
+
+    public String queryReservableFlights(int xid) throws RemoteException {
+        String response = "";
+        for (RMItem item:this.m_data.values())
+        {
+            Flight flight = (Flight)item;
+            response += "FlightNum:"+flight.getFlightNumber()+" Seats:"+flight.getCount()+" Price:"+flight.getPrice()+"\n";
+        }
+        return response;
+    }
 }

@@ -244,7 +244,13 @@ public interface IResourceManager extends Remote
             throws RemoteException;
 
 
-    public Collection<RMItem> queryReservableItems(int xid)
+    public String queryReservableFlights(int xid)
+            throws RemoteException;
+
+    public String queryReservableCars(int xid)
+            throws RemoteException;
+
+    public String queryReservableRooms(int xid)
             throws RemoteException;
 
     public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms)

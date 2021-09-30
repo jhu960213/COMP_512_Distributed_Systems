@@ -54,4 +54,13 @@ public class RoomsResourceManager extends ResourceManager {
     public int reserveRoomItem(int xid, int customerID, String location) throws RemoteException {
         return reserveItem(xid, customerID, Room.getKey(location), location);
     }
+    public String queryReservableRooms(int xid) throws RemoteException {
+        String response = "";
+        for (RMItem item:this.m_data.values())
+        {
+            Room room = (Room) item;
+            response += "Location:"+room.getLocation()+" Counts:"+room.getCount()+" Price:"+room.getPrice()+"\n";
+        }
+        return response;
+    }
 }

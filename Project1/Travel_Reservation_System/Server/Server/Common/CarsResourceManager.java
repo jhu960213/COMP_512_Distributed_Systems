@@ -63,4 +63,13 @@ public class CarsResourceManager extends ResourceManager {
         return reserveItem(xid, customerID, Car.getKey(location), location);
     }
 
+    public String queryReservableCars(int xid) throws RemoteException {
+        String response = "";
+        for (RMItem item:this.m_data.values())
+        {
+            Car car = (Car) item;
+            response += "Location:"+car.getLocation()+" Counts:"+car.getCount()+" Price:"+car.getPrice()+"\n";
+        }
+        return response;
+    }
 }
