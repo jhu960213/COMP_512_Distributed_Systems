@@ -1,12 +1,9 @@
 package Server.Common;
 
 import Server.Interface.IResourceManager;
-
 import java.rmi.RemoteException;
-import java.util.Calendar;
 import java.util.Vector;
 
-import static Server.Common.Trace.info;
 
 public class FlightsResourceManager implements IResourceManager {
 
