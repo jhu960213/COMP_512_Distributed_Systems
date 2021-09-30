@@ -1,8 +1,6 @@
 package Server.Interface;
 
-import Server.Common.RMItem;
-import org.graalvm.compiler.lir.sparc.SPARCArithmetic;
-
+import Server.Common.Customer;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -78,19 +76,11 @@ public interface IResourceManager extends Remote
 
 
     /**
-     * Retrieves a reserved item from the specific resource manager (Car, Flight, Room) to the middleware.
+     * Cancels all reservations pertaining to a specific customer upon deletion of said customer (called by deleteCustomer)
      *
-     * @return RMItem upon success
+     * @return True upon success
      */
-    public RMItem retrieveReservedItem(int id, String key)
-        throws RemoteException;
-
-    /**
-     * Stores a modified reserved item from middleware to a specific resource manager's storage.
-     *
-     * @return RMItem upon success
-     */
-    public void storeReservedItem(int xid, String key, RMItem item)
+    public void cancelReservations(Customer customer, int xid, int customerID)
         throws RemoteException;
 
     /**

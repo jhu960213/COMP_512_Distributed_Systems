@@ -263,12 +263,23 @@ public class CarsResourceManager implements IResourceManager {
         throw new RemoteException("\n*** Adding new customers is handled in the middleware! ***\n");
     }
 
-    public RMItem retrieveReservedItem(int xid, String key) throws RemoteException {
-        return readData(xid, key);
-    }
+    public void cancelReservations(Customer customer, int xid, int customerID) throws RemoteException {
 
-    public void storeReservedItem(int xid, String key, RMItem item) {
-        writeData(xid, key, item);
+        // loop through all the reservations the customer currently has and cancel them
+        RMHashMap reservations = customer.getReservations();
+        for (String reservedKey : reservations.keySet())
+        {
+            ReservedItem reservedItem = customer.getReservedItem(reservedKey);
+            Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reservedItem.getKey() + " " +  reservedItem.getCount() +  " times");
+            ReservableItem reservableItem = (ReservableItem)readData(xid, reservedItem.getKey());
+            if (reservableItem != null ) {
+                info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reservedItem.getKey() + " which is reserved " + reservableItem.getReserved() + " times and is still available " + reservableItem.getCount() + " times");
+                reservableItem.setReserved(reservableItem.getReserved() - reservedItem.getCount());
+                reservableItem.setCount(reservableItem.getCount() + reservedItem.getCount());
+                writeData(xid, reservableItem.getKey(), reservableItem);
+            }
+        }
+        Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") now has no reservations pertaining to " + this.getName() + "!");
     }
 
     public boolean deleteCustomer(int xid, int customerID) throws RemoteException

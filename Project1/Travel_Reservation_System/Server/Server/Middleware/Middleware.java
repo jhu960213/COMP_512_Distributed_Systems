@@ -230,7 +230,7 @@ public class Middleware implements IResourceManager {
         }
     }
 
-    public int newCustomer(int xid) throws RemoteException
+    public synchronized int newCustomer(int xid) throws RemoteException
     {
         int cid = 0; // 0 will be the default value returned if it failed to add customers at middleware
         try {
@@ -271,24 +271,8 @@ public class Middleware implements IResourceManager {
         return false;
     }
 
-    public RMItem retrieveReservedItem(int id, String key) throws RemoteException {
-        throw new RemoteException("\n*** Retrieving a reserved item must be handled by the specific RM! ***\n");
-    }
-
-    public void storeReservedItem(int xid, String key, RMItem item) throws RemoteException {
-        throw new RemoteException("\n*** Storing a reserved item must be handled by the specific RM! ***\n");
-    }
-
-    private void processItem(IResourceManager rm,
-                             ReservableItem reservableItem,
-                             ReservedItem reservedItem,
-                             int xid, int customerID) throws RemoteException {
-        if (reservableItem != null) {
-            Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reservedItem.getKey() + " which is reserved " +  reservableItem.getReserved() +  " times and is still available " + reservableItem.getCount() + " times");
-            reservableItem.setReserved(reservableItem.getReserved() - reservedItem.getCount());
-            reservableItem.setCount(reservableItem.getCount() + reservedItem.getCount());
-            rm.storeReservedItem(xid, reservableItem.getKey(), reservableItem);
-        }
+    public void cancelReservations(Customer customer, int xid, int customerID) throws RemoteException {
+        throw new RemoteException("\n*** Canceling a customer's reservations should be handled by the appropriate resource manager! ***\n");
     }
 
     public synchronized boolean deleteCustomer(int xid, int customerID) throws RemoteException
@@ -303,21 +287,10 @@ public class Middleware implements IResourceManager {
             }
             else
             {
-                // loop through all the reservations the customer had
-                RMHashMap reservations = customer.getReservations();
-                for (String reservedKey : reservations.keySet())
-                {
-                    ReservedItem reservedItem = customer.getReservedItem(reservedKey);
-                    Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reservedItem.getKey() + " " +  reservedItem.getCount() +  " times");
-
-                    ReservableItem flightItem  = (ReservableItem)this.m_flightsResourceManager.retrieveReservedItem(xid, reservedItem.getKey());
-                    ReservableItem carItem  = (ReservableItem)this.m_carsResourceManager.retrieveReservedItem(xid, reservedItem.getKey());
-                    ReservableItem roomItem  = (ReservableItem)this.m_roomsResourceManager.retrieveReservedItem(xid, reservedItem.getKey());
-
-                    processItem(this.m_flightsResourceManager, flightItem, reservedItem, xid, customerID);
-                    processItem(this.m_carsResourceManager, carItem, reservedItem, xid, customerID);
-                    processItem(this.m_roomsResourceManager, roomItem, reservedItem, xid, customerID);
-                }
+                // canceling the reservations in all 3 resource servers
+                this.m_carsResourceManager.cancelReservations(customer, xid, customerID);
+                this.m_flightsResourceManager.cancelReservations(customer, xid, customerID);
+                this.m_roomsResourceManager.cancelReservations(customer, xid, customerID);
                 // Remove the customer from the storage
                 removeData(xid, customer.getKey());
                 Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") succeeded");
@@ -332,13 +305,14 @@ public class Middleware implements IResourceManager {
     // Adds flight reservation to this customer
     public synchronized boolean reserveFlight(int xid, int customerID, int flightNum) throws RemoteException
     {
+        Boolean response = false;
         // Read customer object if it exists (and read lock it)
         Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
         if (customer == null)
         {
             return false;
         }
-        Boolean response = false;
+
         try {
             int price = m_flightsResourceManager.reserveFlightItem(xid, customerID, flightNum);
             if (price > -1)
@@ -356,13 +330,13 @@ public class Middleware implements IResourceManager {
     // Adds car reservation to this customer
     public synchronized boolean reserveCar(int xid, int customerID, String location) throws RemoteException
     {
+        Boolean response = false;
         // Read customer object if it exists (and read lock it)
         Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
         if (customer == null)
         {
             return false;
         }
-        Boolean response = false;
         try {
             int price = m_carsResourceManager.reserveCarItem(xid, customerID, location);
             if (price > -1)
@@ -402,19 +376,19 @@ public class Middleware implements IResourceManager {
     }
 
     public int reserveFlightItem(int id, int customerID, int flightNumber) throws RemoteException {
-        throw new RemoteException("\n*** Reserving Flight Item is handled in the ResourceManager! ***\n");
+        throw new RemoteException("\n*** Reserving Flight Item is handled in the specific ResourceManager! ***\n");
     }
 
     public int reserveCarItem(int id, int customerID, String location) throws RemoteException {
-        throw new RemoteException("\n*** Reserving Car Item is handled in the ResourceManager! ***\n");
+        throw new RemoteException("\n*** Reserving Car Item is handled in the specific ResourceManager! ***\n");
     }
 
     public int reserveRoomItem(int id, int customerID, String location) throws RemoteException {
-        throw new RemoteException("\n*** Reserving Room Item is handled in the ResourceManager! ***\n");
+        throw new RemoteException("\n*** Reserving Room Item is handled in the specific ResourceManager! ***\n");
     }
 
     public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers) throws RemoteException {
-        throw new RemoteException("\n*** Reserving Flight Item Bundle is handled in the ResourceManager! ***\n");
+        throw new RemoteException("\n*** Reserving Flight Item Bundle is handled in the specific ResourceManager! ***\n");
     }
 
     // Reserve bundle
