@@ -12,7 +12,9 @@ public class serverSocket
 
   public static void main(String args[])
   {
-
+    // protected String m_name = "";
+    // protected RMHashMap m_data = new RMHashMap();
+    ResourceManager rm=new ResourceManager(); //create RM for all the threads, multithreading safety features already implemented.
     serverSocket server= new serverSocket();
     try
     {
@@ -33,7 +35,7 @@ public class serverSocket
     while (true)
     {
       Socket Carsocket=serverSocket.accept();
-      new serverSocketThread(Carsocket).start();
+      new serverSocketThread(Carsocket, rm).start();
     }
   }
 }
