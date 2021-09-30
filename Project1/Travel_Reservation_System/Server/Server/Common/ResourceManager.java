@@ -374,6 +374,21 @@ public class ResourceManager implements IResourceManager
 		return reserveItem(xid, customerID, Room.getKey(location), location);
 	}
 
+	// Adds flight reservation to this customer
+	public int reserveFlightItem(int xid, int customerID, int flightNumber) throws RemoteException {
+		return 0;
+	}
+
+	// Adds car reservation to this customer
+	public int reserveCarItem(int xid, int customerID, String location) throws RemoteException {
+		return 0;
+	}
+
+	// Adds room reservation to this customer
+	public int reserveRoomItem(int xid, int customerID, String location) throws RemoteException {
+		return 0;
+	}
+
 	// Reserve bundle 
 	public boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException
 	{

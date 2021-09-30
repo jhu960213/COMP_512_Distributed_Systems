@@ -127,43 +127,32 @@ public class RoomsResourceManager implements IResourceManager {
     }
 
     // Reserve an item
-    protected boolean reserveItem(int xid, int customerID, String key, String location)
+    protected int reserveItem(int xid, int customerID, String key, String location)
     {
-        Trace.info("RM::reserveItem(" + xid + ", customer=" + customerID + ", " + key + ", " + location + ") called" );
-        // Read customer object if it exists (and read lock it)
-        Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-        if (customer == null)
-        {
-            Trace.warn("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
-            return false;
-        }
-
         // Check if the item is available
         ReservableItem item = (ReservableItem)readData(xid, key);
         if (item == null)
         {
             Trace.warn("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") failed--item doesn't exist");
-            return false;
+            return -1;
         }
         else if (item.getCount() == 0)
         {
             Trace.warn("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") failed--No more items");
-            return false;
+            return -1;
         }
         else
         {
-            customer.reserve(key, location, item.getPrice());
-            writeData(xid, customer.getKey(), customer);
-
             // Decrease the number of available items in the storage
             item.setCount(item.getCount() - 1);
             item.setReserved(item.getReserved() + 1);
             writeData(xid, item.getKey(), item);
 
             Trace.info("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") succeeded");
-            return true;
+            return item.getPrice();
         }
     }
+
 
     // Create a new flight, or add seats to existing flight
     // NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
@@ -331,24 +320,35 @@ public class RoomsResourceManager implements IResourceManager {
         throw new RemoteException("\n*** Deleting new customers is handled in the middleware! ***\n");
     }
 
-    // Adds flight reservation to this customer
     public boolean reserveFlight(int xid, int customerID, int flightNum) throws RemoteException
     {
-        return reserveItem(xid, customerID, Flight.getKey(flightNum), String.valueOf(flightNum));
+        throw new RemoteException("\n*** Reserving Flight is handled in the middleware! ***\n");
+    }
+
+    public boolean reserveCar(int xid, int customerID, String location) throws RemoteException
+    {
+        throw new RemoteException("\n*** Reserving Car is handled in the middleware! ***\n");
+    }
+
+    public boolean reserveRoom(int xid, int customerID, String location) throws RemoteException
+    {
+        throw new RemoteException("\n*** Reserving Room is handled in the middleware! ***\n");
+    }
+
+    // Adds flight reservation to this customer
+    public int reserveFlightItem(int xid, int customerID, int flightNumber) throws RemoteException {
+        return reserveItem(xid, customerID, Flight.getKey(flightNumber), String.valueOf(flightNumber));
     }
 
     // Adds car reservation to this customer
-    public boolean reserveCar(int xid, int customerID, String location) throws RemoteException
-    {
+    public int reserveCarItem(int xid, int customerID, String location) throws RemoteException {
         return reserveItem(xid, customerID, Car.getKey(location), location);
     }
 
     // Adds room reservation to this customer
-    public boolean reserveRoom(int xid, int customerID, String location) throws RemoteException
-    {
+    public int reserveRoomItem(int xid, int customerID, String location) throws RemoteException {
         return reserveItem(xid, customerID, Room.getKey(location), location);
     }
-
     // Reserve bundle
     public boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException
     {
