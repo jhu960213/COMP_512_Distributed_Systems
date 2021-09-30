@@ -2,10 +2,10 @@ package Server.Middleware;
 
 import Server.Common.*;
 import Server.Interface.IResourceManager;
-
 import java.rmi.RemoteException;
 import java.util.*;
-
+import java.util.Calendar;
+import java.util.Vector;
 
 public class Middleware implements IResourceManager {
 
@@ -103,6 +103,7 @@ public class Middleware implements IResourceManager {
         }
         return response;
     }
+
     public boolean deleteFlight(int xid, int flightNum) throws RemoteException
     {
         boolean response = false;
@@ -211,7 +212,6 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
-
     public String queryCustomerInfo(int xid, int customerID) throws RemoteException
     {
         Trace.info("RM::queryCustomerInfo(" + xid + ", " + customerID + ") called");
@@ -232,7 +232,7 @@ public class Middleware implements IResourceManager {
 
     public int newCustomer(int xid) throws RemoteException
     {
-        int cid = 0; // 0 will be the default value returned if it failed to add customers in all 3 resource servers
+        int cid = 0; // 0 will be the default value returned if it failed to add customers at middleware
         try {
             Trace.info("RM::newCustomer(" + xid + ") called");
             cid = Integer.parseInt(String.valueOf(xid) +
@@ -271,7 +271,27 @@ public class Middleware implements IResourceManager {
         return false;
     }
 
-    public boolean deleteCustomer(int xid, int customerID) throws RemoteException
+    public RMItem retrieveReservedItem(int id, String key) throws RemoteException {
+        throw new RemoteException("\n*** Retrieving a reserved item must be handled by the specific RM! ***\n");
+    }
+
+    public void storeReservedItem(int xid, String key, RMItem item) throws RemoteException {
+        throw new RemoteException("\n*** Storing a reserved item must be handled by the specific RM! ***\n");
+    }
+
+    private void processItem(IResourceManager rm,
+                             ReservableItem reservableItem,
+                             ReservedItem reservedItem,
+                             int xid, int customerID) throws RemoteException {
+        if (reservableItem != null) {
+            Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reservedItem.getKey() + " which is reserved " +  reservableItem.getReserved() +  " times and is still available " + reservableItem.getCount() + " times");
+            reservableItem.setReserved(reservableItem.getReserved() - reservedItem.getCount());
+            reservableItem.setCount(reservableItem.getCount() + reservedItem.getCount());
+            rm.storeReservedItem(xid, reservableItem.getKey(), reservableItem);
+        }
+    }
+
+    public synchronized boolean deleteCustomer(int xid, int customerID) throws RemoteException
     {
         try {
             Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") called");
@@ -283,19 +303,21 @@ public class Middleware implements IResourceManager {
             }
             else
             {
-                // Increase the reserved numbers of all reservable items which the customer reserved.
+                // loop through all the reservations the customer had
                 RMHashMap reservations = customer.getReservations();
                 for (String reservedKey : reservations.keySet())
                 {
-                    ReservedItem reserveditem = customer.getReservedItem(reservedKey);
-                    Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times");
-                    ReservableItem item  = (ReservableItem)readData(xid, reserveditem.getKey());
-                    Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " which is reserved " +  item.getReserved() +  " times and is still available " + item.getCount() + " times");
-                    item.setReserved(item.getReserved() - reserveditem.getCount());
-                    item.setCount(item.getCount() + reserveditem.getCount());
-                    writeData(xid, item.getKey(), item);
-                }
+                    ReservedItem reservedItem = customer.getReservedItem(reservedKey);
+                    Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reservedItem.getKey() + " " +  reservedItem.getCount() +  " times");
 
+                    ReservableItem flightItem  = (ReservableItem)this.m_flightsResourceManager.retrieveReservedItem(xid, reservedItem.getKey());
+                    ReservableItem carItem  = (ReservableItem)this.m_carsResourceManager.retrieveReservedItem(xid, reservedItem.getKey());
+                    ReservableItem roomItem  = (ReservableItem)this.m_roomsResourceManager.retrieveReservedItem(xid, reservedItem.getKey());
+
+                    processItem(this.m_flightsResourceManager, flightItem, reservedItem, xid, customerID);
+                    processItem(this.m_carsResourceManager, carItem, reservedItem, xid, customerID);
+                    processItem(this.m_roomsResourceManager, roomItem, reservedItem, xid, customerID);
+                }
                 // Remove the customer from the storage
                 removeData(xid, customer.getKey());
                 Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") succeeded");
@@ -316,7 +338,6 @@ public class Middleware implements IResourceManager {
         {
             return false;
         }
-
         Boolean response = false;
         try {
             int price = m_flightsResourceManager.reserveFlightItem(xid, customerID, flightNum);
@@ -341,7 +362,6 @@ public class Middleware implements IResourceManager {
         {
             return false;
         }
-
         Boolean response = false;
         try {
             int price = m_carsResourceManager.reserveCarItem(xid, customerID, location);
@@ -366,7 +386,6 @@ public class Middleware implements IResourceManager {
         {
             return false;
         }
-
         Boolean response = false;
         try {
             int price = m_roomsResourceManager.reserveRoomItem(xid, customerID, location);
@@ -399,7 +418,6 @@ public class Middleware implements IResourceManager {
     }
 
     // Reserve bundle
-    // TODO: need to add functionality to this method and ask prof how we want to do this
     public synchronized boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException
     {
         Trace.info("RM::bundle(" + xid + ", " + customerId + ", " + flightNumbers + ", " + location + ", " + car + ", " + room + ") called");
@@ -438,5 +456,4 @@ public class Middleware implements IResourceManager {
         }
         return false;
     }
-
 }

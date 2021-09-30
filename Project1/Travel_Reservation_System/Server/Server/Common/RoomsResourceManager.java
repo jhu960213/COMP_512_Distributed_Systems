@@ -261,6 +261,14 @@ public class RoomsResourceManager implements IResourceManager {
         throw new RemoteException("\n*** Adding new customers is handled in the middleware! ***\n");
     }
 
+    public RMItem retrieveReservedItem(int xid, String key) throws RemoteException {
+        return readData(xid, key);
+    }
+
+    public void storeReservedItem(int xid, String key, RMItem item) {
+        writeData(xid, key, item);
+    }
+
     public boolean deleteCustomer(int xid, int customerID) throws RemoteException
     {
         throw new RemoteException("\n*** Deleting new customers is handled in the middleware! ***\n");
