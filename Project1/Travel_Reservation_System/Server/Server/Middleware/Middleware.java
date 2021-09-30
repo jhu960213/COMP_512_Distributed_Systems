@@ -450,7 +450,8 @@ public class Middleware implements IResourceManager {
         throw new RemoteException("\n*** queryReservableRooms is handled in the specific ResourceManager! ***\n");
     }
 
-    public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms) throws RemoteException {
+    public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms) throws RemoteException
+    {
         Trace.info("RM::queryReservableItems(" + xid + ", " + flights + ", " + cars + ", " + rooms + ") called");
         String response = "";
         try {
@@ -471,5 +472,25 @@ public class Middleware implements IResourceManager {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
+    }
+
+    public String queryFlightReservers(int xid) throws RemoteException
+    {
+        String response = "";
+        Collection<RMItem> customersList = this.getCustomersList().values();
+        for(RMItem c: customersList) {
+            Customer currentCustomer = (Customer)c;
+            RMHashMap reservations = currentCustomer.getReservations();
+            for(String reservedKey : reservations.keySet()) {
+                ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
+                if 
+
+
+            }
+
+
+        }
+
+
     }
 }

@@ -1,6 +1,5 @@
 package Server.Common;
 
-import Server.Interface.IResourceManager;
 import java.rmi.RemoteException;
 import java.util.*;
 
@@ -81,5 +80,11 @@ public class FlightsResourceManager extends ResourceManager {
             response += "FlightNum:"+flight.getFlightNumber()+" Seats:"+flight.getCount()+" Price:"+flight.getPrice()+"\n";
         }
         return response;
+    }
+
+    public String queryFlightReservers() throws RemoteException {
+
+
+        return "";
     }
 }
