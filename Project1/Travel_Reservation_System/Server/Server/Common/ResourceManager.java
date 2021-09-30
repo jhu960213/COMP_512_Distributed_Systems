@@ -9,7 +9,6 @@ import Server.Interface.*;
 
 import java.util.*;
 import java.rmi.RemoteException;
-import java.io.*;
 
 import static Server.Common.Trace.info;
 
@@ -270,6 +269,15 @@ public class ResourceManager implements IResourceManager
 	}
 
 	public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers) throws RemoteException {
+		throw new RemoteException("\n*** Calling a wrong server! ***\n");
+	}
+
+	public Collection<RMItem> queryReservableItems(int xid) throws RemoteException {
+		
+		return this.m_data.values();
+	}
+
+	public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms) throws RemoteException {
 		throw new RemoteException("\n*** Calling a wrong server! ***\n");
 	}
 

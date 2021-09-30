@@ -22,5 +22,10 @@ public class Flight extends ReservableItem
 		String s = "flight-" + flightNum;
 		return s.toLowerCase();
 	}
+
+	public String getFlightNumber()
+	{
+		return this.getKey().substring("flight-".length());
+	}
 }
 

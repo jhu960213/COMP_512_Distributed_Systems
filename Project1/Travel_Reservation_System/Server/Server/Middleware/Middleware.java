@@ -437,4 +437,46 @@ public class Middleware implements IResourceManager {
         }
         return response;
     }
+
+    public Collection<RMItem> queryReservableItems(int xid) throws RemoteException {
+        return null;
+    }
+
+    public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms) throws RemoteException {
+        Trace.info("RM::queryReservableItems(" + xid + ", " + flights + ", " + cars + ", " + rooms + ") called");
+        String response = "";
+        try {
+            if (flights)
+            {
+                Collection<RMItem> items = m_flightsResourceManager.queryReservableItems(xid);
+                for (RMItem item:items)
+                {
+                    Flight flight = (Flight)item;
+                    response += "Flight: FlightNum:"+flight.getFlightNumber()+" Seats:"+flight.getCount()+" Price:"+flight.getPrice()+"\n";
+                }
+            }
+            if (cars)
+            {
+                Collection<RMItem> items = m_carsResourceManager.queryReservableItems(xid);
+                for (RMItem item:items)
+                {
+                    Car car = (Car) item;
+                    response += "Car: Location:"+car.getLocation()+" Counts:"+car.getCount()+" Price:"+car.getPrice()+"\n";
+                }
+            }
+            if (rooms)
+            {
+                Collection<RMItem> items = m_roomsResourceManager.queryReservableItems(xid);
+                for (RMItem item:items)
+                {
+                    Room room = (Room) item;
+                    response += "Room: Location:"+room.getLocation()+" Counts:"+room.getCount()+" Price:"+room.getPrice()+"\n";
+                }
+            }
+            Trace.info("RM::queryReservableItems(" + xid + ", " + flights + ", " + cars + ", " + rooms + ") succeed");
+        } catch (Exception e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+        }
+        return response;
+    }
 }

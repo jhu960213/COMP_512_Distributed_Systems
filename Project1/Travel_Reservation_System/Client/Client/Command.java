@@ -22,6 +22,7 @@ public enum Command {
 	QueryFlightPrice("Query the price per seat on a flight number", "<xid>,<FlightNumber>"),
 	QueryCarsPrice("Query the price per car at a location", "<xid>,<Location>"),
 	QueryRoomsPrice("Query the price per room at a location", "<xid>,<Location>"),
+	QueryReservableItems("Query the reservable flights, cars, rooms", "<xid>,<Flights-true/false>,<Cars-true/false>,<Rooms-true/false>"),
 
 	ReserveFlight("Reserve a flight number for a customer", "<xid>,<CustomerID>,<FlightNumber>"),
 	ReserveCar("Reserve a car for a customer at a location", "<xid>,<CustomerID>,<Location>"),
