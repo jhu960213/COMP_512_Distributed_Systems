@@ -289,7 +289,7 @@ public class ResourceManager implements IResourceManager
 		throw new RemoteException("\n*** Calling a wrong server! ***\n");
 	}
 
-	public void cancelReservations(Object customerObj, int xid, int customerID) throws RemoteException {
+	public synchronized void cancelReservations(Object customerObj, int xid, int customerID) throws RemoteException {
 
 		// loop through all the reservations the customer currently has and cancel them
 		Customer customer = (Customer)customerObj;

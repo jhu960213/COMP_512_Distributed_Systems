@@ -423,6 +423,45 @@ public abstract class Client
 				System.out.println("The list of reservable items:\n" + string);
 
 				break;
+
+			case QueryFlightReservations:
+				checkArgumentsCount(3, arguments.size());
+
+				System.out.println("Querying reservations of the flight [xid=" + arguments.elementAt(1) + "]");
+				System.out.println("-Flight Number: " + arguments.elementAt(2));
+
+				int id = toInt(arguments.elementAt(1));
+				int flightNum = toInt(arguments.elementAt(2));
+
+//				String string = m_resourceManager.query(id, flightNum);
+//				System.out.println("Reservations: " + string);
+				break;
+
+			case QueryCarReservations:
+				checkArgumentsCount(3, arguments.size());
+
+				System.out.println("Querying reservations of cars location [xid=" + arguments.elementAt(1) + "]");
+				System.out.println("-Car Location: " + arguments.elementAt(2));
+
+				int id = toInt(arguments.elementAt(1));
+				String location = arguments.elementAt(2);
+
+//				String string = m_resourceManager.query(id, location);
+//				System.out.println("Reservations: " + string);
+				break;
+
+			case QueryRoomReservations:
+				checkArgumentsCount(3, arguments.size());
+
+				System.out.println("Querying reservations of rooms location [xid=" + arguments.elementAt(1) + "]");
+				System.out.println("-Room Location: " + arguments.elementAt(2));
+
+				int id = toInt(arguments.elementAt(1));
+				String location = arguments.elementAt(2);
+
+//				String string = m_resourceManager.query(id, location);
+//				System.out.println("Reservations: " + string);
+
 			case Quit:
 				checkArgumentsCount(1, arguments.size());
 
