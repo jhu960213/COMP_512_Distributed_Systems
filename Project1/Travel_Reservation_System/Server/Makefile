@@ -1,13 +1,10 @@
-all: server.policy middleware compile-server-rmi
+all: java.policy compile-server-rmi
 
-
-#codebase \"file:`pwd`/\"
-
-server.policy: FORCE
-	@echo "Creating server policy"
-	@echo "grant codebase \"file:`pwd`/-\" {" > server.policy
-	@echo "permission java.security.AllPermission;" >> server.policy
-	@echo "};" >> server.policy
+java.policy: FORCE
+	@echo "Creating server java policy"
+	@echo "grant codebase \"file:`pwd`/\" {" > java.policy
+	@echo "permission java.security.AllPermission;" >> java.policy
+	@echo "};" >> java.policy
 
 FORCE: ;
 
@@ -16,13 +13,10 @@ RMIInterface.jar: Server/Interface/IResourceManager.java
 	javac Server/Interface/IResourceManager.java
 	jar cvf RMIInterface.jar Server/Interface/IResourceManager.class
 
-middleware: Server/Middleware/Middleware.java
-	javac Server/Middleware/*.java
-
-compile-server-rmi: Server/RMI/*.java Server/Interface/IResourceManager.java Server/Common/*.java
-	javac Server/RMI/*.java Server/Interface/IResourceManager.java Server/Common/*.java
+compile-server-rmi: Server/RMI/*.java Server/Interface/IResourceManager.java Server/Common/*.java Server/Middleware/*.java
+	javac Server/RMI/*.java Server/Interface/IResourceManager.java Server/Common/*.java Server/Middleware/*.java
 
 clean:
 	rm -f Server/Interface/*.class Server/Common/*.class Server/RMI/*.class Server/Middleware/*.class
 	rm -f RMIInterface.jar
-	rm -f server.policy
+	rm -f java.policy 

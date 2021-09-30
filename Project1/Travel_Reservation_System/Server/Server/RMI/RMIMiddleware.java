@@ -6,83 +6,60 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import static java.lang.Runtime.*;
+import java.rmi.RemoteException;
+import java.rmi.NotBoundException;
 
 public class RMIMiddleware extends Middleware {
 
-    // for connection to middleware
-    private static String rmiMiddlewareServerName;
-    private static String rmiMiddlewareServerPrefix;
-    private static int rmiMiddlewareRegistryPortNum;
-    private static int rmiMiddlewareExportPortNum;
+    private static String rmiMiddlewareServerName = "Middleware";
+    private static String rmiMiddlewareServerPrefix = "group_04_";
+    private static int rmiMiddlewareRegistryPortNum = 5004;
 
-    // for connection to resource managers: A = carManager, B = roomManager, C = flightManager
-    private static String resourceAServerName;
-    private static String resourceAHostName;
+    private static String flightsResourceServerHost = "localhost";
+    private static int flightsResourceServerPort = 2004;
+    private static String flightsResourceServerName = "FlightsServer";
 
-    private static String resourceBServerName;
-    private static String resourceBHostName;
+    private static String carsResourceServerHost = "localhost";
+    private static int carsResourceServerPort = 3004;
+    private static String carsResourceServerName = "CarsServer";
 
-    private static String resourceCServerName;
-    private static String resourceCHostName;
+    private static String roomsResourceServerHost = "localhost";
+    private static int roomsResourceServerPort = 4004;
+    private static String roomsResourceServerName = "RoomsServer";
 
-    private static int resourceAPortNum;
-    private static int resourceBPortNum;
-    private static int resourceCPortNum;
+    private static String s_rmiPrefix = "group_04_";
 
-    public RMIMiddleware(String name)
-    {
+    public RMIMiddleware(String name) {
         super(name);
     }
 
     // start the rmi registry for the middleware server and export remote middleware object reference to clients
     public static void main(String args[])
     {
-        //System.setProperty("java.rmi.server.hostname", "localhost");
-        if (args.length == 13)
+        if (args.length > 3)
         {
-            // commandline args in the format of "serverName, serverPrefix, serverRegistryPortNum, serverExportPortNum"
-            rmiMiddlewareServerName = args[0];
-            rmiMiddlewareServerPrefix = args[1];
-            rmiMiddlewareRegistryPortNum = Integer.parseInt(args[2]);
-            rmiMiddlewareExportPortNum = Integer.parseInt(args[3]);
+            flightsResourceServerHost = args[0];
+            carsResourceServerHost = args[1];
+            roomsResourceServerHost = args[2];
+            rmiMiddlewareServerName = args[3];
+            if (args.length > 4) flightsResourceServerPort = Integer.parseInt(args[4]);
+            if (args.length > 5) carsResourceServerPort = Integer.parseInt(args[5]);
+            if (args.length > 6) roomsResourceServerPort = Integer.parseInt(args[6]);
+            if (args.length > 7) rmiMiddlewareRegistryPortNum = Integer.parseInt(args[7]);
 
-            // commandline args in the format of serverAName, serverAPort, serverBName, serverBPort, serverCName, serverCPort
-            resourceAServerName = args[4];
-            resourceAHostName = args[5];
-            resourceAPortNum = Integer.parseInt(args[6]);
-
-            resourceBServerName = args[7];
-            resourceBHostName = args[8];
-            resourceBPortNum = Integer.parseInt(args[9]);
-
-            resourceCServerName = args [10];
-            resourceCHostName = args[11];
-            resourceCPortNum = Integer.parseInt(args[12]);
-
-
-            // create RMI server entry for middleware
-            try
-            {
+            try {
                 // create RMI middleware server object
                 RMIMiddleware rmiMiddlewareServer = new RMIMiddleware(rmiMiddlewareServerName);
 
-                // connect to resource A
-                rmiMiddlewareServer.connectToResourceServer(resourceAHostName, resourceAServerName, resourceAPortNum, rmiMiddlewareServerPrefix + resourceAServerName);
-                Thread.sleep(1000); // miliseconds?
-
-                // connect to resource B
-                rmiMiddlewareServer.connectToResourceServer(resourceBHostName, resourceBServerName, resourceBPortNum, rmiMiddlewareServerPrefix + resourceBServerName);
-                Thread.sleep(1000);
-
-                // connect to resource C
-                rmiMiddlewareServer.connectToResourceServer(resourceCHostName, resourceCServerName, resourceCPortNum, rmiMiddlewareServerPrefix + resourceCServerName);
-
+                rmiMiddlewareServer.m_flightsResourceManager = rmiMiddlewareServer.connectServer(flightsResourceServerHost, flightsResourceServerPort, flightsResourceServerName);
+                rmiMiddlewareServer.m_carsResourceManager = rmiMiddlewareServer.connectServer(carsResourceServerHost, carsResourceServerPort, carsResourceServerName);
+                rmiMiddlewareServer.m_roomsResourceManager = rmiMiddlewareServer.connectServer(roomsResourceServerHost, roomsResourceServerPort, roomsResourceServerName);
 
                 // dynamically generated the stub (client proxy)
                 IResourceManager resourceManager =
-                        (IResourceManager) UnicastRemoteObject.exportObject(rmiMiddlewareServer, rmiMiddlewareExportPortNum);
+                        (IResourceManager) UnicastRemoteObject.exportObject(rmiMiddlewareServer, rmiMiddlewareRegistryPortNum);
 
-                // Bind the remote object's stub in the rmi middleware server registry
+                // Bind the remte object's stub in the rmi middleware server registry
                 Registry tmpRegistry;
                 try
                 {
@@ -97,8 +74,7 @@ public class RMIMiddleware extends Middleware {
                     tmpRegistry = LocateRegistry.getRegistry(rmiMiddlewareRegistryPortNum);
                 }
                 final Registry rmiMiddlewareRegistry = tmpRegistry;
-                rmiMiddlewareRegistry.rebind(rmiMiddlewareServerPrefix + rmiMiddlewareServerName, resourceManager);
-
+                rmiMiddlewareRegistry.bind(rmiMiddlewareServerPrefix + rmiMiddlewareServerName, resourceManager);
 
                 // unbinding registry when rmi middleware server shuts down
                 getRuntime().addShutdownHook(new Thread(() -> {
@@ -110,8 +86,9 @@ public class RMIMiddleware extends Middleware {
                         e.printStackTrace();
                     }
                 }));
-                System.out.println("'" + rmiMiddlewareServerName + "' middleware server ready and bound to '"
+                System.out.println("'" + rmiMiddlewareServerName + "' resource manager server ready and bound to '"
                         + rmiMiddlewareServerPrefix + rmiMiddlewareServerName + "'");
+
             }
             catch (Exception e)
             {
@@ -134,5 +111,33 @@ public class RMIMiddleware extends Middleware {
                     "to start the RMI middlware server! ***\n");
             System.exit(1);
         }
+    }
+
+    public IResourceManager connectServer(String server, int port, String name)
+    {
+        try {
+            boolean first = true;
+            while (true) {
+                try {
+                    Registry registry = LocateRegistry.getRegistry(server, port);
+                    IResourceManager m_resourceManager = (IResourceManager)registry.lookup(s_rmiPrefix + name);
+                    System.out.println("Connected to '" + name + "' server [" + server + ":" + port + "/" + s_rmiPrefix + name + "]");
+                    return m_resourceManager;
+                }
+                catch (NotBoundException|RemoteException e) {
+                    if (first) {
+                        System.out.println("Waiting for '" + name + "' server [" + server + ":" + port + "/" + s_rmiPrefix + name + "]");
+                        first = false;
+                    }
+                }
+                Thread.sleep(500);
+            }
+        }
+        catch (Exception e) {
+            System.err.println((char)27 + "[31;1mServer exception: " + (char)27 + "[0mUncaught exception");
+            e.printStackTrace();
+            System.exit(1);
+        }
+        return null;
     }
 }
