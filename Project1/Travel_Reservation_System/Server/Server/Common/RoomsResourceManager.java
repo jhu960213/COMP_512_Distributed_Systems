@@ -3,8 +3,7 @@ package Server.Common;
 import Server.Interface.IResourceManager;
 
 import java.rmi.RemoteException;
-import java.util.Calendar;
-import java.util.Vector;
+import java.util.*;
 
 import static Server.Common.Trace.info;
 
@@ -302,4 +301,7 @@ public class RoomsResourceManager implements IResourceManager {
         return false;
     }
 
+    public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers) throws RemoteException {
+        throw new RemoteException("\n*** Calling a wrong server! ***\n");
+    }
 }

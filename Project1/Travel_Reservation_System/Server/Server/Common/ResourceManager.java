@@ -395,6 +395,10 @@ public class ResourceManager implements IResourceManager
 		return false;
 	}
 
+	public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers) throws RemoteException {
+		return null;
+	}
+
 	public String getName() throws RemoteException
 	{
 		return m_name;

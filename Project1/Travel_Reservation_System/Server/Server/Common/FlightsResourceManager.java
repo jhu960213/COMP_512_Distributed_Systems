@@ -2,7 +2,7 @@ package Server.Common;
 
 import Server.Interface.IResourceManager;
 import java.rmi.RemoteException;
-import java.util.Vector;
+import java.util.*;
 
 
 public class FlightsResourceManager implements IResourceManager {
@@ -143,14 +143,6 @@ public class FlightsResourceManager implements IResourceManager {
             // Decrease the number of available items in the storage
             item.setCount(item.getCount() - 1);
             item.setReserved(item.getReserved() + 1);
-
-            try
-            {
-                Thread.sleep(5000);
-            } catch (Exception e) {
-
-            }
-
             writeData(xid, item.getKey(), item);
 
             Trace.info("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") succeeded");
@@ -303,5 +295,14 @@ public class FlightsResourceManager implements IResourceManager {
     public boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException
     {
         return false;
+    }
+    public Map<String, Integer> reserveFlightItemBundle(int xid, int customerID, Vector<String> flightNumbers) throws RemoteException {
+        Map<String, Integer> prices = new HashMap<>();
+        for (String flightNum:flightNumbers)
+        {
+            int price = reserveFlightItem(xid, customerID, Integer.parseInt(flightNum));
+            if (price>0) prices.put(flightNum, price);
+        }
+        return prices;
     }
 }

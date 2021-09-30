@@ -222,7 +222,15 @@ public interface IResourceManager extends Remote
      * @return Success
      */
     public boolean bundle(int id, int customerID, Vector<String> flightNumbers, String location, boolean car, boolean room)
-	throws RemoteException; 
+	throws RemoteException;
+
+    /**
+     * Reserve a bundle of flights
+     *
+     * @return Prices of flights
+     */
+    public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers)
+            throws RemoteException;
 
     /**
      * Convenience for probing the resource manager.

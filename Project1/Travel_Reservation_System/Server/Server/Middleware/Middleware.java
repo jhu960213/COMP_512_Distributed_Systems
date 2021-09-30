@@ -4,8 +4,7 @@ import Server.Common.*;
 import Server.Interface.IResourceManager;
 
 import java.rmi.RemoteException;
-import java.util.Calendar;
-import java.util.Vector;
+import java.util.*;
 
 
 public class Middleware implements IResourceManager {
@@ -249,7 +248,7 @@ public class Middleware implements IResourceManager {
         return cid;
     }
 
-    public boolean newCustomer(int xid, int customerID) throws RemoteException
+    public synchronized boolean newCustomer(int xid, int customerID) throws RemoteException
     {
         try {
             Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") called");
@@ -309,7 +308,7 @@ public class Middleware implements IResourceManager {
     }
 
     // Adds flight reservation to this customer
-    public boolean reserveFlight(int xid, int customerID, int flightNum) throws RemoteException
+    public synchronized boolean reserveFlight(int xid, int customerID, int flightNum) throws RemoteException
     {
         // Read customer object if it exists (and read lock it)
         Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
@@ -334,7 +333,7 @@ public class Middleware implements IResourceManager {
     }
 
     // Adds car reservation to this customer
-    public boolean reserveCar(int xid, int customerID, String location) throws RemoteException
+    public synchronized boolean reserveCar(int xid, int customerID, String location) throws RemoteException
     {
         // Read customer object if it exists (and read lock it)
         Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
@@ -359,7 +358,7 @@ public class Middleware implements IResourceManager {
     }
 
     // Adds room reservation to this customer
-    public boolean reserveRoom(int xid, int customerID, String location) throws RemoteException
+    public synchronized boolean reserveRoom(int xid, int customerID, String location) throws RemoteException
     {
         // Read customer object if it exists (and read lock it)
         Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
@@ -395,10 +394,48 @@ public class Middleware implements IResourceManager {
         throw new RemoteException("\n*** Reserving Room Item is handled in the ResourceManager! ***\n");
     }
 
+    public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers) throws RemoteException {
+        throw new RemoteException("\n*** Reserving Flight Item Bundle is handled in the ResourceManager! ***\n");
+    }
+
     // Reserve bundle
     // TODO: need to add functionality to this method and ask prof how we want to do this
-    public boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException
+    public synchronized boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException
     {
+        Trace.info("RM::bundle(" + xid + ", " + customerId + ", " + flightNumbers + ", " + location + ", " + car + ", " + room + ") called");
+        // Read customer object if it exists (and read lock it)
+        Customer customer = (Customer)readData(xid, Customer.getKey(customerId));
+        if (customer == null)
+        {
+            return false;
+        }
+        try {
+            if (flightNumbers.size() > 0)
+            {
+                Map<String, Integer> prices = m_flightsResourceManager.reserveFlightItemBundle(xid, customerId, flightNumbers);
+                if (prices.size() > 0) {
+                    for (String flightNum : prices.keySet())
+                        customer.reserve(Flight.getKey(Integer.parseInt(flightNum)), flightNum, prices.get(flightNum));
+                } else return false;
+            }
+            if (car)
+            {
+                int price = m_carsResourceManager.reserveCarItem(xid, customerId, location);
+                if (price > -1) customer.reserve(Car.getKey(location), location, price);
+                else return false;
+            }
+            if (room)
+            {
+                int price = m_roomsResourceManager.reserveRoomItem(xid, customerId, location);
+                if (price > -1) customer.reserve(Room.getKey(location), location, price);
+                else return false;
+            }
+            writeData(xid, customer.getKey(), customer);
+            Trace.info("RM::bundle(" + xid + ", " + customerId + ", " + flightNumbers + ", " + location + ", " + car + ", " + room + ") succeeded");
+            return true;
+        } catch (Exception e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+        }
         return false;
     }
 
