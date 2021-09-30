@@ -399,6 +399,10 @@ public class ResourceManager implements IResourceManager
 		return null;
 	}
 
+	public void cancelReservations(Object customer, int xid, int customerID) throws RemoteException {
+
+	}
+
 	public String getName() throws RemoteException
 	{
 		return m_name;

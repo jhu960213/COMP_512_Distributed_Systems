@@ -1,6 +1,5 @@
 package Server.Interface;
 
-import Server.Common.Customer;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -80,7 +79,7 @@ public interface IResourceManager extends Remote
      *
      * @return True upon success
      */
-    public void cancelReservations(Customer customer, int xid, int customerID)
+    public void cancelReservations(Object customer, int xid, int customerID)
         throws RemoteException;
 
     /**

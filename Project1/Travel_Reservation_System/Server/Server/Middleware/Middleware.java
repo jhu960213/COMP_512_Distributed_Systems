@@ -220,7 +220,7 @@ public class Middleware implements IResourceManager {
         {
             Trace.warn("RM::queryCustomerInfo(" + xid + ", " + customerID + ") failed--customer doesn't exist");
             // NOTE: don't change this--WC counts on this value indicating a customer does not exist...
-            return "";
+            return "No such customer";
         }
         else
         {
@@ -271,7 +271,7 @@ public class Middleware implements IResourceManager {
         return false;
     }
 
-    public void cancelReservations(Customer customer, int xid, int customerID) throws RemoteException {
+    public void cancelReservations(Object customer, int xid, int customerID) throws RemoteException {
         throw new RemoteException("\n*** Canceling a customer's reservations should be handled by the appropriate resource manager! ***\n");
     }
 
@@ -401,6 +401,7 @@ public class Middleware implements IResourceManager {
         {
             return false;
         }
+        Boolean response = false;
         try {
             if (flightNumbers.size() > 0)
             {
@@ -408,26 +409,32 @@ public class Middleware implements IResourceManager {
                 if (prices.size() > 0) {
                     for (String flightNum : prices.keySet())
                         customer.reserve(Flight.getKey(Integer.parseInt(flightNum)), flightNum, prices.get(flightNum));
-                } else return false;
+                    response = true;
+                }
             }
             if (car)
             {
                 int price = m_carsResourceManager.reserveCarItem(xid, customerId, location);
-                if (price > -1) customer.reserve(Car.getKey(location), location, price);
-                else return false;
+                if (price > -1)
+                {
+                    customer.reserve(Car.getKey(location), location, price);
+                    response = true;
+                }
             }
             if (room)
             {
                 int price = m_roomsResourceManager.reserveRoomItem(xid, customerId, location);
-                if (price > -1) customer.reserve(Room.getKey(location), location, price);
-                else return false;
+                if (price > -1)
+                {
+                    customer.reserve(Room.getKey(location), location, price);
+                    response = true;
+                }
             }
             writeData(xid, customer.getKey(), customer);
             Trace.info("RM::bundle(" + xid + ", " + customerId + ", " + flightNumbers + ", " + location + ", " + car + ", " + room + ") succeeded");
-            return true;
         } catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
-        return false;
+        return response;
     }
 }

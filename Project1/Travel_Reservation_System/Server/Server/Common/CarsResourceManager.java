@@ -263,9 +263,10 @@ public class CarsResourceManager implements IResourceManager {
         throw new RemoteException("\n*** Adding new customers is handled in the middleware! ***\n");
     }
 
-    public void cancelReservations(Customer customer, int xid, int customerID) throws RemoteException {
+    public void cancelReservations(Object customerObj, int xid, int customerID) throws RemoteException {
 
         // loop through all the reservations the customer currently has and cancel them
+        Customer customer = (Customer)customerObj;
         RMHashMap reservations = customer.getReservations();
         for (String reservedKey : reservations.keySet())
         {
