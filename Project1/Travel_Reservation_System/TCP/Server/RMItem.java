@@ -3,7 +3,7 @@
 // CSE 593
 // -------------------------------
 
-package Server.Common;
+package Server;
 
 import java.io.*;
 

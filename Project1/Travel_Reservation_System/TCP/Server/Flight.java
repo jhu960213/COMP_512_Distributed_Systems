@@ -3,7 +3,7 @@
 // CSE 593
 // -------------------------------
 
-package Server.Common;
+package Server;
 
 public class Flight extends ReservableItem
 {

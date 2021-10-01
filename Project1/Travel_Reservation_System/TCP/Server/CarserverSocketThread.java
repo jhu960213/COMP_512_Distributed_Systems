@@ -1,3 +1,7 @@
+package Server;
+
+import Server.ResourceManager;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -5,13 +9,16 @@ import java.net.Socket;
 import java.util.Date;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.*;
 
 
 public class CarserverSocketThread extends Thread
 {
   Socket socket;
+  ResourceManager rm;
   CarserverSocketThread (Socket socket, ResourceManager rm)
   { this.socket=socket;
+    this.rm = rm;
   }
 
   public void run()
@@ -31,9 +38,9 @@ public class CarserverSocketThread extends Thread
         // int x= Integer.parseInt(params[1]);
         // int y= Integer.parseInt(params[2]);
 
-        int res_int=null;
+        int res_int = -1;
         String res_str = null;
-        boolean res_bool = null;
+        boolean res_bool = false;
 
         // System.out.println(params[0] +"--"+params[1]+"--"+params[2]);
         /**
@@ -44,19 +51,23 @@ public class CarserverSocketThread extends Thread
          *
          * @return Success
          */
-        if (params[0].equals("addCars"){
-          res_bool = rm.addCars(params[1], params[2], params[3], params[4])
+        int first = Integer.parseInt(params[1]);
+        int second = Integer.parseInt(params[2]);
+        int third = Integer.parseInt(params[3]);
+        int fourth = Integer.parseInt(params[4]);
+        if (params[0].equals("addCars")){
+          res_bool = rm.addCars(first, params[2], third, fourth);
         }
         // (int id, String location, int numCars, int price)
-        else if (params[0].equals("deleteCars") {
-          res_bool = rm.deleteCars(params[1], params[2])
+        else if (params[0].equals("deleteCars")){
+          res_bool = rm.deleteCars(Integer.parseInt(params[1]), params[2]);
         }
         /**
          * Add customer.
          *
          * @return Unique customer identifier
          */
-        else if (params[0].equals("newCustomer"){
+        else if (params[0].equals("newCustomer")){
 
         }
         // (int id)
@@ -67,7 +78,7 @@ public class CarserverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("newCustomer"){
+        else if (params[0].equals("newCustomer")){
 
         }
         // (int id, int cid)
@@ -78,7 +89,7 @@ public class CarserverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("deleteCustomer"){}
+        else if (params[0].equals("deleteCustomer")){}
         // (int id, int customerID)
 
         /**
@@ -86,7 +97,7 @@ public class CarserverSocketThread extends Thread
          *
          * @return A formatted bill for the customer
          */
-        else if (params[0].equals("queryCustomerInfo"){}
+        else if (params[0].equals("queryCustomerInfo")){}
         // (int id, int customerID)
 
 
@@ -95,8 +106,8 @@ public class CarserverSocketThread extends Thread
          *
          * @return Price of car
          */
-        else if (params[0].equals("queryCarsPrice"){
-          res_int = rm.queryCarsPrice(params[1], params[2])
+        else if (params[0].equals("queryCarsPrice")){
+          res_int = rm.queryCarsPrice(first, params[2]);
         }
         // (int id, String location)
 
@@ -105,7 +116,7 @@ public class CarserverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("reserveCar"){
+        else if (params[0].equals("reserveCar")){
         }
         // (int id, int customerID, String location)
 
@@ -115,7 +126,7 @@ public class CarserverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("bundle"){}
+        else if (params[0].equals("bundle")){}
         // (int id, int customerID, Vector<String> flightNumbers, String location, boolean car, boolean room)
 
 
@@ -124,10 +135,10 @@ public class CarserverSocketThread extends Thread
          *
          * @return Name
          */
-         if (res_int!=null){
+         if (res_int!=-1){
            outToClient.println("hello client from server THREAD, your result is: " + res_int );
          }
-         else if (res_bool!=null){
+         else if (res_bool!= false){//change this l8r
            outToClient.println("hello client from server THREAD, your result is: " + res_bool );
          }
          else if (res_str!=null){

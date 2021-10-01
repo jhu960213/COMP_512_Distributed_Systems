@@ -3,9 +3,7 @@
 // CSE 593
 // -------------------------------
 
-package Server.Common;
-
-import java.util.*;
+package Server;
 
 public class Customer extends RMItem
 {

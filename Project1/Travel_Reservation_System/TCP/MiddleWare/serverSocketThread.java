@@ -28,19 +28,19 @@ public class serverSocketThread extends Thread
       int CarPort = 2004;
       int RoomPort = 1004;
 
-      while ((message = inFromClient.readLine())!=null && message != "Quit")
+      while (((message = inFromClient.readLine())!=null) && (message != "Quit"))
       {
         System.out.println("message:"+message);
         String result="Working!";
 
-        simpleMath sm=new simpleMath();
+//        simpleMath sm=new simpleMath();
         String[] params =  message.split(",");
         // int x= Integer.parseInt(params[1]);
         // int y= Integer.parseInt(params[2]);
         int res=0;
         System.out.println(params[0] +"--"+params[1]+"--"+params[2]);
-        if (params[0].equals("addFlight"){
-          command(FlightServer, FlightPort, message)
+        if (params[0].equals("addFlight")){
+          command(FlightServer, FlightPort, message);
         }
         // (int id, int flightNum, int flightSeats, int flightPrice)
 
@@ -52,8 +52,8 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("addCars"){
-          command(CarServer, CarPort, message)
+        else if (params[0].equals("addCars")){
+          command(CarServer, CarPort, message);
         }
         // (int id, String location, int numCars, int price)
         /**
@@ -64,8 +64,8 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("addRooms"){
-          command(RoomServer, RoomPort, message)
+        else if (params[0].equals("addRooms")){
+          command(RoomServer, RoomPort, message);
         }
         // (int id, String location, int numRooms, int price)
 
@@ -74,7 +74,7 @@ public class serverSocketThread extends Thread
          *
          * @return Unique customer identifier
          */
-        else if (params[0].equals("newCustomer"){
+        else if (params[0].equals("newCustomer")){
 
         }
         // (int id)
@@ -85,7 +85,7 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("newCustomer"){
+        else if (params[0].equals("newCustomer")){
 
         }
         // (int id, int cid)
@@ -98,8 +98,8 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("deleteFlight"){
-          command(FlightServer, FlightPort, message)
+        else if (params[0].equals("deleteFlight")){
+          command(FlightServer, FlightPort, message);
         }
         // (int id, int flightNum)
 
@@ -111,8 +111,8 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("deleteCars"){
-          command(CarServer, CarPort, message)
+        else if (params[0].equals("deleteCars")){
+          command(CarServer, CarPort, message);
 
         }
         // (int id, String location)
@@ -125,8 +125,8 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("deleteRooms"){
-          command(RoomServer, RoomPort, message)
+        else if (params[0].equals("deleteRooms")){
+          command(RoomServer, RoomPort, message);
         }
         // (int id, String location)
 
@@ -136,7 +136,7 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("deleteCustomer"){}
+        else if (params[0].equals("deleteCustomer")){}
         // (int id, int customerID)
 
 
@@ -145,8 +145,8 @@ public class serverSocketThread extends Thread
          *
          * @return Number of empty seats
          */
-        else if (params[0].equals("queryFlight"){
-          command(FlightServer, FlightPort, message)
+        else if (params[0].equals("queryFlight")){
+          command(FlightServer, FlightPort, message);
         }
         // (int id, int flightNumber)
 
@@ -156,8 +156,8 @@ public class serverSocketThread extends Thread
          *
          * @return Number of available cars at this location
          */
-        else if (params[0].equals("queryCars"){
-          command(CarServer, CarPort, message)
+        else if (params[0].equals("queryCars")){
+          command(CarServer, CarPort, message);
         }
         // (int id, String location)
 
@@ -167,8 +167,8 @@ public class serverSocketThread extends Thread
          *
          * @return Number of available rooms at this location
          */
-        else if (params[0].equals("queryRooms"){
-          command(RoomServer, RoomPort, message)
+        else if (params[0].equals("queryRooms")){
+          command(RoomServer, RoomPort, message);
         }
         // (int id, String location)
 
@@ -178,7 +178,7 @@ public class serverSocketThread extends Thread
          *
          * @return A formatted bill for the customer
          */
-        else if(params[0].equals("queryCustomerInfo"){}
+        else if(params[0].equals("queryCustomerInfo")){}
         // (int id, int customerID)
 
 
@@ -187,8 +187,8 @@ public class serverSocketThread extends Thread
          *
          * @return Price of a seat in this flight
          */
-        else if (params[0].equals("queryFlightPrice"){
-          command(FlightServer, FlightPort, message)
+        else if (params[0].equals("queryFlightPrice")){
+          command(FlightServer, FlightPort, message);
         }
         // (int id, int flightNumber)
 
@@ -198,8 +198,8 @@ public class serverSocketThread extends Thread
          *
          * @return Price of car
          */
-        else if (params[0].equals("queryCarsPrice"){
-          command(CarServer, CarPort, message)
+        else if (params[0].equals("queryCarsPrice")){
+          command(CarServer, CarPort, message);
         }
         // (int id, String location)
 
@@ -209,8 +209,8 @@ public class serverSocketThread extends Thread
          *
          * @return Price of a room
          */
-        else if (params[0].equals("queryRoomsPrice"){
-          command(RoomServer, RoomPort, message)
+        else if (params[0].equals("queryRoomsPrice")){
+          command(RoomServer, RoomPort, message);
         }
         // (int id, String location)
 
@@ -220,8 +220,8 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("reserveFlight"){
-          command(FlightServer, FlightPort, message)
+        else if (params[0].equals("reserveFlight")){
+          command(FlightServer, FlightPort, message);
         }
         // (int id, int customerID, int flightNumber)
 
@@ -231,8 +231,8 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("reserveCar"){
-          command(CarServer, CarPort, message)
+        else if (params[0].equals("reserveCar")){
+          command(CarServer, CarPort, message);
         }
         // (int id, int customerID, String location)
 
@@ -242,8 +242,8 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("reserveRoom"){
-          command(RoomServer, RoomPort, message)
+        else if (params[0].equals("reserveRoom")){
+          command(RoomServer, RoomPort, message);
         }
         // (int id, int customerID, String location)
 
@@ -253,7 +253,7 @@ public class serverSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("bundle"){}
+        else if (params[0].equals("bundle")){}
         // (int id, int customerID, Vector<String> flightNumbers, String location, boolean car, boolean room)
 
 
@@ -285,14 +285,14 @@ public class serverSocketThread extends Thread
       // String readerInput=bufferedReader.readLine(); // read user's input
       // if(readerInput.equals("Quit"))
         // break;
-        if res != null{
+        if (res != null){
           break;
         }
         //we break upon receiving a response. Unsure if this is the best course of action
         //MARK: Check best course of action.
 
       outToServer.println(readerInput); // send the user's input via the output stream to the server
-      String res=inFromServer.readLine(); // receive the server's result via the input stream from the server
+      res=inFromServer.readLine(); // receive the server's result via the input stream from the server
       System.out.println("result: "+res); // print the server result to the user
     }
 

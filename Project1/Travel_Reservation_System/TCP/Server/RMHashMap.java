@@ -3,8 +3,8 @@
 // CSE 593
 // -------------------------------
 
-package Server.Common;
-
+//package Server.Common;
+package Server;
 import java.util.*;
 
 // A specialization of HashMap with some extra diagnostics

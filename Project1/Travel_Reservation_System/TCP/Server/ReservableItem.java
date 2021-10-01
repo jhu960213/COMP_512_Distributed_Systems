@@ -3,9 +3,9 @@
 // CSE 593
 // -------------------------------
 
-package Server.Common;
+package Server;
 
-import java.io.*;
+import java.io.Serializable;
 
 // Superclass for the three reservable items: Flight, Car, and Room
 public abstract class ReservableItem extends RMItem implements Serializable

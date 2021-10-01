@@ -1,14 +1,14 @@
-// -------------------------------
+package Server;// -------------------------------
 // adapted from Kevin T. Manley
 // CSE 593
 // -------------------------------
 
-package Server.Common;
-
-import Server.Interface.*;
+//package TCP.Server;
+//import Server.Common.RMHashMap;
+//import Server.Interface.*;
 
 import java.util.*;
-import java.rmi.IOException;
+import java.io.IOException;
 import java.io.*;
 
 public class ResourceManager

@@ -3,24 +3,23 @@
 // CSE 593
 // -------------------------------
 
-package Server.Common;
+package Server;
 
-public class Room extends ReservableItem
+public class Car extends ReservableItem
 {
-	public Room(String location, int count, int price)
+	public Car(String location, int count, int price)
 	{
 		super(location, count, price);
 	}
 
 	public String getKey()
 	{
-		return Room.getKey(getLocation());
+		return Car.getKey(getLocation());
 	}
 
 	public static String getKey(String location)
 	{
-		String s = "room-" + location;
+		String s = "car-" + location;
 		return s.toLowerCase();
 	}
 }
-
