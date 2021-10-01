@@ -82,9 +82,4 @@ public class FlightsResourceManager extends ResourceManager {
         return response;
     }
 
-    public String queryFlightReservers() throws RemoteException {
-
-
-        return "";
-    }
 }

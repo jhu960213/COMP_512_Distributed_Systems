@@ -484,15 +484,11 @@ public class Middleware implements IResourceManager {
             for(String reservedKey : reservations.keySet()) {
                 ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
                 if (reservedItem.getItemType() == ReservedItem.ItemType.Flight) {
-
+                    response += "Customer ID:" + currentCustomer.getKey() + " reserved:"
+                            + reservedItem.getCount() + " seats at:" + reservedItem.getPrice() + "\n";
                 }
-
-
             }
-
-
         }
-
-
+        return response;
     }
 }

@@ -255,6 +255,8 @@ public interface IResourceManager extends Remote
 
     public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms)
             throws RemoteException;
+
+    public String queryFlightReservers(int xid) throws RemoteException;
     /**
      * Convenience for probing the resource manager.
      *
