@@ -474,20 +474,71 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
-    public String queryFlightReservers(int xid) throws RemoteException
-    {
+    public String queryFlightReservers(int xid) throws RemoteException {
         String response = "";
-        Collection<RMItem> customersList = this.getCustomersList().values();
-        for(RMItem c: customersList) {
-            Customer currentCustomer = (Customer)c;
-            RMHashMap reservations = currentCustomer.getReservations();
-            for(String reservedKey : reservations.keySet()) {
-                ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
-                if (reservedItem.getItemType() == ReservedItem.ItemType.Flight) {
-                    response += "Customer ID:" + currentCustomer.getKey() + " reserved:"
-                            + reservedItem.getCount() + " seats at:" + reservedItem.getPrice() + "\n";
+        try {
+            Trace.info("RM::queryFlightReservers(" + xid + ") called");
+            Collection<RMItem> customersList = this.getCustomersList().values();
+            for (RMItem c : customersList) {
+                Customer currentCustomer = (Customer) c;
+                RMHashMap reservations = currentCustomer.getReservations();
+                for (String reservedKey : reservations.keySet()) {
+                    ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
+                    if (reservedItem.getItemType() == ReservedItem.ItemType.Flight) {
+                        response += "Customer ID:" + currentCustomer.getKey() + "|reserved:"
+                                + reservedItem.getCount() + " seat(s) |at: $" + reservedItem.getPrice() + "|\n";
+                    }
                 }
             }
+            return response;
+        } catch (Exception e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+        }
+        return response;
+    }
+
+    public String queryCarReservers(int xid) throws RemoteException {
+        String response = "";
+        try {
+            Trace.info("RM::queryCarReservers(" + xid + ") called");
+            Collection<RMItem> customersList = this.getCustomersList().values();
+            for (RMItem c : customersList) {
+                Customer currentCustomer = (Customer) c;
+                RMHashMap reservations = currentCustomer.getReservations();
+                for (String reservedKey : reservations.keySet()) {
+                    ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
+                    if (reservedItem.getItemType() == ReservedItem.ItemType.Car) {
+                        response += "Customer ID: " + currentCustomer.getKey() + "|reserved: "
+                                + reservedItem.getCount() + "car(s) |at: $" + reservedItem.getPrice() + "|\n";
+                    }
+                }
+            }
+            return response;
+        } catch (Exception e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+        }
+        return response;
+    }
+
+    public String queryRoomReservers(int xid) throws RemoteException {
+        String response = "";
+        try {
+            Trace.info("RM::queryRoomReservers(" + xid + ") called");
+            Collection<RMItem> customersList = this.getCustomersList().values();
+            for (RMItem c : customersList) {
+                Customer currentCustomer = (Customer) c;
+                RMHashMap reservations = currentCustomer.getReservations();
+                for (String reservedKey : reservations.keySet()) {
+                    ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
+                    if (reservedItem.getItemType() == ReservedItem.ItemType.Room) {
+                        response += "Customer ID: " + currentCustomer.getKey() + "|reserved: "
+                                + reservedItem.getCount() + "room(s) |at: $" + reservedItem.getPrice() + "|\n";
+                    }
+                }
+            }
+            return response;
+        } catch (Exception e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
     }

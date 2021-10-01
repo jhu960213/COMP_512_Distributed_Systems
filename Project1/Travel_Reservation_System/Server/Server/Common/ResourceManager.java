@@ -293,6 +293,14 @@ public class ResourceManager implements IResourceManager
 		throw new RemoteException("\n*** QueryFlightReservers should be handled in the middleware! ***\n");
 	}
 
+	public String queryCarReservers(int xid) throws RemoteException {
+		throw new RemoteException("\n*** queryCarReservers should be handled in the middleware! ***\n");
+	}
+
+	public String queryRoomReservers(int xid) throws RemoteException {
+		throw new RemoteException("\n*** queryRoomReservers should be handled in the middleware! ***\n");
+	}
+
 	public synchronized void cancelReservations(Object customerObj, int xid, int customerID) throws RemoteException {
 
 		// loop through all the reservations the customer currently has and cancel them
