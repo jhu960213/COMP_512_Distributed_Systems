@@ -49,12 +49,10 @@ public class CarServerSocketThread extends Thread
          *
          * @return Success
          */
-        int first = Integer.parseInt(params[1]);
-        int second = Integer.parseInt(params[2]);
-        int third = Integer.parseInt(params[3]);
-        int fourth = Integer.parseInt(params[4]);
+
         if (params[0].equals("addCars")){
-          res_bool = rm.addCars(first, params[2], third, fourth);
+          System.out.println("Carserver Recieved AddCars Command");
+          res_bool = rm.addCars(Integer.parseInt(params[1]), params[2], Integer.parseInt(params[3]), Integer.parseInt(params[4]));
         }
         // (int id, String location, int numCars, int price)
         else if (params[0].equals("deleteCars")){
@@ -109,7 +107,7 @@ public class CarServerSocketThread extends Thread
          * @return Price of car
          */
         else if (params[0].equals("queryCarsPrice")){
-          res_int = rm.queryCarsPrice(first, params[2]);
+          res_int = rm.queryCarsPrice(Integer.parseInt(params[1]), params[2]);
         }
         // (int id, String location)
 

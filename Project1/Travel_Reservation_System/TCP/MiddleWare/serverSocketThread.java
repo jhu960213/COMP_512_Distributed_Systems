@@ -23,11 +23,14 @@ public class serverSocketThread extends Thread
       PrintWriter outToClient = new PrintWriter(socket.getOutputStream(), true);
       String message = null;
 
-      String FlightServer = "FlightServer";
-      String CarServer = "CarServer";
-      String RoomServer = "RoomServer";
+//      String FlightServer = "FlightServer";
+//      String CarServer = "CarServer";
+//      String RoomServer = "RoomServer";
+      String FlightServer = "localhost";
+      String CarServer = "localhost";
+      String RoomServer = "localhost";
       int FlightPort = 3004;
-      int CarPort = 2004;
+      int CarPort = 6004;
       int RoomPort = 1004;
 
       while (((message = inFromClient.readLine())!=null) && (message != "Quit"))
@@ -274,7 +277,7 @@ public class serverSocketThread extends Thread
   }
   public void command(String serverName, int serverPort, String readerInput) throws IOException {
     // String serverName=args[0];
-    System.out.println("We called the command!");
+    System.out.println("Command: "+ serverName+ "," + serverPort);
     Socket Comsocket= new Socket(serverName, serverPort); // establish a socket with a server using the given port#
 
     PrintWriter outToServer= new PrintWriter(Comsocket.getOutputStream(),true); // open an output stream to the server...
