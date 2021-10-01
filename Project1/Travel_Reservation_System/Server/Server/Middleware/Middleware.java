@@ -483,7 +483,9 @@ public class Middleware implements IResourceManager {
             RMHashMap reservations = currentCustomer.getReservations();
             for(String reservedKey : reservations.keySet()) {
                 ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
-                if 
+                if (reservedItem.getItemType() == ReservedItem.ItemType.Flight) {
+
+                }
 
 
             }
