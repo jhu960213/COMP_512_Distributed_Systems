@@ -1,3 +1,5 @@
+package Server.ResourceServer;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -7,10 +9,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 
-public class RoomserverSocketThread extends Thread
+public class RoomsServerSocketThread extends Thread
 {
   Socket socket;
-  RoomserverSocketThread (Socket socket)
+  RoomsServerSocketThread (Socket socket)
   { this.socket=socket; }
 
   public void run()
@@ -25,17 +27,7 @@ public class RoomserverSocketThread extends Thread
         System.out.println("message:"+message);
         String result="Working!";
 
-        simpleMath sm=new simpleMath();
-        String[] params =  message.split(",");
-        int x= Integer.parseInt(params[1]);
-        int y= Integer.parseInt(params[2]);
         int res=0;
-        System.out.println(params[0] +"--"+params[1]+"--"+params[2]);
-        if (params[0].equals("mul"))
-           res=sm.mul(x,y);
-        else if (params[0].equals("add"))
-           res=sm.add(x,y);
-
          outToClient.println("hello client from server THREAD, your result is: " + res );
       }
       socket.close();

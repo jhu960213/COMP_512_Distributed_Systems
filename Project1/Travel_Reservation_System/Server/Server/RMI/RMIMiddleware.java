@@ -1,7 +1,7 @@
 package Server.RMI;
 
 import Server.Interface.IResourceManager;
-import Server.Middleware.Middleware;
+
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
