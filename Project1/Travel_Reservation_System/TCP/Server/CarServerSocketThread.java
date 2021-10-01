@@ -66,7 +66,7 @@ public class CarServerSocketThread extends Thread
          * @return Unique customer identifier
          */
         else if (params[0].equals("newCustomer")){
-
+          ;
         }
         // (int id)
 
@@ -77,7 +77,7 @@ public class CarServerSocketThread extends Thread
          * @return Success
          */
         else if (params[0].equals("newCustomer")){
-
+          ;
         }
         // (int id, int cid)
 
@@ -87,7 +87,9 @@ public class CarServerSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("deleteCustomer")){}
+        else if (params[0].equals("deleteCustomer")){
+          ;
+        }
         // (int id, int customerID)
 
         /**
@@ -95,7 +97,9 @@ public class CarServerSocketThread extends Thread
          *
          * @return A formatted bill for the customer
          */
-        else if (params[0].equals("queryCustomerInfo")){}
+        else if (params[0].equals("queryCustomerInfo")){
+          ;
+        }
         // (int id, int customerID)
 
 
@@ -115,6 +119,7 @@ public class CarServerSocketThread extends Thread
          * @return Success
          */
         else if (params[0].equals("reserveCar")){
+          ;
         }
         // (int id, int customerID, String location)
 
@@ -124,7 +129,9 @@ public class CarServerSocketThread extends Thread
          *
          * @return Success
          */
-        else if (params[0].equals("bundle")){}
+        else if (params[0].equals("bundle")){
+          ;
+        }
         // (int id, int customerID, Vector<String> flightNumbers, String location, boolean car, boolean room)
 
 

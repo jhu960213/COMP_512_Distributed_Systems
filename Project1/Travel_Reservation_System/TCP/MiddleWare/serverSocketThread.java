@@ -55,6 +55,7 @@ public class serverSocketThread extends Thread
          * @return Success
          */
         else if (params[0].equals("addCars")){
+          System.out.println("We are adding cars!");
           command(CarServer, CarPort, message);
         }
         // (int id, String location, int numCars, int price)
@@ -273,7 +274,7 @@ public class serverSocketThread extends Thread
   }
   public void command(String serverName, int serverPort, String readerInput) throws IOException {
     // String serverName=args[0];
-
+    System.out.println("We called the command!");
     Socket Comsocket= new Socket(serverName, serverPort); // establish a socket with a server using the given port#
 
     PrintWriter outToServer= new PrintWriter(Comsocket.getOutputStream(),true); // open an output stream to the server...

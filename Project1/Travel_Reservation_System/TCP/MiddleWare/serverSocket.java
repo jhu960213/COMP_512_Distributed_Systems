@@ -30,7 +30,7 @@ public class serverSocket
   public void runServerThread() throws IOException
   {
     ServerSocket serverSocket = new ServerSocket(9004);
-    System.out.println("Server ready...");
+    System.out.println("MiddleWareServer ready...");
     while (true)
     {
       Socket socket=serverSocket.accept();

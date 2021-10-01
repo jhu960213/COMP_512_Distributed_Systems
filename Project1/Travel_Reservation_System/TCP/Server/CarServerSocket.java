@@ -32,7 +32,7 @@ public class CarServerSocket
   public void runServerThread() throws IOException
   {
     ServerSocket serverSocket = new ServerSocket(2004);
-    System.out.println("Server ready...");
+    System.out.println("CarServer ready...");
     while (true)
     {
       Socket CarSocket=serverSocket.accept();
