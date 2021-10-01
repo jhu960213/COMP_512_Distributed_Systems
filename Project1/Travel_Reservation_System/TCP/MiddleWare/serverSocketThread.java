@@ -1,3 +1,5 @@
+package MiddleWare;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -269,7 +271,7 @@ public class serverSocketThread extends Thread
     }
     catch (IOException e) {}
   }
-  public void command(String serverName, int serverPort, String readerInput){
+  public void command(String serverName, int serverPort, String readerInput) throws IOException {
     // String serverName=args[0];
 
     Socket Comsocket= new Socket(serverName, serverPort); // establish a socket with a server using the given port#
@@ -292,7 +294,7 @@ public class serverSocketThread extends Thread
         //MARK: Check best course of action.
 
       outToServer.println(readerInput); // send the user's input via the output stream to the server
-      res=inFromServer.readLine(); // receive the server's result via the input stream from the server
+      res= inFromServer.readLine(); // receive the server's result via the input stream from the server
       System.out.println("result: "+res); // print the server result to the user
     }
 

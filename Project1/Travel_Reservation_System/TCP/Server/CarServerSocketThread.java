@@ -1,7 +1,5 @@
 package Server;
-
 import Server.ResourceManager;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -12,11 +10,11 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 
-public class CarserverSocketThread extends Thread
+public class CarServerSocketThread extends Thread
 {
   Socket socket;
   ResourceManager rm;
-  CarserverSocketThread (Socket socket, ResourceManager rm)
+  CarServerSocketThread (Socket socket, ResourceManager rm)
   { this.socket=socket;
     this.rm = rm;
   }
@@ -135,14 +133,13 @@ public class CarserverSocketThread extends Thread
          *
          * @return Name
          */
-         if (res_int!=-1){
-           outToClient.println("hello client from server THREAD, your result is: " + res_int );
-         }
-         else if (res_bool!= false){//change this l8r
-           outToClient.println("hello client from server THREAD, your result is: " + res_bool );
+         if (res_int!=-1) {
+           outToClient.println("hello client from server THREAD, your result is: " + res_int);
          }
          else if (res_str!=null){
            outToClient.println("hello client from server THREAD, your result is: " + res_str );
+         } else{
+           outToClient.println("hello client from server THREAD, your result is: " + res_bool );
          }
 
       }

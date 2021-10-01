@@ -1,3 +1,5 @@
+package Server;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -7,13 +9,13 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 
-public class serverSocket
+public class RoomserverSocket
 {
 
   public static void main(String args[])
   {
 
-    serverSocket server= new serverSocket();
+    RoomserverSocket server= new RoomserverSocket();
     try
     {
 			//comment this line and uncomment the next one to run in multiple threads.
@@ -31,7 +33,7 @@ public class serverSocket
     while (true)
     {
       Socket socket=serverSocket.accept();
-      new serverSocketThread(socket).start();
+      new RoomserverSocketThread(socket).start();
     }
   }
 }
