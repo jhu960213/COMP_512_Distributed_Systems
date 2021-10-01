@@ -257,6 +257,10 @@ public interface IResourceManager extends Remote
             throws RemoteException;
 
     public String queryFlightReservers(int xid) throws RemoteException;
+
+    public String queryCarReservers(int xid) throws RemoteException;
+
+    public String queryRoomReservers(int xid) throws RemoteException;
     /**
      * Convenience for probing the resource manager.
      *

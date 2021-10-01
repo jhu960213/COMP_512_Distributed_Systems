@@ -1,0 +1,1 @@
+chmod +x run_carManager_server.sh run_middleware_server.sh run_rmi_flightManager.sh run_roomManager_server.sh run_flightManager_server.sh run_rmi.sh run_rmi_middleware.sh run_server.sh run_middleware.sh run_rmi_carManager.sh run_rmi_roomManager.sh run_servers.sh
