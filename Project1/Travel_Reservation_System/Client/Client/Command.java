@@ -23,6 +23,11 @@ public enum Command {
 	QueryCarsPrice("Query the price per car at a location", "<xid>,<Location>"),
 	QueryRoomsPrice("Query the price per room at a location", "<xid>,<Location>"),
 
+	QueryReservableItems("Query the reservable flights, cars, rooms", "<xid>,<Flights-true/false>,<Cars-true/false>,<Rooms-true/false>"),
+	QueryFlightReservations("Query the reservations of a flight", "<xid>,<FlightNumber>"),
+	QueryCarReservations("Query the reservations of cars at a location", "<xid>,<Location>"),
+	QueryRoomReservations("Query the reservations of rooms at a location", "<xid>,<Location>"),
+
 	ReserveFlight("Reserve a flight number for a customer", "<xid>,<CustomerID>,<FlightNumber>"),
 	ReserveCar("Reserve a car for a customer at a location", "<xid>,<CustomerID>,<Location>"),
 	ReserveRoom("Reserve a room for a customer at a location", "<xid>,<CustomerID>,<Location>"),

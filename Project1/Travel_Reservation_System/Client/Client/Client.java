@@ -413,6 +413,49 @@ public abstract class Client
 				}
 				break;
 			}
+			case QueryReservableItems: {
+				checkArgumentsCount(5, arguments.size());
+				int id = toInt(arguments.elementAt(1));
+				boolean flights = toBoolean(arguments.elementAt(2));
+				boolean cars = toBoolean(arguments.elementAt(3));
+				boolean rooms = toBoolean(arguments.elementAt(4));
+				String string = m_resourceManager.queryReservableItems(id, flights, cars, rooms);
+				System.out.println("The list of reservable items:\n" + string);
+
+				break;
+			}
+			case QueryFlightReservations: {
+				checkArgumentsCount(2, arguments.size());
+
+				System.out.println("Querying reservations of the flight [xid=" + arguments.elementAt(1) + "]");
+
+				int id = toInt(arguments.elementAt(1));
+
+				String string = m_resourceManager.queryFlightReservers(id);
+				System.out.println("Reservations:\n" + string);
+				break;
+			}
+			case QueryCarReservations: {
+				checkArgumentsCount(2, arguments.size());
+
+				System.out.println("Querying reservations of cars location [xid=" + arguments.elementAt(1) + "]");
+
+				int id = toInt(arguments.elementAt(1));
+
+				String string = m_resourceManager.queryFlightReservers(id);
+				System.out.println("Reservations:\n" + string);
+				break;
+			}
+			case QueryRoomReservations: {
+				checkArgumentsCount(2, arguments.size());
+
+				System.out.println("Querying reservations of rooms location [xid=" + arguments.elementAt(1) + "]");
+
+				int id = toInt(arguments.elementAt(1));
+
+				String string = m_resourceManager.queryFlightReservers(id);
+				System.out.println("Reservations:\n" + string);
+			}
 			case Quit:
 				checkArgumentsCount(1, arguments.size());
 

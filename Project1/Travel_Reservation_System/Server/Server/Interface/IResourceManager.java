@@ -1,5 +1,7 @@
 package Server.Interface;
 
+import Server.Common.RMItem;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -241,6 +243,20 @@ public interface IResourceManager extends Remote
     public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers)
             throws RemoteException;
 
+
+    public String queryReservableFlights(int xid)
+            throws RemoteException;
+
+    public String queryReservableCars(int xid)
+            throws RemoteException;
+
+    public String queryReservableRooms(int xid)
+            throws RemoteException;
+
+    public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms)
+            throws RemoteException;
+
+    public String queryFlightReservers(int xid) throws RemoteException;
     /**
      * Convenience for probing the resource manager.
      *

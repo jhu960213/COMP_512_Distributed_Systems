@@ -437,4 +437,58 @@ public class Middleware implements IResourceManager {
         }
         return response;
     }
+
+    public String queryReservableFlights(int xid) throws RemoteException {
+        throw new RemoteException("\n*** queryReservableFlights is handled in the specific ResourceManager! ***\n");
+    }
+
+    public String queryReservableCars(int xid) throws RemoteException {
+        throw new RemoteException("\n*** queryReservableCars is handled in the specific ResourceManager! ***\n");
+    }
+
+    public String queryReservableRooms(int xid) throws RemoteException {
+        throw new RemoteException("\n*** queryReservableRooms is handled in the specific ResourceManager! ***\n");
+    }
+
+    public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms) throws RemoteException
+    {
+        Trace.info("RM::queryReservableItems(" + xid + ", " + flights + ", " + cars + ", " + rooms + ") called");
+        String response = "";
+        try {
+            if (flights)
+            {
+                response += "Flights:\n" + m_flightsResourceManager.queryReservableFlights(xid);
+            }
+            if (cars)
+            {
+                response += "Cars:\n" + m_carsResourceManager.queryReservableCars(xid);
+            }
+            if (rooms)
+            {
+                response += "Rooms:\n" + m_roomsResourceManager.queryReservableRooms(xid);
+            }
+            Trace.info("RM::queryReservableItems(" + xid + ", " + flights + ", " + cars + ", " + rooms + ") succeed");
+        } catch (Exception e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+        }
+        return response;
+    }
+
+    public String queryFlightReservers(int xid) throws RemoteException
+    {
+        String response = "";
+        Collection<RMItem> customersList = this.getCustomersList().values();
+        for(RMItem c: customersList) {
+            Customer currentCustomer = (Customer)c;
+            RMHashMap reservations = currentCustomer.getReservations();
+            for(String reservedKey : reservations.keySet()) {
+                ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
+                if (reservedItem.getItemType() == ReservedItem.ItemType.Flight) {
+                    response += "Customer ID:" + currentCustomer.getKey() + " reserved:"
+                            + reservedItem.getCount() + " seats at:" + reservedItem.getPrice() + "\n";
+                }
+            }
+        }
+        return response;
+    }
 }
