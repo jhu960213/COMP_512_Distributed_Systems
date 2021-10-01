@@ -178,7 +178,7 @@ public class serverSocketThread extends Thread
          *
          * @return A formatted bill for the customer
          */
-        else if params[0].equals("queryCustomerInfo"){}
+        else if(params[0].equals("queryCustomerInfo"){}
         // (int id, int customerID)
 
 
@@ -274,12 +274,12 @@ public class serverSocketThread extends Thread
 
     Socket Comsocket= new Socket(serverName, serverPort); // establish a socket with a server using the given port#
 
-    PrintWriter outToServer= new PrintWriter(socket.getOutputStream(),true); // open an output stream to the server...
-    BufferedReader inFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream())); // open an input stream from the server...
+    PrintWriter outToServer= new PrintWriter(Comsocket.getOutputStream(),true); // open an output stream to the server...
+    BufferedReader inFromServer = new BufferedReader(new InputStreamReader(Comsocket.getInputStream())); // open an input stream from the server...
 
     BufferedReader bufferedReader =new java.io.BufferedReader(new InputStreamReader(System.in)); //to read user's input
 
-    String res = null
+    String res = null;
     while(true) // works forever
     {
       // String readerInput=bufferedReader.readLine(); // read user's input
