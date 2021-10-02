@@ -5,8 +5,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import org.json.JSONObject;
 
-public class TCPClient {
+public class Client {
     public static void main(String args[]) throws IOException
     {
         String serverName = args[0];
@@ -23,6 +24,7 @@ public class TCPClient {
             if(readerInput.equals("Quit"))
                 break;
 
+            JSONObject jsonObject;
 
             outToServer.println(readerInput); // send the user's input via the output stream to the server
             String res = inFromServer.readLine(); // receive the server's result via the input stream from the server
@@ -31,4 +33,5 @@ public class TCPClient {
 
         socket.close();
     }
+
 }

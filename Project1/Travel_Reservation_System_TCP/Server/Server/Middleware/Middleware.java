@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class MiddlewareServer
+public class Middleware
 {
     public static void main(String args[])
     {
 
-        MiddlewareServer server= new MiddlewareServer();
+        Middleware server= new Middleware();
         try
         {
 			//comment this line and uncomment the next one to run in multiple threads.
