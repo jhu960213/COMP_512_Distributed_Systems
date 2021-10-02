@@ -6,14 +6,23 @@ import java.net.Socket;
 
 public class Middleware
 {
+    private static int middlewareRegistryPortNum = 5004;
+
+    private static String flightsResourceServerHost = "localhost";
+    private static int flightsResourceServerPort = 2004;
+
+    private static String carsResourceServerHost = "localhost";
+    private static int carsResourceServerPort = 3004;
+
+    private static String roomsResourceServerHost = "localhost";
+    private static int roomsResourceServerPort = 4004;
+
     public static void main(String args[])
     {
 
         Middleware server= new Middleware();
         try
         {
-			//comment this line and uncomment the next one to run in multiple threads.
-            // server.runServer();
             server.runServerThread();
         } catch (IOException e) {
 
@@ -22,7 +31,7 @@ public class Middleware
 
     public void runServerThread() throws IOException
     {
-        ServerSocket serverSocket = new ServerSocket(9004);
+        ServerSocket serverSocket = new ServerSocket(middlewareRegistryPortNum);
         System.out.println("Server ready...");
         while (true)
         {
