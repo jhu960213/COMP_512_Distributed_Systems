@@ -21,7 +21,7 @@ public class Middleware implements IResourceManager {
     private static int middlewareRegistryPortNum = 5004;
 
     private static String flightsResourceServerHost = "localhost";
-    private static int flightsResourceServerPort = 2005;
+    private static int flightsResourceServerPort = 2004;
 
     private static String carsResourceServerHost = "localhost";
     private static int carsResourceServerPort = 3004;
@@ -45,6 +45,14 @@ public class Middleware implements IResourceManager {
 
     public static void main(String args[])
     {
+
+        if (args.length > 0) flightsResourceServerHost = args[0];
+        if (args.length > 1) carsResourceServerHost = args[1];
+        if (args.length > 2) roomsResourceServerHost = args[2];
+        if (args.length > 3) flightsResourceServerPort = Integer.parseInt(args[3]);
+        if (args.length > 4) carsResourceServerPort = Integer.parseInt(args[4]);
+        if (args.length > 5) roomsResourceServerPort = Integer.parseInt(args[5]);
+        if (args.length > 6) middlewareRegistryPortNum = Integer.parseInt(args[6]);
 
         Middleware server= new Middleware();
         try
@@ -315,7 +323,7 @@ public class Middleware implements IResourceManager {
         return Integer.parseInt(response);
     }
 
-    public boolean reserveFlight(int xid, int customerID, int flightNumber) {
+    public synchronized boolean reserveFlight(int xid, int customerID, int flightNumber) {
         Trace.info("RM::reserveFlight(" + xid + ", " + customerID + ", " + flightNumber + ") called");
         Boolean response = false;
         // Read customer object if it exists (and read lock it)
@@ -340,7 +348,7 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
-    public boolean reserveCar(int xid, int customerID, String location) {
+    public synchronized boolean reserveCar(int xid, int customerID, String location) {
         Trace.info("RM::reserveCar(" + xid + ", " + customerID + ", " + location + ") called");
         Boolean response = false;
         // Read customer object if it exists (and read lock it)
@@ -366,7 +374,7 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
-    public boolean reserveRoom(int xid, int customerID, String location) {
+    public synchronized boolean reserveRoom(int xid, int customerID, String location) {
         Trace.info("RM::reserveRoom(" + xid + ", " + customerID + ", " + location + ") called");
         Boolean response = false;
         // Read customer object if it exists (and read lock it)
@@ -406,7 +414,7 @@ public class Middleware implements IResourceManager {
         return 0;
     }
 
-    public boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room)
+    public synchronized boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room)
     {
         Trace.info("RM::bundle(" + xid + ", " + customerId + ", " + flightNumbers + ", " + location + ", " + car + ", " + room + ") called");
         // Read customer object if it exists (and read lock it)

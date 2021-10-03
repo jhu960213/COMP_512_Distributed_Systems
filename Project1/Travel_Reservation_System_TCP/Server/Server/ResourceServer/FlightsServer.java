@@ -9,7 +9,7 @@ import java.net.Socket;
 
 public class FlightsServer
 {
-    private static int s_portNum = 2005;
+    private static int s_portNum = 2004;
     FlightsResourceManager flightsResourceManager;
 
     FlightsServer()
@@ -19,6 +19,10 @@ public class FlightsServer
 
     public static void main(String args[])
     {
+        if (args.length > 0)
+        {
+            s_portNum = Integer.parseInt(args[0]);
+        }
         FlightsServer server= new FlightsServer();
         try
         {
@@ -35,7 +39,7 @@ public class FlightsServer
     public void runServerThread() throws IOException
     {
         ServerSocket serverSocket = new ServerSocket(s_portNum);
-        System.out.println("Server ready...");
+        System.out.println("FlightsServer ready...");
         while (true)
         {
             Socket socket = serverSocket.accept();

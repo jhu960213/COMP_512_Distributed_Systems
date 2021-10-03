@@ -24,7 +24,7 @@ public class Client {
         {
             s_serverPort = Integer.parseInt(args[1]);
         }
-        if (args.length > 3)
+        if (args.length > 2)
         {
             System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0mUsage: java client.RMIClient [server_hostname [server_rmiobject]]");
             System.exit(1);

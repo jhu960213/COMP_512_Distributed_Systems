@@ -37,81 +37,71 @@ public class RMIMiddleware extends Middleware {
     // start the rmi registry for the middleware server and export remote middleware object reference to clients
     public static void main(String args[])
     {
-        if (args.length > 3)
-        {
-            flightsResourceServerHost = args[0];
-            carsResourceServerHost = args[1];
-            roomsResourceServerHost = args[2];
-            rmiMiddlewareServerName = args[3];
-            if (args.length > 4) flightsResourceServerPort = Integer.parseInt(args[4]);
-            if (args.length > 5) carsResourceServerPort = Integer.parseInt(args[5]);
-            if (args.length > 6) roomsResourceServerPort = Integer.parseInt(args[6]);
-            if (args.length > 7) rmiMiddlewareRegistryPortNum = Integer.parseInt(args[7]);
+        if (args.length > 0) flightsResourceServerHost = args[0];
+        if (args.length > 1) carsResourceServerHost = args[1];
+        if (args.length > 2) roomsResourceServerHost = args[2];
+        if (args.length > 3) rmiMiddlewareServerName = args[3];
+        if (args.length > 4) flightsResourceServerPort = Integer.parseInt(args[4]);
+        if (args.length > 5) carsResourceServerPort = Integer.parseInt(args[5]);
+        if (args.length > 6) roomsResourceServerPort = Integer.parseInt(args[6]);
+        if (args.length > 7) rmiMiddlewareRegistryPortNum = Integer.parseInt(args[7]);
 
-            try {
-                // create RMI middleware server object
-                RMIMiddleware rmiMiddlewareServer = new RMIMiddleware(rmiMiddlewareServerName);
+        try {
+            // create RMI middleware server object
+            RMIMiddleware rmiMiddlewareServer = new RMIMiddleware(rmiMiddlewareServerName);
 
-                rmiMiddlewareServer.m_flightsResourceManager = rmiMiddlewareServer.connectServer(flightsResourceServerHost, flightsResourceServerPort, flightsResourceServerName);
-                rmiMiddlewareServer.m_carsResourceManager = rmiMiddlewareServer.connectServer(carsResourceServerHost, carsResourceServerPort, carsResourceServerName);
-                rmiMiddlewareServer.m_roomsResourceManager = rmiMiddlewareServer.connectServer(roomsResourceServerHost, roomsResourceServerPort, roomsResourceServerName);
+            rmiMiddlewareServer.m_flightsResourceManager = rmiMiddlewareServer.connectServer(flightsResourceServerHost, flightsResourceServerPort, flightsResourceServerName);
+            rmiMiddlewareServer.m_carsResourceManager = rmiMiddlewareServer.connectServer(carsResourceServerHost, carsResourceServerPort, carsResourceServerName);
+            rmiMiddlewareServer.m_roomsResourceManager = rmiMiddlewareServer.connectServer(roomsResourceServerHost, roomsResourceServerPort, roomsResourceServerName);
 
-                // dynamically generated the stub (client proxy)
-                IResourceManager resourceManager =
-                        (IResourceManager) UnicastRemoteObject.exportObject(rmiMiddlewareServer, rmiMiddlewareRegistryPortNum);
+            // dynamically generated the stub (client proxy)
+            IResourceManager resourceManager =
+                    (IResourceManager) UnicastRemoteObject.exportObject(rmiMiddlewareServer, rmiMiddlewareRegistryPortNum);
 
-                // Bind the remte object's stub in the rmi middleware server registry
-                Registry tmpRegistry;
-                try
-                {
-                    tmpRegistry = LocateRegistry.createRegistry(rmiMiddlewareRegistryPortNum);
-                }
-                catch (Exception e)
-                {
-                    System.out.println("\n*** RMI middleware error: Failed to export and " +
-                            "create registry instance on localhost," +
-                            " an existing registry may have already been " +
-                            "exported and created on port:" + rmiMiddlewareRegistryPortNum + "! ***\n");
-                    tmpRegistry = LocateRegistry.getRegistry(rmiMiddlewareRegistryPortNum);
-                }
-                final Registry rmiMiddlewareRegistry = tmpRegistry;
-                rmiMiddlewareRegistry.bind(rmiMiddlewareServerPrefix + rmiMiddlewareServerName, resourceManager);
-
-                // unbinding registry when rmi middleware server shuts down
-                getRuntime().addShutdownHook(new Thread(() -> {
-                    try {
-                        rmiMiddlewareRegistry.unbind(rmiMiddlewareServerPrefix + rmiMiddlewareServerName);
-                        System.out.println("'" + rmiMiddlewareServerName + "' resource manager unbound");
-                    } catch (Exception e) {
-                        System.err.println((char) 27 + "[31;1mRMI middleware server exception: " + (char) 27 + "[0mUncaught exception");
-                        e.printStackTrace();
-                    }
-                }));
-                System.out.println("'" + rmiMiddlewareServerName + "' resource manager server ready and bound to '"
-                        + rmiMiddlewareServerPrefix + rmiMiddlewareServerName + "'");
-
+            // Bind the remte object's stub in the rmi middleware server registry
+            Registry tmpRegistry;
+            try
+            {
+                tmpRegistry = LocateRegistry.createRegistry(rmiMiddlewareRegistryPortNum);
             }
             catch (Exception e)
             {
-                System.err.println((char)27 + "[31;1mRMI middleware server exception: " + (char)27 + "[0mUncaught exception");
-                e.printStackTrace();
-                System.exit(1);
+                System.out.println("\n*** RMI middleware error: Failed to export and " +
+                        "create registry instance on localhost," +
+                        " an existing registry may have already been " +
+                        "exported and created on port:" + rmiMiddlewareRegistryPortNum + "! ***\n");
+                tmpRegistry = LocateRegistry.getRegistry(rmiMiddlewareRegistryPortNum);
             }
+            final Registry rmiMiddlewareRegistry = tmpRegistry;
+            rmiMiddlewareRegistry.bind(rmiMiddlewareServerPrefix + rmiMiddlewareServerName, resourceManager);
 
-            // create and install a security manager
-            if (System.getSecurityManager() == null)
-            {
-                System.setSecurityManager(new SecurityManager());
-            }
+            // unbinding registry when rmi middleware server shuts down
+            getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    rmiMiddlewareRegistry.unbind(rmiMiddlewareServerPrefix + rmiMiddlewareServerName);
+                    System.out.println("'" + rmiMiddlewareServerName + "' resource manager unbound");
+                } catch (Exception e) {
+                    System.err.println((char) 27 + "[31;1mRMI middleware server exception: " + (char) 27 + "[0mUncaught exception");
+                    e.printStackTrace();
+                }
+            }));
+            System.out.println("'" + rmiMiddlewareServerName + "' resource manager server ready and bound to '"
+                    + rmiMiddlewareServerPrefix + rmiMiddlewareServerName + "'");
+
         }
-
-        else
+        catch (Exception e)
         {
-            System.out.println("\n*** RMI middleware error: Wrong number of arguments," +
-                    "please input the correct server name, server prefix, and port # " +
-                    "to start the RMI middlware server! ***\n");
+            System.err.println((char)27 + "[31;1mRMI middleware server exception: " + (char)27 + "[0mUncaught exception");
+            e.printStackTrace();
             System.exit(1);
         }
+
+        // create and install a security manager
+        if (System.getSecurityManager() == null)
+        {
+            System.setSecurityManager(new SecurityManager());
+        }
+
     }
 
     public IResourceManager connectServer(String server, int port, String name)

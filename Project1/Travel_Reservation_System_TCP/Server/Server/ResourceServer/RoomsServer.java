@@ -17,7 +17,10 @@ public class RoomsServer {
 
     public static void main(String args[])
     {
-
+        if (args.length > 0)
+        {
+            s_portNum = Integer.parseInt(args[0]);
+        }
         RoomsServer server= new RoomsServer();
         try
         {
@@ -33,7 +36,7 @@ public class RoomsServer {
     public void runServerThread() throws IOException
     {
         ServerSocket serverSocket = new ServerSocket(s_portNum);
-        System.out.println("Server ready...");
+        System.out.println("RoomsServer ready...");
         while (true)
         {
             Socket socket = serverSocket.accept();
