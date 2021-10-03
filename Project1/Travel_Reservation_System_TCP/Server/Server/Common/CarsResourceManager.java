@@ -59,7 +59,7 @@ public class CarsResourceManager extends ResourceManager {
     }
 
     public String queryReservableCars(int xid) {
-        String response = "";
+        String response = this.m_data.values().size() > 0 ? "Cars:\n" : "";
         for (RMItem item:this.m_data.values())
         {
             Car car = (Car) item;

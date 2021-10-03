@@ -58,6 +58,7 @@ public class ServerSocketThread extends Thread
 
                 System.out.println("Result = " + returnObj);
                 outToClient.println(returnObj);
+                outToClient.println("end");
             }
             this.socket.close();
         }

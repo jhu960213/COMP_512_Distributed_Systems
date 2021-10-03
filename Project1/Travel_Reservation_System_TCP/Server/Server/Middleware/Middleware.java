@@ -564,9 +564,14 @@ public class Middleware implements IResourceManager {
         for (Object obj : argList) args.add(obj);
         jsonObject.put("method", methodName);
         jsonObject.put("args", args);
-        System.out.println("JSON=" + jsonObject.toString());
+        System.out.println("Send JSON=" + jsonObject.toString());
         outToServer.println(jsonObject.toString());
-        String response = inFromServer.readLine();
+        String response = "", line;
+        while ((line = inFromServer.readLine()) != null) {
+            if (line.equals("end")) break;
+            response += ((response.length() > 0 ? "\n" : "") + line);
+        }
+        System.out.println("response from server = " + response);
         socket.close();
         return response;
     }

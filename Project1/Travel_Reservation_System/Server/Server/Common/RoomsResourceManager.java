@@ -55,7 +55,7 @@ public class RoomsResourceManager extends ResourceManager {
         return reserveItem(xid, customerID, Room.getKey(location), location);
     }
     public String queryReservableRooms(int xid) throws RemoteException {
-        String response = "";
+        String response = this.m_data.values().size() > 0 ? "Rooms:\n" : "";
         for (RMItem item:this.m_data.values())
         {
             Room room = (Room) item;
