@@ -1,5 +1,6 @@
 package Server.ResourceServer;
 
+import Server.Common.Customer;
 import Server.Interface.IResourceManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -10,8 +11,10 @@ import java.net.Socket;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.lang.reflect.*;
+import java.util.Vector;
 
 public class ServerSocketThread extends Thread
 {
@@ -40,20 +43,27 @@ public class ServerSocketThread extends Thread
 
                 String methodName = jsonObject.getString("method");
                 List<Object> argList = new ArrayList<>();
-                for (Object obj : jsonArray) argList.add(obj);
+                for (Object obj : jsonArray) {
+                    if (obj.getClass().equals(JSONArray.class)) {
+                        Vector<Object> arr = new Vector<>();
+                        for (Object obj2 : (JSONArray)obj) arr.add(obj2);
+                        argList.add(arr);
+                    } else if (obj.getClass().equals(JSONObject.class)) {
+                        argList.add(new Customer((JSONObject) obj));
+                    }
+                    else argList.add(obj);
+                }
 
                 Object returnObj = null;
                 for (Method method : this.resourceManager.getClass().getMethods())
-                    if (method.getName().equals(methodName))
+                    if (method.getName().equals(methodName) && method.getParameterCount() == argList.size())
                     {
-                        Class<?>[] paramTypes = method.getParameterTypes();
                         returnObj = method.invoke(this.resourceManager, argList.toArray());
                         break;
                     }
 
                 System.out.println("Result = " + returnObj);
-                if (returnObj != null) outToClient.println(returnObj);
-                else outToClient.println("No such command");
+                outToClient.println(returnObj);
             }
             this.socket.close();
         }

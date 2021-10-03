@@ -58,7 +58,9 @@ public class FlightsResourceManager extends ResourceManager {
     }
 
     // Adds flight reservation to this customer
-    public int reserveFlightItem(int xid, int customerID, int flightNumber)  {
+    public int reserveFlightItem(int xid, int customerID, int flightNumber)
+    {
+        Trace.info("RM::reserveFlightItem(" + xid + ", " + customerID + ", " + flightNumber + ") called");
         return reserveItem(xid, customerID, Flight.getKey(flightNumber), String.valueOf(flightNumber));
     }
 

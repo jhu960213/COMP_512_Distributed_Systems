@@ -462,10 +462,10 @@ public class Client {
 
                 int id = toInt(arguments.elementAt(1));
                 int customerID = toInt(arguments.elementAt(2));
-                Vector<String> flightNumbers = new Vector<String>();
+                List<String> flightNumbers = new ArrayList<>();
                 for (int i = 0; i < arguments.size() - 6; ++i)
                 {
-                    flightNumbers.addElement(arguments.elementAt(3+i));
+                    flightNumbers.add(arguments.elementAt(3+i));
                 }
                 String location = arguments.elementAt(arguments.size()-3);
                 boolean car = toBoolean(arguments.elementAt(arguments.size()-2));

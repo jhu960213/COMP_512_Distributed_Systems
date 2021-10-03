@@ -5,6 +5,8 @@
 
 package Server.Common;
 
+import org.json.JSONObject;
+
 // Represents a customer's "reserved item" (e.g. Flight, Car, or Room)
 // NOTE: if a customer reserves more than one item of the same kind, this is stored as a single
 // instance of ReservedItem reflecting the *latest price*
@@ -22,6 +24,14 @@ public class ReservedItem extends RMItem
 		m_strLocation = location;
 		m_nCount = count;
 		m_nPrice = price;
+	}
+	ReservedItem(JSONObject jsonObject)
+	{
+		super();
+		m_nCount = jsonObject.getInt("count");
+		m_nPrice = jsonObject.getInt("price");
+		m_strLocation = jsonObject.getString("location");
+		m_strReservableItemKey = jsonObject.getString("reservableItemKey");
 	}
 
 	public String getReservableItemKey()

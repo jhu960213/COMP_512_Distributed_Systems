@@ -5,7 +5,9 @@
 
 package Server.Common;
 
-import java.util.*;
+import org.json.JSONObject;
+
+import java.util.Iterator;
 
 public class Customer extends RMItem
 {
@@ -17,6 +19,19 @@ public class Customer extends RMItem
 		super();
 		m_reservations = new RMHashMap();
 		m_ID = id;
+	}
+
+	public Customer(JSONObject jsonObject)
+	{
+		super();
+		this.setID(jsonObject.getInt("ID"));
+		JSONObject reservations = jsonObject.getJSONObject("reservations");
+		Iterator iterator = reservations.keys();
+		m_reservations = new RMHashMap();
+		while (iterator.hasNext()) {
+			String key = (String) iterator.next();
+			m_reservations.put(key, new ReservedItem(reservations.getJSONObject(key)));
+		}
 	}
 
 	public void setID(int id)
@@ -93,5 +108,6 @@ public class Customer extends RMItem
 		obj.m_reservations = (RMHashMap)m_reservations.clone();
 		return obj;
 	}
+
 }
 
