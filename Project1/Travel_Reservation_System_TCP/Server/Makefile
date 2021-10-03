@@ -8,9 +8,9 @@ java.policy: FORCE
 
 FORCE: ;
 
-compile-server:../json-20210307.jar Server/ResourceServer/*.java Server/Common/*.java Server/Middleware/*.java
-	javac -cp ../json-20210307.jar Server/ResourceServer/*.java Server/Common/*.java Server/Middleware/*.java
+compile-server:../json-20210307.jar Server/Interface/*.java Server/ResourceServer/*.java Server/Common/*.java Server/Middleware/*.java
+	javac -cp ../json-20210307.jar Server/Interface/*.java Server/ResourceServer/*.java Server/Common/*.java Server/Middleware/*.java
 
 clean:
-	rm -f Server/Common/*.class Server/ResourceServer/*.class Server/Middleware/*.class
+	rm -f Server/Common/*.class Server/Interface/*.class Server/ResourceServer/*.class Server/Middleware/*.class
 	rm -f java.policy 

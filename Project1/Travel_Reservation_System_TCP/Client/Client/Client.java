@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.Vector;
+import java.util.*;
 
 import org.json.JSONObject;
 
@@ -42,7 +39,6 @@ public class Client {
         Socket socket= new Socket(s_serverHost, s_serverPort); // establish a socket with a server using the given port#
         PrintWriter outToServer= new PrintWriter(socket.getOutputStream(),true); // open an output stream to the server...
         BufferedReader inFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream())); // open an input stream from the server...
-
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in)); //to read user's input
 
         // Prepare for reading commands
@@ -91,6 +87,7 @@ public class Client {
              // send the user's input via the output stream to the server
             String res = inFromServer.readLine(); // receive the server's result via the input stream from the server
             System.out.println("result: " + res); // print the server result to the user
+
         }
         socket.close();
     }
@@ -125,14 +122,8 @@ public class Client {
                 int flightSeats = toInt(arguments.elementAt(3));
                 int flightPrice = toInt(arguments.elementAt(4));
 
-                List<Object> args = new ArrayList<Object>();
-                args.add(Integer.valueOf(id));
-                args.add(Integer.valueOf(flightNum));
-                args.add(Integer.valueOf(flightSeats));
-                args.add(Integer.valueOf(flightPrice));
-
                 jsonObject.put("method", "addFlight");
-                jsonObject.put("args", args);
+                jsonObject.put("args", Arrays.asList(new Object[]{id, flightNum, flightSeats, flightPrice}));
 
 //                if (m_resourceManager.addFlight(id, flightNum, flightSeats, flightPrice)) {
 //                    System.out.println("Flight added");
@@ -154,6 +145,8 @@ public class Client {
                 int numCars = toInt(arguments.elementAt(3));
                 int price = toInt(arguments.elementAt(4));
 
+                jsonObject.put("method", "addCars");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, location, numCars, price}));
 //                if (m_resourceManager.addCars(id, location, numCars, price)) {
 //                    System.out.println("Cars added");
 //                } else {
@@ -174,6 +167,8 @@ public class Client {
                 int numRooms = toInt(arguments.elementAt(3));
                 int price = toInt(arguments.elementAt(4));
 
+                jsonObject.put("method", "addRooms");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, location, numRooms, price}));
 //                if (m_resourceManager.addRooms(id, location, numRooms, price)) {
 //                    System.out.println("Rooms added");
 //                } else {
@@ -188,6 +183,8 @@ public class Client {
 
                 int id = toInt(arguments.elementAt(1));
 
+                jsonObject.put("method", "newCustomer");
+                jsonObject.put("args", Arrays.asList(new Object[]{id}));
 //                int customer = m_resourceManager.newCustomer(id);
 //                System.out.println("Add customer ID: " + customer);
                 break;
@@ -201,6 +198,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int customerID = toInt(arguments.elementAt(2));
 
+                jsonObject.put("method", "newCustomer");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID}));
 //                if (m_resourceManager.newCustomer(id, customerID)) {
 //                    System.out.println("Add customer ID: " + customerID);
 //                } else {
@@ -217,6 +216,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int flightNum = toInt(arguments.elementAt(2));
 
+                jsonObject.put("method", "deleteFlight");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, flightNum}));
 //                if (m_resourceManager.deleteFlight(id, flightNum)) {
 //                    System.out.println("Flight Deleted");
 //                } else {
@@ -233,6 +234,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
+                jsonObject.put("method", "deleteCars");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
 //                if (m_resourceManager.deleteCars(id, location)) {
 //                    System.out.println("Cars Deleted");
 //                } else {
@@ -249,6 +252,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
+                jsonObject.put("method", "deleteRooms");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
 //                if (m_resourceManager.deleteRooms(id, location)) {
 //                    System.out.println("Rooms Deleted");
 //                } else {
@@ -265,6 +270,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int customerID = toInt(arguments.elementAt(2));
 
+                jsonObject.put("method", "deleteCustomer");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID}));
 //                if (m_resourceManager.deleteCustomer(id, customerID)) {
 //                    System.out.println("Customer Deleted");
 //                } else {
@@ -281,6 +288,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int flightNum = toInt(arguments.elementAt(2));
 
+                jsonObject.put("method", "queryFlight");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, flightNum}));
 //                int seats = m_resourceManager.queryFlight(id, flightNum);
 //                System.out.println("Number of seats available: " + seats);
                 break;
@@ -294,6 +303,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
+                jsonObject.put("method", "queryCars");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
 //                int numCars = m_resourceManager.queryCars(id, location);
 //                System.out.println("Number of cars at this location: " + numCars);
                 break;
@@ -307,6 +318,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
+                jsonObject.put("method", "queryRooms");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
 //                int numRoom = m_resourceManager.queryRooms(id, location);
 //                System.out.println("Number of rooms at this location: " + numRoom);
                 break;
@@ -320,6 +333,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int customerID = toInt(arguments.elementAt(2));
 
+                jsonObject.put("method", "queryCustomerInfo");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID}));
 //                String bill = m_resourceManager.queryCustomerInfo(id, customerID);
 //                System.out.print(bill);
                 break;
@@ -333,6 +348,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int flightNum = toInt(arguments.elementAt(2));
 
+                jsonObject.put("method", "queryFlightPrice");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, flightNum}));
 //                int price = m_resourceManager.queryFlightPrice(id, flightNum);
 //                System.out.println("Price of a seat: " + price);
                 break;
@@ -346,6 +363,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
+                jsonObject.put("method", "queryCarsPrice");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
 //                int price = m_resourceManager.queryCarsPrice(id, location);
 //                System.out.println("Price of cars at this location: " + price);
                 break;
@@ -359,6 +378,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
+                jsonObject.put("method", "queryRoomsPrice");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
 //                int price = m_resourceManager.queryRoomsPrice(id, location);
 //                System.out.println("Price of rooms at this location: " + price);
                 break;
@@ -374,6 +395,8 @@ public class Client {
                 int customerID = toInt(arguments.elementAt(2));
                 int flightNum = toInt(arguments.elementAt(3));
 
+                jsonObject.put("method", "reserveFlight");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID, flightNum}));
 //                if (m_resourceManager.reserveFlight(id, customerID, flightNum)) {
 //                    System.out.println("Flight Reserved");
 //                } else {
@@ -392,6 +415,8 @@ public class Client {
                 int customerID = toInt(arguments.elementAt(2));
                 String location = arguments.elementAt(3);
 
+                jsonObject.put("method", "reserveCar");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID, location}));
 //                if (m_resourceManager.reserveCar(id, customerID, location)) {
 //                    System.out.println("Car Reserved");
 //                } else {
@@ -410,6 +435,8 @@ public class Client {
                 int customerID = toInt(arguments.elementAt(2));
                 String location = arguments.elementAt(3);
 
+                jsonObject.put("method", "reserveRoom");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID, location}));
 //                if (m_resourceManager.reserveRoom(id, customerID, location)) {
 //                    System.out.println("Room Reserved");
 //                } else {
@@ -444,6 +471,8 @@ public class Client {
                 boolean car = toBoolean(arguments.elementAt(arguments.size()-2));
                 boolean room = toBoolean(arguments.elementAt(arguments.size()-1));
 
+                jsonObject.put("method", "bundle");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID, flightNumbers, location, car, room}));
 //                if (m_resourceManager.bundle(id, customerID, flightNumbers, location, car, room)) {
 //                    System.out.println("Bundle Reserved");
 //                } else {
@@ -457,6 +486,9 @@ public class Client {
                 boolean flights = toBoolean(arguments.elementAt(2));
                 boolean cars = toBoolean(arguments.elementAt(3));
                 boolean rooms = toBoolean(arguments.elementAt(4));
+
+                jsonObject.put("method", "queryReservableItems");
+                jsonObject.put("args", Arrays.asList(new Object[]{id, flights, cars, rooms}));
 //                String string = m_resourceManager.queryReservableItems(id, flights, cars, rooms);
 //                System.out.println("The list of reservable items:\n" + string);
 
@@ -466,6 +498,9 @@ public class Client {
                 checkArgumentsCount(2, arguments.size());
                 System.out.println("Querying all customers that have reserved flights...");
                 int id = toInt(arguments.elementAt(1));
+
+                jsonObject.put("method", "queryFlightReservers");
+                jsonObject.put("args", Arrays.asList(new Object[]{id}));
 //                String string = m_resourceManager.queryFlightReservers(id);
 //                System.out.println("FLIGHT ANALYTICS:\n" + string);
 
@@ -475,6 +510,9 @@ public class Client {
                 checkArgumentsCount(2, arguments.size());
                 System.out.println("Querying all customers that have reserved cars...");
                 int id = toInt(arguments.elementAt(1));
+
+                jsonObject.put("method", "queryCarReservers");
+                jsonObject.put("args", Arrays.asList(new Object[]{id}));
 //                String string = m_resourceManager.queryCarReservers(id);
 //                System.out.println("CAR ANALYTICS:\n" + string);
 
@@ -484,6 +522,9 @@ public class Client {
                 checkArgumentsCount(2, arguments.size());
                 System.out.println("Querying all customers that have reserved rooms...");
                 int id = toInt(arguments.elementAt(1));
+
+                jsonObject.put("method", "queryRoomReservers");
+                jsonObject.put("args", Arrays.asList(new Object[]{id}));
 //                String string = m_resourceManager.queryRoomReservers(id);
 //                System.out.println("ROOM ANALYTICS:\n" + string);
 

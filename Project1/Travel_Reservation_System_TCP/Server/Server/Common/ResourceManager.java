@@ -5,13 +5,15 @@
 
 package Server.Common;
 
+import Server.Interface.IResourceManager;
+
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.Vector;
 
 import static Server.Common.Trace.info;
 
-public class ResourceManager
+public class ResourceManager implements IResourceManager
 {
 	protected String m_name = "";
 	protected RMHashMap m_data = new RMHashMap();

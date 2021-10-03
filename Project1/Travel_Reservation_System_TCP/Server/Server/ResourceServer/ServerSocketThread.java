@@ -1,6 +1,6 @@
-package Server.Middleware;
+package Server.ResourceServer;
 
-import Server.Common.MethodCall;
+import Server.Interface.IResourceManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -9,18 +9,18 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.lang.reflect.*;
 
-public class MiddlewareSocketThread extends Thread
+public class ServerSocketThread extends Thread
 {
     Socket socket;
-    MiddlewareSocketThread (Socket socket)
+    IResourceManager resourceManager;
+    public ServerSocketThread(Socket socket, IResourceManager resourceManager)
     {
-        this.socket=socket;
+        this.socket = socket;
+        this.resourceManager = resourceManager;
     }
 
     public void run()
@@ -31,7 +31,7 @@ public class MiddlewareSocketThread extends Thread
             PrintWriter outToClient = new PrintWriter(socket.getOutputStream(), true);
             String message = null;
 
-            while ((message = inFromClient.readLine())!=null && message != "Quit")
+            while ((message = inFromClient.readLine())!=null && message!="Quit")
             {
                 System.out.println("received message:"+message);
 
@@ -43,17 +43,19 @@ public class MiddlewareSocketThread extends Thread
                 for (Object obj : jsonArray) argList.add(obj);
 
                 Object returnObj = null;
-                for (Method method : this.getClass().getMethods())
+                for (Method method : this.resourceManager.getClass().getMethods())
                     if (method.getName().equals(methodName))
                     {
                         Class<?>[] paramTypes = method.getParameterTypes();
-                        returnObj = method.invoke(this, argList.toArray());
+                        returnObj = method.invoke(this.resourceManager, argList.toArray());
                         break;
                     }
+
                 System.out.println("Result = " + returnObj);
-                outToClient.println(returnObj);
+                if (returnObj != null) outToClient.println(returnObj);
+                else outToClient.println("No such command");
             }
-            socket.close();
+            this.socket.close();
         }
         catch (IOException e)
         {
@@ -65,11 +67,4 @@ public class MiddlewareSocketThread extends Thread
         }
     }
 
-
-    public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice)
-    {
-        boolean response = false;
-        System.out.println("addFlighCalled");
-        return response;
-    }
 }
