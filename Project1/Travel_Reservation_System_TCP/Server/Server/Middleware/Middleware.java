@@ -552,18 +552,9 @@ public class Middleware implements IResourceManager {
         int port = 0;
         switch (resourceServer)
         {
-            case Flights:
-                host = flightsResourceServerHost;
-                port = flightsResourceServerPort;
-                break;
-            case Cars:
-                host = carsResourceServerHost;
-                port = carsResourceServerPort;
-                break;
-            case Rooms:
-                host = roomsResourceServerHost;
-                port = roomsResourceServerPort;
-                break;
+            case Flights: host = flightsResourceServerHost; port = flightsResourceServerPort; break;
+            case Cars: host = carsResourceServerHost; port = carsResourceServerPort; break;
+            case Rooms: host = roomsResourceServerHost; port = roomsResourceServerPort; break;
         }
         Socket socket= new Socket(host, port);
         PrintWriter outToServer= new PrintWriter(socket.getOutputStream(),true);
