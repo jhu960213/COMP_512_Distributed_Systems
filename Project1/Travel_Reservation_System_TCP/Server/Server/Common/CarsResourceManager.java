@@ -55,11 +55,13 @@ public class CarsResourceManager extends ResourceManager {
 
     // Adds car reservation to this customer
     public int reserveCarItem(int xid, int customerID, String location) {
+        Trace.info("RM::reserveCarItem(" + xid + ", " + customerID + ", " + location + ") called");
         return reserveItem(xid, customerID, Car.getKey(location), location);
     }
 
     public String queryReservableCars(int xid) {
-        String response = "";
+        Trace.info("RM::queryReservableCars(" + xid + ") called");
+        String response = this.m_data.values().size() > 0 ? "Cars:\n" : "";
         for (RMItem item:this.m_data.values())
         {
             Car car = (Car) item;

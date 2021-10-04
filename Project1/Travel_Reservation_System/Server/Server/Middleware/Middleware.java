@@ -485,8 +485,8 @@ public class Middleware implements IResourceManager {
                 for (String reservedKey : reservations.keySet()) {
                     ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
                     if (reservedItem.getItemType() == ReservedItem.ItemType.Flight) {
-                        response += "Customer ID:" + currentCustomer.getKey() + "|reserved:"
-                                + reservedItem.getCount() + " seat(s) |at: $" + reservedItem.getPrice() + "|\n";
+                        response += "Customer ID:" + currentCustomer.getKey() + "|reserved:" + reservedItem.getCount()
+                                + " seat(s) |flightNum: " + reservedItem.getLocation() + " |at: $" + reservedItem.getPrice() + "|\n";
                     }
                 }
             }
@@ -508,8 +508,8 @@ public class Middleware implements IResourceManager {
                 for (String reservedKey : reservations.keySet()) {
                     ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
                     if (reservedItem.getItemType() == ReservedItem.ItemType.Car) {
-                        response += "Customer ID: " + currentCustomer.getKey() + "|reserved: "
-                                + reservedItem.getCount() + "car(s) |at: $" + reservedItem.getPrice() + "|\n";
+                        response += "Customer ID: " + currentCustomer.getKey() + "|reserved: " + reservedItem.getCount()
+                                + "car(s) |location: " + reservedItem.getLocation() + " |at: $" + reservedItem.getPrice() + "|\n";
                     }
                 }
             }
@@ -531,8 +531,8 @@ public class Middleware implements IResourceManager {
                 for (String reservedKey : reservations.keySet()) {
                     ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
                     if (reservedItem.getItemType() == ReservedItem.ItemType.Room) {
-                        response += "Customer ID: " + currentCustomer.getKey() + "|reserved: "
-                                + reservedItem.getCount() + "room(s) |at: $" + reservedItem.getPrice() + "|\n";
+                        response += "Customer ID: " + currentCustomer.getKey() + "|reserved: " + reservedItem.getCount()
+                                + "room(s) |location: " + reservedItem.getLocation() + " |at: $" + reservedItem.getPrice() + "|\n";
                     }
                 }
             }

@@ -8,8 +8,8 @@ java.policy: FORCE
 
 FORCE: ;
 
-compile-client:../json-20210307.jar Client/*.java
-	javac -cp ../json-20210307.jar Client/*.java
+compile-client:
+	javac Client/*.java
 
 clean:
 	rm -f Client/*.class

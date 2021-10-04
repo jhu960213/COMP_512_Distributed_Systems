@@ -47,10 +47,12 @@ public class RoomsResourceManager extends ResourceManager {
 
     // Adds room reservation to this customer
     public int reserveRoomItem(int xid, int customerID, String location) {
+        Trace.info("RM::reserveRoomItem(" + xid + ", " + customerID + ", " + location + ") called");
         return reserveItem(xid, customerID, Room.getKey(location), location);
     }
     public String queryReservableRooms(int xid) {
-        String response = "";
+        Trace.info("RM::queryReservableRooms(" + xid + ") called");
+        String response = this.m_data.values().size() > 0 ? "Rooms:\n" : "";
         for (RMItem item:this.m_data.values())
         {
             Room room = (Room) item;

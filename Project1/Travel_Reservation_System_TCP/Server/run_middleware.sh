@@ -9,4 +9,4 @@ echo '  $5 - Cars port (Optional, default 3004)'
 echo '  $6 - Rooms port (Optional, default 4004)'
 echo '  $7 - Middleware port (Optional, default 5004)'
 
-java -Djava.security.policy=java.policy -cp ../json-20210307.jar:. Server.Middleware.Middleware $1 $2 $3 $4 $5 $6 $7
+java -Djava.security.policy=java.policy Server.Middleware.Middleware $1 $2 $3 $4 $5 $6 $7
