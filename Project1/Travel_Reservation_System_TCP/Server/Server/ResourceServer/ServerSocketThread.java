@@ -25,7 +25,9 @@ public class ServerSocketThread extends Thread
             ObjectOutputStream outToClient = new ObjectOutputStream(socket.getOutputStream());
             while (true) {
                 String methodName = (String) inFromClient.readObject();
-                if (methodName.equals("Quit")) break;
+                if (methodName.equals("Quit")) {
+                    break;
+                }
                 Object[] argList = (Object[]) inFromClient.readObject();
                 for (Method method : this.resourceManager.getClass().getMethods())
                     if (method.getName().equals(methodName) && method.getParameterCount() == argList.length) {
@@ -44,7 +46,13 @@ public class ServerSocketThread extends Thread
         }
         catch (IOException | ClassNotFoundException e)
         {
-            e.printStackTrace();
+            if (e.getClass() == EOFException.class) {
+                try {
+                    this.socket.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            } else e.printStackTrace();
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {

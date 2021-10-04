@@ -73,6 +73,7 @@ public class Client {
 
     public Object callServer(String methodName, Object[] argList) throws IOException, ClassNotFoundException {
         outToServer.writeObject(methodName);
+        if (argList == null) return null;
         outToServer.writeObject(argList);
         Object response = inFromServer.readObject();
         return response;
@@ -469,6 +470,7 @@ public class Client {
             }
             case Quit:
                 checkArgumentsCount(1, arguments.size());
+                callServer("Quit", null);
                 System.out.println("Quitting client");
                 return false;
         }
