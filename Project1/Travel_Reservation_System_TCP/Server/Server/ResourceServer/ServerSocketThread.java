@@ -25,13 +25,11 @@ public class ServerSocketThread extends Thread
             ObjectOutputStream outToClient = new ObjectOutputStream(socket.getOutputStream());
             while (true) {
                 String methodName = (String) inFromClient.readObject();
-//                System.out.println(methodName.getClass() + ":" + methodName);
                 if (methodName.equals("Quit")) break;
-                List<Object> argList = (List<Object>) inFromClient.readObject();
-//                System.out.println(argList.getClass() + ":" + argList);
+                Object[] argList = (Object[]) inFromClient.readObject();
                 for (Method method : this.resourceManager.getClass().getMethods())
-                    if (method.getName().equals(methodName) && method.getParameterCount() == argList.size()) {
-                        Object returnObj = method.invoke(this.resourceManager, argList.toArray());
+                    if (method.getName().equals(methodName) && method.getParameterCount() == argList.length) {
+                        Object returnObj = method.invoke(this.resourceManager, argList);
                         outToClient.writeObject(returnObj);
                         break;
                     }

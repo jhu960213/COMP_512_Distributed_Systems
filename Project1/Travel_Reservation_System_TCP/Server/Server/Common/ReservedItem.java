@@ -10,6 +10,9 @@ package Server.Common;
 // instance of ReservedItem reflecting the *latest price*
 public class ReservedItem extends RMItem
 {
+	public enum ItemType{
+		Flight, Car, Room
+	}
 	private int m_nCount;
 	private int m_nPrice;
 	private String m_strReservableItemKey;
@@ -66,6 +69,13 @@ public class ReservedItem extends RMItem
 	{
 		String s = getReservableItemKey();
 		return s.toLowerCase();
+	}
+
+	public ItemType getItemType()
+	{
+		if (this.getKey().startsWith("flight")) return ItemType.Flight;
+		else if (this.getKey().startsWith("car")) return ItemType.Car;
+		else return ItemType.Room;
 	}
 }
 

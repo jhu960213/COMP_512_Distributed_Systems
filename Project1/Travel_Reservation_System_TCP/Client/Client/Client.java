@@ -73,7 +73,7 @@ public class Client {
         socket.close();
     }
 
-    public Object callServer(String methodName, List argList) throws IOException, ClassNotFoundException {
+    public Object callServer(String methodName, Object[] argList) throws IOException, ClassNotFoundException {
         outToServer.writeObject(methodName);
         outToServer.writeObject(argList);
         Object response = inFromServer.readObject();
@@ -108,7 +108,7 @@ public class Client {
                 int flightSeats = toInt(arguments.elementAt(3));
                 int flightPrice = toInt(arguments.elementAt(4));
 
-                Boolean res = (Boolean) callServer("addFlight", Arrays.asList(new Object[]{id, flightNum, flightSeats, flightPrice}));
+                Boolean res = (Boolean) callServer("addFlight", new Object[]{id, flightNum, flightSeats, flightPrice});
                 if (res) {
                     System.out.println("Flight added");
                 } else {
@@ -129,13 +129,12 @@ public class Client {
                 int numCars = toInt(arguments.elementAt(3));
                 int price = toInt(arguments.elementAt(4));
 
-//                jsonObject.put("method", "addCars");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, location, numCars, price}));
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Cars added");
-//                } else {
-//                    System.out.println("Cars could not be added");
-//                }
+                Boolean res = (Boolean) callServer("addCars", new Object[]{id, location, numCars, price});
+                if (res) {
+                    System.out.println("Cars added");
+                } else {
+                    System.out.println("Cars could not be added");
+                }
                 break;
             }
             case AddRooms: {
@@ -151,14 +150,12 @@ public class Client {
                 int numRooms = toInt(arguments.elementAt(3));
                 int price = toInt(arguments.elementAt(4));
 
-//                jsonObject.put("method", "addRooms");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, location, numRooms, price}));
-//
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Rooms added");
-//                } else {
-//                    System.out.println("Rooms could not be added");
-//                }
+                Boolean res = (Boolean) callServer("addRooms", new Object[]{id, location, numRooms, price});
+                if (res) {
+                    System.out.println("Rooms added");
+                } else {
+                    System.out.println("Rooms could not be added");
+                }
                 break;
             }
             case AddCustomer: {
@@ -168,11 +165,8 @@ public class Client {
 
                 int id = toInt(arguments.elementAt(1));
 
-//                jsonObject.put("method", "newCustomer");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id}));
-//
-//                int customer = Integer.parseInt(callServer(jsonObject));
-//                System.out.println("Add customer ID: " + customer);
+                Integer customer = (Integer) callServer("newCustomer", new Object[]{id});
+                System.out.println("Add customer ID: " + customer);
                 break;
             }
             case AddCustomerID: {
@@ -184,14 +178,12 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int customerID = toInt(arguments.elementAt(2));
 
-//                jsonObject.put("method", "newCustomer");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID}));
-//
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Add customer ID: " + customerID);
-//                } else {
-//                    System.out.println("Customer could not be added");
-//                }
+                Boolean res = (Boolean) callServer("newCustomer", new Object[]{id, customerID});
+                if (res) {
+                    System.out.println("Add customer ID: " + customerID);
+                } else {
+                    System.out.println("Customer could not be added");
+                }
                 break;
             }
             case DeleteFlight: {
@@ -203,14 +195,12 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int flightNum = toInt(arguments.elementAt(2));
 
-//                jsonObject.put("method", "deleteFlight");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, flightNum}));
-//
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Flight Deleted");
-//                } else {
-//                    System.out.println("Flight could not be deleted");
-//                }
+                Boolean res = (Boolean) callServer("deleteFlight", new Object[]{id, flightNum});
+                if (res) {
+                    System.out.println("Flight Deleted");
+                } else {
+                    System.out.println("Flight could not be deleted");
+                }
                 break;
             }
             case DeleteCars: {
@@ -222,14 +212,11 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
-//                jsonObject.put("method", "deleteCars");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
-//
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Cars Deleted");
-//                } else {
-//                    System.out.println("Cars could not be deleted");
-//                }
+                if ((Boolean) callServer("deleteCars", new Object[]{id, location})) {
+                    System.out.println("Cars Deleted");
+                } else {
+                    System.out.println("Cars could not be deleted");
+                }
                 break;
             }
             case DeleteRooms: {
@@ -241,14 +228,11 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
-//                jsonObject.put("method", "deleteRooms");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
-//
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Rooms Deleted");
-//                } else {
-//                    System.out.println("Rooms could not be deleted");
-//                }
+                if ((Boolean) callServer("deleteRooms", new Object[]{id, location})) {
+                    System.out.println("Rooms Deleted");
+                } else {
+                    System.out.println("Rooms could not be deleted");
+                }
                 break;
             }
             case DeleteCustomer: {
@@ -260,14 +244,11 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int customerID = toInt(arguments.elementAt(2));
 
-//                jsonObject.put("method", "deleteCustomer");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID}));
-//
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Customer Deleted");
-//                } else {
-//                    System.out.println("Customer could not be deleted");
-//                }
+                if ((Boolean) callServer("deleteCustomer", new Object[]{id, customerID})) {
+                    System.out.println("Customer Deleted");
+                } else {
+                    System.out.println("Customer could not be deleted");
+                }
                 break;
             }
             case QueryFlight: {
@@ -279,11 +260,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int flightNum = toInt(arguments.elementAt(2));
 
-//                jsonObject.put("method", "queryFlight");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, flightNum}));
-//
-//                int seats = Integer.parseInt(callServer(jsonObject));
-//                System.out.println("Number of seats available: " + seats);
+                Integer seats = (Integer) callServer("queryFlight", new Object[]{id, flightNum});
+                System.out.println("Number of seats available: " + seats);
                 break;
             }
             case QueryCars: {
@@ -295,11 +273,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
-//                jsonObject.put("method", "queryCars");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
-//
-//                int numCars =Integer.parseInt(callServer(jsonObject));
-//                System.out.println("Number of cars at this location: " + numCars);
+                Integer numCars = (Integer) callServer("queryCars", new Object[]{id, location});
+                System.out.println("Number of cars at this location: " + numCars);
                 break;
             }
             case QueryRooms: {
@@ -311,11 +286,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
-//                jsonObject.put("method", "queryRooms");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
-//
-//                int numRoom = Integer.parseInt(callServer(jsonObject));
-//                System.out.println("Number of rooms at this location: " + numRoom);
+                Integer numRoom = (Integer) callServer("queryRooms", new Object[]{id, location});
+                System.out.println("Number of rooms at this location: " + numRoom);
                 break;
             }
             case QueryCustomer: {
@@ -327,11 +299,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int customerID = toInt(arguments.elementAt(2));
 
-//                jsonObject.put("method", "queryCustomerInfo");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID}));
-//
-//                String bill = callServer(jsonObject);
-//                System.out.print(bill);
+                String bill = (String) callServer("queryCustomerInfo", new Object[]{id, customerID});
+                System.out.print(bill);
                 break;
             }
             case QueryFlightPrice: {
@@ -343,11 +312,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int flightNum = toInt(arguments.elementAt(2));
 
-//                jsonObject.put("method", "queryFlightPrice");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, flightNum}));
-//
-//                int price = Integer.parseInt(callServer(jsonObject));
-//                System.out.println("Price of a seat: " + price);
+                Integer price = (Integer) callServer("queryFlightPrice", new Object[]{id, flightNum});
+                System.out.println("Price of a seat: " + price);
                 break;
             }
             case QueryCarsPrice: {
@@ -359,11 +325,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
-//                jsonObject.put("method", "queryCarsPrice");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
-//
-//                int price = Integer.parseInt(callServer(jsonObject));
-//                System.out.println("Price of cars at this location: " + price);
+                Integer price = (Integer) callServer("queryCarsPrice", new Object[]{id, location});
+                System.out.println("Price of cars at this location: " + price);
                 break;
             }
             case QueryRoomsPrice: {
@@ -375,11 +338,8 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 String location = arguments.elementAt(2);
 
-//                jsonObject.put("method", "queryRoomsPrice");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, location}));
-//
-//                int price = Integer.parseInt(callServer(jsonObject));
-//                System.out.println("Price of rooms at this location: " + price);
+                Integer price = (Integer) callServer("queryRoomsPrice", new Object[]{id, location});
+                System.out.println("Price of rooms at this location: " + price);
                 break;
             }
             case ReserveFlight: {
@@ -393,14 +353,11 @@ public class Client {
                 int customerID = toInt(arguments.elementAt(2));
                 int flightNum = toInt(arguments.elementAt(3));
 
-//                jsonObject.put("method", "reserveFlight");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID, flightNum}));
-//
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Flight Reserved");
-//                } else {
-//                    System.out.println("Flight could not be reserved");
-//                }
+                if ((Boolean) callServer("reserveFlight", new Object[]{id, customerID, flightNum})) {
+                    System.out.println("Flight Reserved");
+                } else {
+                    System.out.println("Flight could not be reserved");
+                }
                 break;
             }
             case ReserveCar: {
@@ -414,14 +371,11 @@ public class Client {
                 int customerID = toInt(arguments.elementAt(2));
                 String location = arguments.elementAt(3);
 
-//                jsonObject.put("method", "reserveCar");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID, location}));
-//
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Car Reserved");
-//                } else {
-//                    System.out.println("Car could not be reserved");
-//                }
+                if ((Boolean) callServer("reserveCar", new Object[]{id, customerID, location})) {
+                    System.out.println("Car Reserved");
+                } else {
+                    System.out.println("Car could not be reserved");
+                }
                 break;
             }
             case ReserveRoom: {
@@ -435,14 +389,11 @@ public class Client {
                 int customerID = toInt(arguments.elementAt(2));
                 String location = arguments.elementAt(3);
 
-//                jsonObject.put("method", "reserveRoom");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID, location}));
-//
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Room Reserved");
-//                } else {
-//                    System.out.println("Room could not be reserved");
-//                }
+                if ((Boolean) callServer("reserveRoom", new Object[]{id, customerID, location})) {
+                    System.out.println("Room Reserved");
+                } else {
+                    System.out.println("Room could not be reserved");
+                }
                 break;
             }
             case Bundle: {
@@ -463,7 +414,7 @@ public class Client {
 
                 int id = toInt(arguments.elementAt(1));
                 int customerID = toInt(arguments.elementAt(2));
-                List<String> flightNumbers = new ArrayList<>();
+                Vector<String> flightNumbers = new Vector<>();
                 for (int i = 0; i < arguments.size() - 6; ++i)
                 {
                     flightNumbers.add(arguments.elementAt(3+i));
@@ -472,14 +423,11 @@ public class Client {
                 boolean car = toBoolean(arguments.elementAt(arguments.size()-2));
                 boolean room = toBoolean(arguments.elementAt(arguments.size()-1));
 
-//                jsonObject.put("method", "bundle");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, customerID, flightNumbers, location, car, room}));
-//
-//                if (Boolean.parseBoolean(callServer(jsonObject))) {
-//                    System.out.println("Bundle Reserved");
-//                } else {
-//                    System.out.println("Bundle could not be reserved");
-//                }
+                if ((Boolean) callServer("bundle", new Object[]{id, customerID, flightNumbers, location, car, room})) {
+                    System.out.println("Bundle Reserved");
+                } else {
+                    System.out.println("Bundle could not be reserved");
+                }
                 break;
             }
             case QueryReservableItems: {
@@ -489,12 +437,8 @@ public class Client {
                 boolean cars = toBoolean(arguments.elementAt(3));
                 boolean rooms = toBoolean(arguments.elementAt(4));
 
-//                jsonObject.put("method", "queryReservableItems");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id, flights, cars, rooms}));
-//
-//                String string = callServer(jsonObject);
-//                System.out.println("The list of reservable items:\n" + string);
-
+                String string = (String) callServer("queryReservableItems", new Object[]{id, flights, cars, rooms});
+                System.out.println("The list of reservable items:\n" + string);
                 break;
             }
             case QueryFlightReservers: {
@@ -502,11 +446,8 @@ public class Client {
                 System.out.println("Querying all customers that have reserved flights...");
                 int id = toInt(arguments.elementAt(1));
 
-//                jsonObject.put("method", "queryFlightReservers");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id}));
-//
-//                String string = callServer(jsonObject);
-//                System.out.println("FLIGHT ANALYTICS:\n" + string);
+                String string = (String) callServer("queryFlightReservers", new Object[]{id});
+                System.out.println("FLIGHT ANALYTICS:\n" + string);
 
                 break;
             }
@@ -515,12 +456,8 @@ public class Client {
                 System.out.println("Querying all customers that have reserved cars...");
                 int id = toInt(arguments.elementAt(1));
 
-//                jsonObject.put("method", "queryCarReservers");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id}));
-//
-//                String string = callServer(jsonObject);
-//                System.out.println("CAR ANALYTICS:\n" + string);
-
+                String string = (String) callServer("queryCarReservers", new Object[]{id});
+                System.out.println("CAR ANALYTICS:\n" + string);
                 break;
             }
             case QueryRoomReservers: {
@@ -528,12 +465,8 @@ public class Client {
                 System.out.println("Querying all customers that have reserved rooms...");
                 int id = toInt(arguments.elementAt(1));
 
-//                jsonObject.put("method", "queryRoomReservers");
-//                jsonObject.put("args", Arrays.asList(new Object[]{id}));
-//
-//                String string = callServer(jsonObject);
-//                System.out.println("ROOM ANALYTICS:\n" + string);
-
+                String string = (String) callServer("queryRoomReservers", new Object[]{id});
+                System.out.println("ROOM ANALYTICS:\n" + string);
                 break;
             }
             case Quit:

@@ -65,6 +65,7 @@ public class FlightsResourceManager extends ResourceManager {
     }
 
     public Map<String, Integer> reserveFlightItemBundle(int xid, int customerID, Vector<String> flightNumbers)  {
+        Trace.info("RM::reserveFlightItemBundle(" + xid + ", " + customerID + ", " + flightNumbers + ") called");
         Map<String, Integer> prices = new HashMap<>();
         for (String flightNum:flightNumbers)
         {
@@ -75,6 +76,7 @@ public class FlightsResourceManager extends ResourceManager {
     }
 
     public String queryReservableFlights(int xid)  {
+        Trace.info("RM::queryReservableFlights(" + xid + ") called");
         String response = this.m_data.values().size() > 0 ? "Flights:\n" : "";
         for (RMItem item:this.m_data.values())
         {

@@ -7,6 +7,7 @@ import Server.ResourceServer.ServerSocketThread;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.RemoteException;
 import java.util.*;
 
 public class Middleware implements IResourceManager {
@@ -501,31 +502,70 @@ public class Middleware implements IResourceManager {
         return response;
     }
     public String queryFlightReservers(int xid) {
-        String response = null;
+        String response = "";
         try {
-            response = (String) callResourceServerMethod(ResourceServer.Flights, "queryFlightReservers", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            Trace.info("RM::queryFlightReservers(" + xid + ") called");
+            Collection<RMItem> customersList = this.getCustomersList().values();
+            for (RMItem c : customersList) {
+                Customer currentCustomer = (Customer) c;
+                RMHashMap reservations = currentCustomer.getReservations();
+                for (String reservedKey : reservations.keySet()) {
+                    ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
+                    if (reservedItem.getItemType() == ReservedItem.ItemType.Flight) {
+                        response += "Customer ID:" + currentCustomer.getKey() + "|reserved:" + reservedItem.getCount()
+                                + " seat(s) |flightNum: " + reservedItem.getLocation() + " |at: $" + reservedItem.getPrice() + "|\n";
+                    }
+                }
+            }
+            return response;
+        } catch (Exception e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
     }
 
     public String queryCarReservers(int xid) {
-        String response = null;
+        String response = "";
         try {
-            response = (String) callResourceServerMethod(ResourceServer.Cars, "queryCarReservers", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            Trace.info("RM::queryCarReservers(" + xid + ") called");
+            Collection<RMItem> customersList = this.getCustomersList().values();
+            for (RMItem c : customersList) {
+                Customer currentCustomer = (Customer) c;
+                RMHashMap reservations = currentCustomer.getReservations();
+                for (String reservedKey : reservations.keySet()) {
+                    ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
+                    if (reservedItem.getItemType() == ReservedItem.ItemType.Car) {
+                        response += "Customer ID: " + currentCustomer.getKey() + "|reserved: " + reservedItem.getCount()
+                                + "car(s) |location: " + reservedItem.getLocation() + " |at: $" + reservedItem.getPrice() + "|\n";
+                    }
+                }
+            }
+            return response;
+        } catch (Exception e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
     }
 
     public String queryRoomReservers(int xid) {
-        String response = null;
+        String response = "";
         try {
-            response = (String) callResourceServerMethod(ResourceServer.Rooms, "queryRoomReservers", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            Trace.info("RM::queryRoomReservers(" + xid + ") called");
+            Collection<RMItem> customersList = this.getCustomersList().values();
+            for (RMItem c : customersList) {
+                Customer currentCustomer = (Customer) c;
+                RMHashMap reservations = currentCustomer.getReservations();
+                for (String reservedKey : reservations.keySet()) {
+                    ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
+                    if (reservedItem.getItemType() == ReservedItem.ItemType.Room) {
+                        response += "Customer ID: " + currentCustomer.getKey() + "|reserved: " + reservedItem.getCount()
+                                + "room(s) |location: " + reservedItem.getLocation() + " |at: $" + reservedItem.getPrice() + "|\n";
+                    }
+                }
+            }
+            return response;
+        } catch (Exception e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
     }
@@ -540,17 +580,13 @@ public class Middleware implements IResourceManager {
             case Rooms: host = roomsResourceServerHost; port = roomsResourceServerPort; break;
         }
 
-//        System.out.println("Creating Socket");
         Socket socket= new Socket(host, port);
-//        System.out.println("Created Socket" + socket);
         ObjectOutputStream outToServer = new ObjectOutputStream(socket.getOutputStream());
         ObjectInputStream inFromServer = new ObjectInputStream(socket.getInputStream());
 
-//        System.out.println("Calling : " + methodName + argList);
         outToServer.writeObject(methodName);
-        outToServer.writeObject(Arrays.asList(argList));
+        outToServer.writeObject(argList);
         Object returnObj =  inFromServer.readObject();
-//        System.out.println("Returning : " + returnObj + " : " + returnObj.getClass());
         return returnObj;
     }
 }
