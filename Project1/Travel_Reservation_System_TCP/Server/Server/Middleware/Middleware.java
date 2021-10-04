@@ -3,16 +3,11 @@ package Server.Middleware;
 import Server.Common.*;
 import Server.Interface.IResourceManager;
 import Server.ResourceServer.ServerSocketThread;
-import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Middleware implements IResourceManager {
     enum ResourceServer {
@@ -63,6 +58,17 @@ public class Middleware implements IResourceManager {
         }
     }
 
+    public void runServerThread() throws IOException
+    {
+        ServerSocket serverSocket = new ServerSocket(middlewareRegistryPortNum);
+        System.out.println("Server ready...");
+        while (true)
+        {
+            Socket socket=serverSocket.accept();
+            new ServerSocketThread(socket, this).start();
+        }
+    }
+
     public RMHashMap getCustomersList() {
         return customersList;
     }
@@ -99,49 +105,38 @@ public class Middleware implements IResourceManager {
         }
     }
 
-
-    public void runServerThread() throws IOException
-    {
-        ServerSocket serverSocket = new ServerSocket(middlewareRegistryPortNum);
-        System.out.println("Server ready...");
-        while (true)
-        {
-            Socket socket=serverSocket.accept();
-            new ServerSocketThread(socket, this).start();
-        }
-    }
-
     public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice) {
-        String response = null;
+        Trace.info("RM::addFlight(" + xid + ", " + flightNum + ", " + flightSeats + ", $" + flightPrice + ") called");
+        Boolean response = false;
         try {
-            response = callResourceServerMethod(ResourceServer.Flights, "addFlight", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNum), Integer.valueOf(flightSeats), Integer.valueOf(flightPrice)});
-        } catch (IOException e) {
+            response = (Boolean) callResourceServerMethod(ResourceServer.Flights, "addFlight", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNum), Integer.valueOf(flightSeats), Integer.valueOf(flightPrice)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware addFlight response:" + response);
-        return Boolean.parseBoolean(response);
+        return response;
     }
 
     public boolean addCars(int xid, String location, int numCars, int price) {
-        String response = null;
+        Boolean response = false;
         try {
-            response = callResourceServerMethod(ResourceServer.Cars, "addCars", new Object[]{Integer.valueOf(xid), location, Integer.valueOf(numCars), Integer.valueOf(price)});
-        } catch (IOException e) {
+            response = (Boolean) callResourceServerMethod(ResourceServer.Cars, "addCars", new Object[]{Integer.valueOf(xid), location, Integer.valueOf(numCars), Integer.valueOf(price)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware addCars response:" + response);
-        return Boolean.parseBoolean(response);
+        return response;
     }
 
     public boolean addRooms(int xid, String location, int numRooms, int price) {
-        String response = null;
+        Boolean response = false;
         try {
-            response = callResourceServerMethod(ResourceServer.Rooms, "addRooms", new Object[]{Integer.valueOf(xid), location, Integer.valueOf(numRooms), Integer.valueOf(price)});
-        } catch (IOException e) {
+            response = (Boolean) callResourceServerMethod(ResourceServer.Rooms, "addRooms", new Object[]{Integer.valueOf(xid), location, Integer.valueOf(numRooms), Integer.valueOf(price)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware addRooms response:" + response);
-        return Boolean.parseBoolean(response);
+        return response;
     }
 
     public synchronized int newCustomer(int xid)
@@ -181,36 +176,36 @@ public class Middleware implements IResourceManager {
     }
 
     public boolean deleteFlight(int xid, int flightNum) {
-        String response = null;
+        Boolean response = false;
         try {
-            response = callResourceServerMethod(ResourceServer.Flights, "deleteFlight", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNum)});
-        } catch (IOException e) {
+            response = (Boolean) callResourceServerMethod(ResourceServer.Flights, "deleteFlight", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNum)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware deleteFlight response:" + response);
-        return Boolean.parseBoolean(response);
+        return response;
     }
 
     public boolean deleteCars(int xid, String location) {
-        String response = null;
+        Boolean response = false;
         try {
-            response = callResourceServerMethod(ResourceServer.Cars, "deleteCars", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException e) {
+            response = (Boolean) callResourceServerMethod(ResourceServer.Cars, "deleteCars", new Object[]{Integer.valueOf(xid), location});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware deleteCars response:" + response);
-        return Boolean.parseBoolean(response);
+        return response;
     }
 
     public boolean deleteRooms(int xid, String location) {
-        String response = null;
+        Boolean response = false;
         try {
-            response = callResourceServerMethod(ResourceServer.Rooms, "deleteRooms", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException e) {
+            response = (Boolean) callResourceServerMethod(ResourceServer.Rooms, "deleteRooms", new Object[]{Integer.valueOf(xid), location});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware deleteRooms response:" + response);
-        return Boolean.parseBoolean(response);
+        return response;
     }
 
     public boolean deleteCustomer(int xid, int customerID) {
@@ -240,36 +235,36 @@ public class Middleware implements IResourceManager {
     }
 
     public int queryFlight(int xid, int flightNumber) {
-        String response = null;
+        int response = 0;
         try {
-            response = callResourceServerMethod(ResourceServer.Flights, "queryFlight", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNumber)});
-        } catch (IOException e) {
+            response = (Integer) callResourceServerMethod(ResourceServer.Flights, "queryFlight", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNumber)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware queryFlight response:" + response);
-        return Integer.parseInt(response);
+        return response;
     }
 
     public int queryCars(int xid, String location) {
-        String response = null;
+        int response = 0;
         try {
-            response = callResourceServerMethod(ResourceServer.Cars, "queryCars", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException e) {
+            response = (Integer)callResourceServerMethod(ResourceServer.Cars, "queryCars", new Object[]{Integer.valueOf(xid), location});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware queryCars response:" + response);
-        return Integer.parseInt(response);
+        return response;
     }
 
     public int queryRooms(int xid, String location) {
-        String response = null;
+        int response = 0;
         try {
-            response = callResourceServerMethod(ResourceServer.Rooms, "queryRooms", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException e) {
+            response = (Integer)callResourceServerMethod(ResourceServer.Rooms, "queryRooms", new Object[]{Integer.valueOf(xid), location});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware queryRooms response:" + response);
-        return Integer.parseInt(response);
+        return response;
     }
 
     public String queryCustomerInfo(int xid, int customerID)
@@ -291,36 +286,36 @@ public class Middleware implements IResourceManager {
     }
 
     public int queryFlightPrice(int xid, int flightNumber) {
-        String response = null;
+        int response = 0;
         try {
-            response = callResourceServerMethod(ResourceServer.Flights, "queryFlightPrice", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNumber)});
-        } catch (IOException e) {
+            response = (Integer)callResourceServerMethod(ResourceServer.Flights, "queryFlightPrice", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNumber)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware addFlight queryFlightPrice:" + response);
-        return Integer.parseInt(response);
+        return response;
     }
 
     public int queryCarsPrice(int xid, String location) {
-        String response = null;
+        int response = 0;
         try {
-            response = callResourceServerMethod(ResourceServer.Cars, "queryCarsPrice", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException e) {
+            response = (Integer)callResourceServerMethod(ResourceServer.Cars, "queryCarsPrice", new Object[]{Integer.valueOf(xid), location});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware queryCarsPrice response:" + response);
-        return Integer.parseInt(response);
+        return response;
     }
 
     public int queryRoomsPrice(int xid, String location) {
-        String response = null;
+        int response = 0;
         try {
-            response = callResourceServerMethod(ResourceServer.Rooms, "queryRoomsPrice", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException e) {
+            response = (Integer)callResourceServerMethod(ResourceServer.Rooms, "queryRoomsPrice", new Object[]{Integer.valueOf(xid), location});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Middleware queryRoomsPrice response:" + response);
-        return Integer.parseInt(response);
+        return response;
     }
 
     public synchronized boolean reserveFlight(int xid, int customerID, int flightNumber) {
@@ -334,15 +329,14 @@ public class Middleware implements IResourceManager {
         }
 
         try {
-            String string = callResourceServerMethod(ResourceServer.Flights, "reserveFlightItem", new Object[]{Integer.valueOf(xid), customerID, flightNumber});
-            int price = Integer.parseInt(string);
+            Integer price = (Integer) callResourceServerMethod(ResourceServer.Flights, "reserveFlightItem", new Object[]{Integer.valueOf(xid), customerID, flightNumber});
             if (price > -1)
             {
                 customer.reserve(Flight.getKey(flightNumber), String.valueOf(flightNumber), price);
                 writeData(xid, customer.getKey(), customer);
                 response = true;
             }
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return response;
@@ -359,16 +353,14 @@ public class Middleware implements IResourceManager {
         }
 
         try {
-            String string = callResourceServerMethod(ResourceServer.Cars, "reserveCarItem", new Object[]{Integer.valueOf(xid), customerID, location});
-            System.out.println("response = " + string);
-            int price = Integer.parseInt(string);
+            Integer price = (Integer) callResourceServerMethod(ResourceServer.Cars, "reserveCarItem", new Object[]{Integer.valueOf(xid), customerID, location});
             if (price > -1)
             {
                 customer.reserve(Car.getKey(location), location, price);
                 writeData(xid, customer.getKey(), customer);
                 response = true;
             }
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return response;
@@ -385,15 +377,14 @@ public class Middleware implements IResourceManager {
         }
 
         try {
-            String string = callResourceServerMethod(ResourceServer.Rooms, "reserveRoomItem", new Object[]{Integer.valueOf(xid), customerID, location});
-            int price = Integer.parseInt(string);
+            Integer price = (Integer) callResourceServerMethod(ResourceServer.Rooms, "reserveRoomItem", new Object[]{Integer.valueOf(xid), customerID, location});
             if (price > -1)
             {
                 customer.reserve(Room.getKey(location), location, price);
                 writeData(xid, customer.getKey(), customer);
                 response = true;
             }
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return response;
@@ -427,13 +418,7 @@ public class Middleware implements IResourceManager {
         try {
             if (flightNumbers.size() > 0)
             {
-                String string = callResourceServerMethod(ResourceServer.Flights, "reserveFlightItemBundle", new Object[]{Integer.valueOf(xid), customerId, flightNumbers});
-                Map<String, Integer> prices = new HashMap<>();
-                String[] rows = string.replace("{","").replace("}","").split(", ");
-                for (String rowStr : rows){
-                    String[] keyValue = rowStr.split("=");
-                    if (keyValue.length == 2) prices.put(keyValue[0], Integer.parseInt(keyValue[1]));
-                }
+                Map<String, Integer> prices = (Map<String, Integer>) callResourceServerMethod(ResourceServer.Flights, "reserveFlightItemBundle", new Object[]{Integer.valueOf(xid), customerId, flightNumbers});
                 if (prices.size() > 0) {
                     for (String flightNum : prices.keySet())
                         customer.reserve(Flight.getKey(Integer.parseInt(flightNum)), flightNum, prices.get(flightNum));
@@ -442,8 +427,7 @@ public class Middleware implements IResourceManager {
             }
             if (car)
             {
-                String string = callResourceServerMethod(ResourceServer.Cars, "reserveCarItem", new Object[]{Integer.valueOf(xid), customerId, location});
-                int price = Integer.parseInt(string);
+                Integer price = (Integer) callResourceServerMethod(ResourceServer.Cars, "reserveCarItem", new Object[]{Integer.valueOf(xid), customerId, location});
                 if (price > -1)
                 {
                     customer.reserve(Car.getKey(location), location, price);
@@ -452,8 +436,7 @@ public class Middleware implements IResourceManager {
             }
             if (room)
             {
-                String string = callResourceServerMethod(ResourceServer.Rooms, "reserveRoomItem", new Object[]{Integer.valueOf(xid), customerId, location});
-                int price = Integer.parseInt(string);
+                Integer price = (Integer) callResourceServerMethod(ResourceServer.Rooms, "reserveRoomItem", new Object[]{Integer.valueOf(xid), customerId, location});
                 if (price > -1)
                 {
                     customer.reserve(Room.getKey(location), location, price);
@@ -478,8 +461,8 @@ public class Middleware implements IResourceManager {
     public String queryReservableFlights(int xid) {
         String response = null;
         try {
-            response = callResourceServerMethod(ResourceServer.Flights, "queryReservableFlights", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException e) {
+            response = (String) callResourceServerMethod(ResourceServer.Flights, "queryReservableFlights", new Object[]{Integer.valueOf(xid)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return response;
@@ -488,8 +471,8 @@ public class Middleware implements IResourceManager {
     public String queryReservableCars(int xid) {
         String response = null;
         try {
-            response = callResourceServerMethod(ResourceServer.Cars, "queryReservableCars", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException e) {
+            response = (String) callResourceServerMethod(ResourceServer.Cars, "queryReservableCars", new Object[]{Integer.valueOf(xid)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return response;
@@ -498,8 +481,8 @@ public class Middleware implements IResourceManager {
     public String queryReservableRooms(int xid) {
         String response = null;
         try {
-            response = callResourceServerMethod(ResourceServer.Rooms, "queryReservableRooms", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException e) {
+            response = (String) callResourceServerMethod(ResourceServer.Rooms, "queryReservableRooms", new Object[]{Integer.valueOf(xid)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return response;
@@ -520,8 +503,8 @@ public class Middleware implements IResourceManager {
     public String queryFlightReservers(int xid) {
         String response = null;
         try {
-            response = callResourceServerMethod(ResourceServer.Flights, "queryFlightReservers", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException e) {
+            response = (String) callResourceServerMethod(ResourceServer.Flights, "queryFlightReservers", new Object[]{Integer.valueOf(xid)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return response;
@@ -530,8 +513,8 @@ public class Middleware implements IResourceManager {
     public String queryCarReservers(int xid) {
         String response = null;
         try {
-            response = callResourceServerMethod(ResourceServer.Cars, "queryCarReservers", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException e) {
+            response = (String) callResourceServerMethod(ResourceServer.Cars, "queryCarReservers", new Object[]{Integer.valueOf(xid)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return response;
@@ -540,14 +523,14 @@ public class Middleware implements IResourceManager {
     public String queryRoomReservers(int xid) {
         String response = null;
         try {
-            response = callResourceServerMethod(ResourceServer.Rooms, "queryRoomReservers", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException e) {
+            response = (String) callResourceServerMethod(ResourceServer.Rooms, "queryRoomReservers", new Object[]{Integer.valueOf(xid)});
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return response;
     }
 
-    public String callResourceServerMethod(ResourceServer resourceServer, String methodName, Object[] argList) throws IOException {
+    public Object callResourceServerMethod(ResourceServer resourceServer, String methodName, Object[] argList) throws IOException, ClassNotFoundException {
         String host = "";
         int port = 0;
         switch (resourceServer)
@@ -556,23 +539,18 @@ public class Middleware implements IResourceManager {
             case Cars: host = carsResourceServerHost; port = carsResourceServerPort; break;
             case Rooms: host = roomsResourceServerHost; port = roomsResourceServerPort; break;
         }
+
+//        System.out.println("Creating Socket");
         Socket socket= new Socket(host, port);
-        PrintWriter outToServer= new PrintWriter(socket.getOutputStream(),true);
-        BufferedReader inFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        JSONObject jsonObject = new JSONObject();
-        List<Object> args = new ArrayList<Object>();
-        for (Object obj : argList) args.add(obj);
-        jsonObject.put("method", methodName);
-        jsonObject.put("args", args);
-        System.out.println("Send JSON=" + jsonObject.toString());
-        outToServer.println(jsonObject.toString());
-        String response = "", line;
-        while ((line = inFromServer.readLine()) != null) {
-            if (line.equals("end")) break;
-            response += ((response.length() > 0 ? "\n" : "") + line);
-        }
-        System.out.println("response from server = " + response);
-        socket.close();
-        return response;
+//        System.out.println("Created Socket" + socket);
+        ObjectOutputStream outToServer = new ObjectOutputStream(socket.getOutputStream());
+        ObjectInputStream inFromServer = new ObjectInputStream(socket.getInputStream());
+
+//        System.out.println("Calling : " + methodName + argList);
+        outToServer.writeObject(methodName);
+        outToServer.writeObject(Arrays.asList(argList));
+        Object returnObj =  inFromServer.readObject();
+//        System.out.println("Returning : " + returnObj + " : " + returnObj.getClass());
+        return returnObj;
     }
 }
