@@ -18,11 +18,7 @@ public class RMIRoomsResourceManager extends  RoomsResourceManager {
     {
         if (args.length > 0)
         {
-            s_serverName = args[0];
-        }
-        if (args.length > 1)
-        {
-            s_portNum = Integer.parseInt(args[1]);
+            s_portNum = Integer.parseInt(args[0]);
         }
 
         // Create the RMI server entry
