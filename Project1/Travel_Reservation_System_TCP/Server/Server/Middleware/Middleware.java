@@ -7,7 +7,6 @@ import Server.ResourceServer.ServerSocketThread;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.RemoteException;
 import java.util.*;
 
 public class Middleware implements IResourceManager {

@@ -7,8 +7,6 @@ import java.util.*;
 public class Client {
     private static String s_serverHost = "localhost";
     private static int s_serverPort = 5004;
-//    private PrintWriter outToServer;
-//    private BufferedReader inFromServer;
     private ObjectOutputStream outToServer;
     private ObjectInputStream inFromServer;
 
