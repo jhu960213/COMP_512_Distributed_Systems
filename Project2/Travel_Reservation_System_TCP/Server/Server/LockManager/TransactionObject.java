@@ -10,7 +10,7 @@ public class TransactionObject
 		m_xid = 0;
 	}
 
-	TransactionObject(int xid)
+	public TransactionObject(int xid)
 	{
 		super();
 

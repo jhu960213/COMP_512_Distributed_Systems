@@ -34,6 +34,11 @@ public enum Command {
 
 	Bundle("Book N flight numbers, and optionally a room and/or car at a location", "<xid>,<CustomerID>,<FlightNumber1>...<FlightNumberN>,<Location>,<Car-Y/N>,<Room-Y/N>"),
 
+	Start("Start a transaction", ""),
+	Commit("Commit a transaction", "<xid>"),
+	Abort("Abort a transaction", "<xid>"),
+	Shutdown("Shutdown the system", ""),
+
 	Quit("Exit the client application", "");
 
 	String m_description;

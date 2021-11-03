@@ -468,6 +468,50 @@ public class Client {
                 System.out.println("ROOM ANALYTICS:\n" + string);
                 break;
             }
+            case Start: {
+                checkArgumentsCount(1, arguments.size());
+                System.out.println("Starting a transaction");
+                Integer xid = (Integer) callServer("start", new Object[]{});
+                System.out.println("Start a transaction: " + xid);
+                break;
+            }
+            case Commit: {
+                checkArgumentsCount(2, arguments.size());
+
+                System.out.println("Committing a transaction [xid=" + arguments.elementAt(1) + "]");
+
+                int id = toInt(arguments.elementAt(1));
+
+                if ((Boolean) callServer("commit", new Object[]{id})) {
+                    System.out.println("Transaction committed");
+                } else {
+                    System.out.println("Transaction could not be committed");
+                }
+                break;
+            }
+            case Abort: {
+                checkArgumentsCount(2, arguments.size());
+
+                System.out.println("Aborting a transaction [xid=" + arguments.elementAt(1) + "]");
+
+                int id = toInt(arguments.elementAt(1));
+
+                callServer("abort", new Object[]{id});
+                System.out.println("Abort transaction");
+                break;
+            }
+            case Shutdown: {
+                checkArgumentsCount(1, arguments.size());
+
+                System.out.println("Shutting down the system");
+
+                if ((Boolean) callServer("shutdown", new Object[]{})) {
+                    System.out.println("System shut down");
+                } else {
+                    System.out.println("System could not be shut down");
+                }
+                break;
+            }
             case Quit:
                 checkArgumentsCount(1, arguments.size());
                 callServer("Quit", null);

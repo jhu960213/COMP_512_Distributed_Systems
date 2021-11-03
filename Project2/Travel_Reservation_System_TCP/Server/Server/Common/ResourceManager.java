@@ -6,6 +6,9 @@
 package Server.Common;
 
 import Server.Interface.IResourceManager;
+import Server.LockManager.DeadlockException;
+import Server.LockManager.LockManager;
+import Server.LockManager.TransactionLockObject;
 
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -17,6 +20,7 @@ public class ResourceManager implements IResourceManager
 {
 	protected String m_name = "";
 	protected RMHashMap m_data = new RMHashMap();
+	private LockManager lockManager = new LockManager();
 
 	public ResourceManager(String p_name)
 	{
@@ -26,33 +30,54 @@ public class ResourceManager implements IResourceManager
 	// Reads a data item
 	protected RMItem readData(int xid, String key)
 	{
-		synchronized(m_data) {
-			RMItem item = m_data.get(key);
-			if (item != null) {
-				return (RMItem)item.clone();
+		try {
+			boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_READ);
+			if (lockGranted) {
+				synchronized(m_data) {
+					RMItem item = m_data.get(key);
+					if (item != null) {
+						return (RMItem)item.clone();
+					}
+				}
 			}
-			return null;
+		} catch (DeadlockException e) {
+			e.printStackTrace();
 		}
+		return null;
 	}
 
 	// Writes a data item
 	protected void writeData(int xid, String key, RMItem value)
 	{
-		synchronized(m_data) {
-			m_data.put(key, value);
+		try {
+			boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
+			if (lockGranted) {
+				synchronized(m_data) {
+					m_data.put(key, value);
+				}
+			}
+		} catch (DeadlockException e) {
+			e.printStackTrace();
 		}
 	}
 
 	// Remove the item out of storage
 	protected void removeData(int xid, String key)
 	{
-		synchronized(m_data) {
-			m_data.remove(key);
+		try {
+			boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
+			if (lockGranted) {
+				synchronized(m_data) {
+					m_data.remove(key);
+				}
+			}
+		} catch (DeadlockException e) {
+			e.printStackTrace();
 		}
 	}
 
 	// Deletes the encar item
-	protected synchronized boolean deleteItem(int xid, String key)
+	protected boolean deleteItem(int xid, String key)
 	{
 		Trace.info("RM::deleteItem(" + xid + ", " + key + ") called");
 		ReservableItem curObj = (ReservableItem)readData(xid, key);
@@ -107,7 +132,7 @@ public class ResourceManager implements IResourceManager
 	}
 
 	// Reserve an item
-	protected synchronized int reserveItem(int xid, int customerID, String key, String location)
+	protected int reserveItem(int xid, int customerID, String key, String location)
 	{
 		// Check if the item is available
 		ReservableItem item = (ReservableItem)readData(xid, key);
@@ -308,7 +333,7 @@ public class ResourceManager implements IResourceManager
 
 	}
 
-	public synchronized void cancelReservations(Object customerObj, int xid, int customerID)  {
+	public void cancelReservations(Object customerObj, int xid, int customerID)  {
 
 		// loop through all the reservations the customer currently has and cancel them
 		Customer customer = (Customer)customerObj;
@@ -327,8 +352,23 @@ public class ResourceManager implements IResourceManager
 		}
 		Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") now has no reservations pertaining to " + this.getName() + "!");
 	}
+	public int start() {
+		return 0;
+	}
 
-	public String getName() 
+	public boolean commit(int xid) {
+		return lockManager.UnlockAll(xid);
+	}
+
+	public void abort(int xid) {
+
+	}
+
+	public boolean shutdown() {
+		return false;
+	}
+
+	public String getName()
 	{
 		return m_name;
 	}

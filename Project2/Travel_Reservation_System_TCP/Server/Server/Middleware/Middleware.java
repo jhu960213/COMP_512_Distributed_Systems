@@ -2,6 +2,9 @@ package Server.Middleware;
 
 import Server.Common.*;
 import Server.Interface.IResourceManager;
+import Server.LockManager.DeadlockException;
+import Server.LockManager.LockManager;
+import Server.LockManager.TransactionLockObject;
 import Server.ResourceServer.ServerSocketThread;
 
 import java.io.*;
@@ -10,8 +13,8 @@ import java.net.Socket;
 import java.util.*;
 
 public class Middleware implements IResourceManager {
-    enum ResourceServer {
-        Flights, Cars, Rooms
+    public enum ResourceServer {
+        Middleware, Flights, Cars, Rooms
     }
     private static int middlewareRegistryPortNum = 5004;
 
@@ -26,9 +29,14 @@ public class Middleware implements IResourceManager {
 
     protected RMHashMap customersList;
 
+    private TransactionManager transactionManager;
+    private LockManager lockManager;
+
     public Middleware() {
         try {
             this.customersList = new RMHashMap();
+            this.transactionManager = new TransactionManager();
+            this.lockManager = new LockManager();
         } catch (Exception e) {
             System.out.println("\n*** Middleware error: " + e.getMessage() + " ***\n");
         }
@@ -40,7 +48,6 @@ public class Middleware implements IResourceManager {
 
     public static void main(String args[])
     {
-
         if (args.length > 0) flightsResourceServerHost = args[0];
         if (args.length > 1) carsResourceServerHost = args[1];
         if (args.length > 2) roomsResourceServerHost = args[2];
@@ -80,28 +87,52 @@ public class Middleware implements IResourceManager {
     // Reads a data item
     protected RMItem readData(int xid, String key)
     {
-        synchronized(this.customersList) {
-            RMItem item = this.customersList.get(key);
-            if (item != null) {
-                return (RMItem)item.clone();
+        transactionManager.addDataOperation(xid, ResourceServer.Middleware);
+        try {
+            Boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_READ);
+            if (lockGranted) {
+                synchronized(this.customersList) {
+                    RMItem item = this.customersList.get(key);
+                    if (item != null) {
+                        return (RMItem)item.clone();
+                    }
+                }
             }
-            return null;
+        } catch (DeadlockException e) {
+            e.printStackTrace();
         }
+        return null;
     }
 
     // Writes a data item
     protected void writeData(int xid, String key, RMItem value)
     {
-        synchronized(this.customersList) {
-            this.customersList.put(key, value);
+        transactionManager.addDataOperation(xid, ResourceServer.Middleware);
+        try {
+            Boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
+            if (lockGranted) {
+                synchronized(this.customersList) {
+                    this.customersList.put(key, value);
+                }
+            }
+        } catch (DeadlockException e) {
+            e.printStackTrace();
         }
     }
 
     // Remove the item out of storage
     protected void removeData(int xid, String key)
     {
-        synchronized(this.customersList) {
-            this.customersList.remove(key);
+        transactionManager.addDataOperation(xid, ResourceServer.Middleware);
+        try {
+            Boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
+            if (lockGranted) {
+                synchronized(this.customersList) {
+                    this.customersList.remove(key);
+                }
+            }
+        } catch (DeadlockException e) {
+            e.printStackTrace();
         }
     }
 
@@ -139,7 +170,7 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
-    public synchronized int newCustomer(int xid)
+    public int newCustomer(int xid)
     {
         int cid = 0; // 0 will be the default value returned if it failed to add customers at middleware
         Trace.info("RM::newCustomer(" + xid + ") called");
@@ -152,7 +183,7 @@ public class Middleware implements IResourceManager {
         return cid;
     }
 
-    public synchronized boolean newCustomer(int xid, int customerID)
+    public boolean newCustomer(int xid, int customerID)
     {
         Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") called");
         Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
@@ -318,7 +349,7 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
-    public synchronized boolean reserveFlight(int xid, int customerID, int flightNumber) {
+    public boolean reserveFlight(int xid, int customerID, int flightNumber) {
         Trace.info("RM::reserveFlight(" + xid + ", " + customerID + ", " + flightNumber + ") called");
         Boolean response = false;
         // Read customer object if it exists (and read lock it)
@@ -342,7 +373,7 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
-    public synchronized boolean reserveCar(int xid, int customerID, String location) {
+    public boolean reserveCar(int xid, int customerID, String location) {
         Trace.info("RM::reserveCar(" + xid + ", " + customerID + ", " + location + ") called");
         Boolean response = false;
         // Read customer object if it exists (and read lock it)
@@ -366,7 +397,7 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
-    public synchronized boolean reserveRoom(int xid, int customerID, String location) {
+    public boolean reserveRoom(int xid, int customerID, String location) {
         Trace.info("RM::reserveRoom(" + xid + ", " + customerID + ", " + location + ") called");
         Boolean response = false;
         // Read customer object if it exists (and read lock it)
@@ -405,7 +436,7 @@ public class Middleware implements IResourceManager {
         return 0;
     }
 
-    public synchronized boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room)
+    public boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room)
     {
         Trace.info("RM::bundle(" + xid + ", " + customerId + ", " + flightNumbers + ", " + location + ", " + car + ", " + room + ") called");
         // Read customer object if it exists (and read lock it)
@@ -569,6 +600,37 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    public int start() {
+        Trace.info("Middleware::start() called");
+        return transactionManager.start();
+    }
+
+    public boolean commit(int xid) {
+        try {
+            Trace.info("Middleware::commit(" + xid + ") called");
+            HashSet<ResourceServer> serverTypes = transactionManager.dataOperationsOfTransaction(xid);
+            Trace.info("serverTypes = " + serverTypes);
+            for (ResourceServer type: serverTypes)
+                if (type == ResourceServer.Middleware) {
+                    if (!lockManager.UnlockAll(xid)) return false;
+                } else {
+                    if (!(Boolean)callResourceServerMethod(type, "commit", new Object[]{Integer.valueOf(xid)})) return false;
+                }
+            return transactionManager.commit(xid);
+        } catch (Exception e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+        }
+        return false;
+    }
+
+    public void abort(int xid) {
+
+    }
+
+    public boolean shutdown() {
+        return false;
+    }
+
     public Object callResourceServerMethod(ResourceServer resourceServer, String methodName, Object[] argList) throws IOException, ClassNotFoundException {
         String host = "";
         int port = 0;
@@ -577,6 +639,10 @@ public class Middleware implements IResourceManager {
             case Flights: host = flightsResourceServerHost; port = flightsResourceServerPort; break;
             case Cars: host = carsResourceServerHost; port = carsResourceServerPort; break;
             case Rooms: host = roomsResourceServerHost; port = roomsResourceServerPort; break;
+        }
+
+        if (argList.length > 0 && !methodName.equals("commit") && !methodName.equals("abort")) {
+            transactionManager.addDataOperation((Integer) argList[0], resourceServer);
         }
 
         Socket socket= new Socket(host, port);
