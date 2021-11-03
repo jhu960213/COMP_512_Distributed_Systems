@@ -1,7 +1,6 @@
 package Server.LockManager;
 
 import Server.Common.*;
-
 import java.util.BitSet;
 import java.util.Vector;
 

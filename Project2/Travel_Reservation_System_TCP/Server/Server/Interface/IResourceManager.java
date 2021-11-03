@@ -215,7 +215,7 @@ public interface IResourceManager
      */
     public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers);
 
-
+    // added from project1
     public String queryReservableFlights(int xid);
 
     public String queryReservableCars(int xid);
@@ -229,10 +229,21 @@ public interface IResourceManager
     public String queryCarReservers(int xid);
 
     public String queryRoomReservers(int xid);
+
     /**
      * Convenience for probing the resource manager.
      *
      * @return Name
      */
     public String getName();
+
+    // added from project2
+    public int start();
+
+    public boolean commit(int transactionId) throws TransactionAbortedException, InvalidTransactionException;
+
+    public void abort(int transactionId) throws InvalidTransactionException;
+
+    public boolean shutdown();
+
 }
