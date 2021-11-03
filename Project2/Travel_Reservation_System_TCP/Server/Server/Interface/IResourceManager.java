@@ -235,6 +235,11 @@ public interface IResourceManager
      *
      * @return Name
      */
+
+    public int start();
+    public boolean commit(int xid);
+    public void abort(int xid);
+    public boolean shutdown();
     public String getName();
 
     // added from project2

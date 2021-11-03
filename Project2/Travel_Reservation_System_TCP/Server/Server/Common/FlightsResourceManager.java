@@ -14,7 +14,7 @@ public class FlightsResourceManager extends ResourceManager {
 
     // Create a new flight, or add seats to existing flight
     // NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
-    public synchronized boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice) 
+    public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice)
     {
         Trace.info("RM::addFlight(" + xid + ", " + flightNum + ", " + flightSeats + ", $" + flightPrice + ") called");
         Flight curObj = (Flight)readData(xid, Flight.getKey(flightNum));
