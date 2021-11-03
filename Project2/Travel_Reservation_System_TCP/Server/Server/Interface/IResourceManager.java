@@ -1,5 +1,6 @@
 package Server.Interface;
 
+import Server.LockManager.*;
 import java.util.Map;
 import java.util.Vector;
 
@@ -236,13 +237,11 @@ public interface IResourceManager
      * @return Name
      */
 
-    public int start();
-    public boolean commit(int xid);
-    public void abort(int xid);
-    public boolean shutdown();
     public String getName();
 
-    // added from project2
+    /**
+     * methods for client transaction control from project 2
+     */
     public int start();
 
     public boolean commit(int transactionId) throws TransactionAbortedException, InvalidTransactionException;
@@ -250,5 +249,4 @@ public interface IResourceManager
     public void abort(int transactionId) throws InvalidTransactionException;
 
     public boolean shutdown();
-
 }

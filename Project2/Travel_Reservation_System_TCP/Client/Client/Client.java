@@ -31,6 +31,7 @@ public class Client {
     }
 
     public void start() throws IOException {
+
         Socket socket = new Socket(s_serverHost, s_serverPort); // establish a socket with a server using the given port#
         outToServer = new ObjectOutputStream(socket.getOutputStream());
         inFromServer = new ObjectInputStream(socket.getInputStream());
@@ -470,45 +471,37 @@ public class Client {
             }
             case Start: {
                 checkArgumentsCount(1, arguments.size());
-                System.out.println("Starting a transaction");
+                System.out.println("Starting a transaction...");
                 Integer xid = (Integer) callServer("start", new Object[]{});
-                System.out.println("Start a transaction: " + xid);
+                System.out.println("Transaction with id: " + xid + " have been started.");
                 break;
             }
             case Commit: {
                 checkArgumentsCount(2, arguments.size());
-
-                System.out.println("Committing a transaction [xid=" + arguments.elementAt(1) + "]");
-
+                System.out.println("Committing a transaction [xid=" + arguments.elementAt(1) + "]...");
                 int id = toInt(arguments.elementAt(1));
-
                 if ((Boolean) callServer("commit", new Object[]{id})) {
-                    System.out.println("Transaction committed");
+                    System.out.println("Transaction committed.");
                 } else {
-                    System.out.println("Transaction could not be committed");
+                    System.out.println("Transaction failed to be committed.");
                 }
                 break;
             }
             case Abort: {
                 checkArgumentsCount(2, arguments.size());
-
-                System.out.println("Aborting a transaction [xid=" + arguments.elementAt(1) + "]");
-
+                System.out.println("Aborting a transaction [xid=" + arguments.elementAt(1) + "]...");
                 int id = toInt(arguments.elementAt(1));
-
                 callServer("abort", new Object[]{id});
-                System.out.println("Abort transaction");
+                System.out.println("Transaction aborted.");
                 break;
             }
             case Shutdown: {
                 checkArgumentsCount(1, arguments.size());
-
-                System.out.println("Shutting down the system");
-
+                System.out.println("Shutting down the system...");
                 if ((Boolean) callServer("shutdown", new Object[]{})) {
-                    System.out.println("System shut down");
+                    System.out.println("System shut down completed.");
                 } else {
-                    System.out.println("System could not be shut down");
+                    System.out.println("System shut down failed.");
                 }
                 break;
             }
