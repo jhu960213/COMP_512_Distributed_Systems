@@ -6,6 +6,8 @@
 package Server.Common;
 
 import Server.Interface.IResourceManager;
+import Server.Interface.InvalidTransactionException;
+import Server.Interface.TransactionAbortedException;
 import Server.LockManager.DeadlockException;
 import Server.LockManager.LockManager;
 import Server.LockManager.TransactionLockObject;
@@ -366,6 +368,10 @@ public class ResourceManager implements IResourceManager
 
 	public boolean shutdown() {
 		return false;
+	}
+
+	public void checkTransaction(int transactionId, String methodName) throws TransactionAbortedException, InvalidTransactionException {
+
 	}
 
 	public String getName()

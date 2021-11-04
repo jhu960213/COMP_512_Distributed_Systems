@@ -1,5 +1,7 @@
 package Client;
 
+import Server.Interface.InvalidTransactionException;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
@@ -65,6 +67,9 @@ public class Client {
             catch (IllegalArgumentException e) {
                 System.err.println((char)27 + "[31;1mCommand exception: " + (char)27 + "[0m" + e.getLocalizedMessage());
             }
+            catch (InvalidTransactionException e) {
+                System.err.println((char)27 + "[31;1mInvalid transactionID (xid): " + (char)27 + "[0m" + e.getLocalizedMessage());
+            }
             catch (Exception e) {
                 System.err.println((char)27 + "[31;1mCommand exception: " + (char)27 + "[0mUncaught exception");
                 e.printStackTrace();
@@ -73,15 +78,16 @@ public class Client {
         socket.close();
     }
 
-    public Object callServer(String methodName, Object[] argList) throws IOException, ClassNotFoundException {
+    public Object callServer(String methodName, Object[] argList) throws IOException, ClassNotFoundException, InvalidTransactionException {
         outToServer.writeObject(methodName);
         if (argList == null) return null;
         outToServer.writeObject(argList);
         Object response = inFromServer.readObject();
+        if (response.getClass() == InvalidTransactionException.class) throw (InvalidTransactionException) response;
         return response;
     }
 
-    public boolean execute(Command cmd, Vector<String> arguments) throws NumberFormatException, IOException, ClassNotFoundException {
+    public boolean execute(Command cmd, Vector<String> arguments) throws NumberFormatException, IOException, ClassNotFoundException, InvalidTransactionException {
         switch (cmd)
         {
             case Help:

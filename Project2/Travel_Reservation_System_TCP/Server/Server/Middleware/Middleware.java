@@ -2,7 +2,9 @@ package Server.Middleware;
 
 import Server.Common.*;
 import Server.Interface.IResourceManager;
+import Server.Interface.TransactionAbortedException;
 import Server.LockManager.DeadlockException;
+import Server.Interface.InvalidTransactionException;
 import Server.LockManager.LockManager;
 import Server.LockManager.TransactionLockObject;
 import Server.ResourceServer.ServerSocketThread;
@@ -170,8 +172,7 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
-    public int newCustomer(int xid)
-    {
+    public int newCustomer(int xid) {
         int cid = 0; // 0 will be the default value returned if it failed to add customers at middleware
         Trace.info("RM::newCustomer(" + xid + ") called");
         cid = Integer.parseInt(String.valueOf(xid) +
@@ -629,6 +630,11 @@ public class Middleware implements IResourceManager {
 
     public boolean shutdown() {
         return false;
+    }
+
+    public void checkTransaction(int transactionId, String methodName) throws TransactionAbortedException, InvalidTransactionException {
+        Trace.info("Middleware::checkTransaction(" + transactionId + "," + methodName + ") called");
+        if (!transactionManager.isActive(transactionId)) throw new InvalidTransactionException(transactionId, methodName);
     }
 
     public Object callResourceServerMethod(ResourceServer resourceServer, String methodName, Object[] argList) throws IOException, ClassNotFoundException {
