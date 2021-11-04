@@ -3,8 +3,9 @@ package Client;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
+import java.lang.Math;
 
-public class Client {
+public class TestClient {
 
     private static String s_serverHost = "localhost";
     private static int s_serverPort = 5004;
@@ -31,15 +32,25 @@ public class Client {
         client.start();
     }
 
+    // java reflection calling server
+    public Object callServer(String methodName, Object[] argList) throws IOException, ClassNotFoundException {
+        outToServer.writeObject(methodName);
+        if (argList == null) return null;
+        outToServer.writeObject(argList);
+        Object response = inFromServer.readObject();
+        return response;
+    }
+
+    // creates tcp socket and loops infinitely to parse and send our commands to middleware over socket
     public void start() throws IOException {
 
         Socket socket = new Socket(s_serverHost, s_serverPort); // establish a socket with a server using the given port#
         outToServer = new ObjectOutputStream(socket.getOutputStream());
         inFromServer = new ObjectInputStream(socket.getInputStream());
+
         // Prepare for reading commands
         System.out.println("*** Welcome to TCP Client Test Suite Interface ***");
         System.out.println("Please use command: \"help\" for a list of supported commands");
-
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 
         while (true)
@@ -73,15 +84,9 @@ public class Client {
         socket.close();
     }
 
-    public Object callServer(String methodName, Object[] argList) throws IOException, ClassNotFoundException {
-        outToServer.writeObject(methodName);
-        if (argList == null) return null;
-        outToServer.writeObject(argList);
-        Object response = inFromServer.readObject();
-        return response;
-    }
+    // executes a specific command
+    public boolean execute(Command cmd, Vector<String> arguments) throws NumberFormatException, IOException, ClassNotFoundException, InterruptedException {
 
-    public boolean execute(Command cmd, Vector<String> arguments) throws NumberFormatException, IOException, ClassNotFoundException {
         switch (cmd)
         {
             case Help:
@@ -506,6 +511,66 @@ public class Client {
                 }
                 break;
             }
+            case ExecuteTestSuite: {
+
+                checkArgumentsCount(5, arguments.size());
+                Random rand = new Random(4);
+
+                int numOperations = toInt(arguments.elementAt(1));
+                int numTransactions = toInt(arguments.elementAt(2));
+                boolean debug = toBoolean(arguments.elementAt(3));
+                int throughPut = toInt(arguments.elementAt(4));
+                long perTransaction = (long)1/((long)throughPut);
+                System.out.println("Executing test suite with: " + numTransactions + " transactions and " + numOperations + " operations/transaction...");
+                long startTime;
+                long endTime;
+
+                for (int tx = 0; tx < numTransactions; tx++)
+                {
+                    startTime = System.nanoTime();
+
+                    // starting a new transaction
+                    Integer txid = (Integer) callServer("start", new Object[]{});
+                    if (debug)
+                        System.out.println("\nRunning transaction ID: " + txid + "...");
+                    Object[] commandAndArgs = generateCommand(txid);
+
+                    // submitting all operations within a transaction
+                    for(int op = 0; op < numOperations; op++)
+                    {
+                        String command = ((HashMap<Integer, String>)commandAndArgs[0]).get(op);
+                        Object[] args = ((HashMap<Integer, Object[]>)commandAndArgs[1]).get(op);
+                        if (debug)
+                            System.out.println("*** executing client operation " + op + "... ***");
+                        Object response = callServer(command, args);
+                        if (debug)
+                            System.out.println("*** server response to client operation: ***\n" + response.toString());
+                    }
+
+                    // commit transaction
+                    boolean commitResponse = (boolean)callServer("commit", new Object[]{txid});
+                    if (debug) {
+                        if (commitResponse)
+                            System.out.println("*** transactions ID: " + txid + "committed successfully.");
+                        else {
+                            System.out.println("*** transactions ID: " + txid + "failed to commit.");
+                        }
+                    }
+
+                    // sleeping to adjust for correct throughput
+                    endTime = System.nanoTime();
+                    long duration = endTime - startTime;
+                    long waitTime = perTransaction - (long)(duration * Math.pow(10,-6));
+                    if (waitTime <= 0)
+                        System.out.println("*** client should not wait since real transaction duration: " +
+                                (long)(duration * Math.pow(10,-6))  +
+                                ">=" + " theoretical transaction duration: " +
+                                perTransaction + " defined by client's desired throughput ***");
+                    else {
+                        Thread.sleep(waitTime);
+                    }
+                }
+            }
             case Quit:
                 checkArgumentsCount(1, arguments.size());
                 callServer("Quit", null);
@@ -513,6 +578,76 @@ public class Client {
                 return false;
         }
         return true;
+    }
+
+    private Object[] generateCommand(Integer txid) {
+
+        // default values - flightNum = 911, Location = montreal, CustomerID = 1000
+
+        HashMap<Integer, String> commands = new HashMap<Integer, String>();
+        HashMap<Integer, Object[]> commandArgs = new HashMap<Integer, Object[]>();
+
+        commands.put(0, "AddFlight");
+        commandArgs.put(0, new Object[]{txid, 911, 100, 50});
+
+        commands.put(1, "AddCars");
+        commandArgs.put(1, new Object[]{txid, "montreal", 100, 150});
+
+        commands.put(2, "AddRooms");
+        commandArgs.put(2, new Object[]{txid, "toronto", 100, 2000});
+
+        commands.put(3, "AddCustomer");
+        commandArgs.put(3, new Object[]{txid});
+
+        commands.put(4, "AddCustomerID");
+        commandArgs.put(4, new Object[]{txid, 1000});
+
+        commands.put(5, "DeleteFlight");
+        commandArgs.put(5, new Object[]{txid, 911});
+
+        commands.put(6, "DeleteCars");
+        commandArgs.put(6, new Object[]{txid, "montreal"});
+
+        commands.put(7, "DeleteRooms");
+        commandArgs.put(7, new Object[]{txid, "toronto"});
+
+        commands.put(8, "DeleteCustomer");
+        commandArgs.put(8, new Object[]{txid, 1000});
+
+        commands.put(9, "QueryFlight");
+        commandArgs.put(9, new Object[]{txid, 911});
+
+        commands.put(10, "QueryCars");
+        commandArgs.put(10, new Object[]{txid, "montreal"});
+
+        commands.put(11, "QueryRooms");
+        commandArgs.put(11, new Object[]{txid, "toronto"});
+
+        commands.put(12, "QueryCustomer");
+        commandArgs.put(12, new Object[]{txid, 1000});
+
+        commands.put(13, "QueryFlightPrice");
+        commandArgs.put(13, new Object[]{txid, 911});
+
+        commands.put(14, "QueryCarsPrice");
+        commandArgs.put(14, new Object[]{txid, "montreal"});
+
+        commands.put(15, "QueryRoomsPrice");
+        commandArgs.put(15, new Object[]{txid, "toronto"});
+
+        commands.put(16, "ReserveFlight");
+        commandArgs.put(16, new Object[]{txid, 1000, 911});
+
+        commands.put(17, "ReserveCar");
+        commandArgs.put(17, new Object[]{txid, 1000, "montreal"});
+
+        commands.put(18, "ReserveRoom");
+        commandArgs.put(18, new Object[]{txid, 1000, "toronto"});
+
+        commands.put(19, "Bundle");
+        commandArgs.put(19, new Object[]{txid, 1000, 911, "montreal", 1, 1});
+
+        return new Object[]{commands, commandArgs};
     }
 
     public static Vector<String> parse(String command)
