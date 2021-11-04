@@ -1,6 +1,5 @@
 package Server.Interface;
 
-import Server.LockManager.*;
 import java.util.Map;
 import java.util.Vector;
 
@@ -249,4 +248,6 @@ public interface IResourceManager
     public void abort(int transactionId) throws InvalidTransactionException;
 
     public boolean shutdown();
+
+    public void checkTransaction(int transactionId, String methodName) throws TransactionAbortedException, InvalidTransactionException;
 }

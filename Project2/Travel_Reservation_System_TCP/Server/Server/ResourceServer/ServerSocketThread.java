@@ -1,6 +1,8 @@
 package Server.ResourceServer;
 
 import Server.Interface.IResourceManager;
+import Server.Interface.InvalidTransactionException;
+import Server.Interface.TransactionAbortedException;
 
 import java.io.*;
 import java.net.Socket;
@@ -29,23 +31,43 @@ public class ServerSocketThread extends Thread
                     break;
                 }
                 Object[] argList = (Object[]) inFromClient.readObject();
-                for (Method method : this.resourceManager.getClass().getMethods())
-                    if (method.getName().equals(methodName) && method.getParameterCount() == argList.length) {
-                        Object returnObj = method.invoke(this.resourceManager, argList);
-                        outToClient.writeObject(returnObj);
-                        break;
+                try {
+                    if (argList.length > 0 && !methodName.equals("commit") && !methodName.equals("abort"))
+                        resourceManager.checkTransaction((int)argList[0], methodName);
+                    for (Method method : this.resourceManager.getClass().getMethods())
+                        if (method.getName().equals(methodName) && method.getParameterCount() == argList.length) {
+                            Object returnObj = method.invoke(this.resourceManager, argList);
+                            outToClient.writeObject(returnObj);
+                            break;
+                        }
+//                    Class[] argTypes = new Class[argList.length];
+//                    for (int i = 0; i < argList.length; i++) argTypes[i] = argList[i].getClass();
+//                    System.out.println(argTypes);
+//                    Method method = resourceManager.getClass().getMethod(methodName, argTypes);
+//                    Object returnObj = method.invoke(this.resourceManager, argList);
+//                    outToClient.writeObject(returnObj);
+                } catch (InvocationTargetException e) {
+                    Throwable cause = e.getCause();
+                    if (cause.getClass() == InvalidTransactionException.class || cause.getClass() == TransactionAbortedException.class)
+                    {
+                        try {
+                            outToClient.writeObject(e.getCause());
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                    } else e.printStackTrace();
+                } catch (InvalidTransactionException | TransactionAbortedException e) {
+                    try {
+                        outToClient.writeObject(e);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
                     }
-//                Class[] argTypes = new Class[argList.length];
-//                for (int i = 0; i < argList.length; i++) argTypes[i] = argList[i].getClass();
-//                System.out.println(argTypes);
-//                Method method = resourceManager.getClass().getMethod(methodName, argTypes);
-//                Object returnObj = method.invoke(this.resourceManager, argList);
-//                outToClient.writeObject(returnObj);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
             }
             this.socket.close();
-        }
-        catch (IOException | ClassNotFoundException e)
-        {
+        } catch (IOException | ClassNotFoundException e) {
             if (e.getClass() == EOFException.class) {
                 try {
                     this.socket.close();
@@ -53,11 +75,8 @@ public class ServerSocketThread extends Thread
                     ex.printStackTrace();
                 }
             } else e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
         }
+
     }
 
 }
