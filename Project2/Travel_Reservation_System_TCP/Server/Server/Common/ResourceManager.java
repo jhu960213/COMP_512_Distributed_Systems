@@ -364,7 +364,6 @@ public class ResourceManager implements IResourceManager
 	public void abort(int xid) {
 		Trace.info("RM::abort(" + xid + ") called");
 		RMHashMap undo = transactionDataManager.undoTransactionDataList(xid);
-		System.out.println(undo);
 		if (undo!=null && undo.size() > 0)
 			for (Map.Entry<String, RMItem> entry: undo.entrySet())
 				undoWriteData(xid, entry.getKey(), entry.getValue());

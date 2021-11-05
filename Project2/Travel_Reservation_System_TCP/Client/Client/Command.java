@@ -38,7 +38,7 @@ public enum Command {
 	Commit("Commit a transaction", "<transaction_id>"),
 	Abort("Abort a transaction", "<transaction_id>"),
 	Shutdown("Shutdown the system", ""),
-	ExecuteTestSuite("Client can execute a series of commands in a loop", "<NumOperations><NumTransactions><Debug><Transactions/(s)>"),
+	ExecuteTestSuite("Client can execute different test suites with different number of transactions and operations", "<TransSimType><NumOperations><NumTransactions><Debug><Transactions/(s)><TransType>"),
 
 	Quit("Exit the client application", "");
 

@@ -11,6 +11,11 @@ public class TestClient {
     private static int s_serverPort = 5004;
     private ObjectOutputStream outToServer;
     private ObjectInputStream inFromServer;
+    private enum TypeOfBooking{
+        FLIGHTS,
+        CARS,
+        ROOMS
+    }
 
     public static void main(String args[]) throws IOException
     {
@@ -513,27 +518,49 @@ public class TestClient {
             }
             case ExecuteTestSuite: {
 
-                checkArgumentsCount(5, arguments.size());
+                checkArgumentsCount(7, arguments.size());
                 Random rand = new Random(4);
 
-                int numOperations = toInt(arguments.elementAt(1));
-                int numTransactions = toInt(arguments.elementAt(2));
-                boolean debug = toBoolean(arguments.elementAt(3));
-                int throughPut = toInt(arguments.elementAt(4));
+                String transactionSimType = arguments.elementAt(1);
+                int numOperations = toInt(arguments.elementAt(2));
+                int numTransactions = toInt(arguments.elementAt(3));
+                boolean debug = toBoolean(arguments.elementAt(4));
+                int throughPut = toInt(arguments.elementAt(5));
+                String transactionType = arguments.elementAt(6);
+
                 long perTransaction = (long)1/((long)throughPut);
-                System.out.println("Executing test suite with: " + numTransactions + " transactions and " + numOperations + " operations/transaction...");
                 long startTime;
                 long endTime;
 
+                System.out.println("Executing test suite - |TranSimType=" + transactionSimType +
+                        " |# of Transactions=" + numTransactions
+                        + " |# of Operations/Trans=" + numOperations
+                        + " |Debug=" + debug
+                        + " |Throughput=" + throughPut + " trans/s"
+                        + " |TransactionType=" + transactionType);
+
                 for (int tx = 0; tx < numTransactions; tx++)
                 {
-                    startTime = System.nanoTime();
-
                     // starting a new transaction
+                    startTime = System.nanoTime();
                     Integer txid = (Integer) callServer("start", new Object[]{});
                     if (debug)
                         System.out.println("\nRunning transaction ID: " + txid + "...");
-                    Object[] commandAndArgs = generateCommand(txid);
+
+                    // choosing between hetero or homo transaction simulation
+                    Object[] commandAndArgs;
+                    if (transactionSimType.equals("hetero")) {
+                         commandAndArgs = generateAllCommands(txid);
+                    } else {
+                        TypeOfBooking simType;
+                        if (transactionType.equals("flight"))
+                            simType = TypeOfBooking.FLIGHTS;
+                        else if (transactionType.equals("cars"))
+                            simType = TypeOfBooking.CARS;
+                        else
+                            simType = TypeOfBooking.ROOMS;
+                        commandAndArgs = generateOneTypeOfCommands(txid, simType);
+                    }
 
                     // submitting all operations within a transaction
                     for(int op = 0; op < numOperations; op++)
@@ -561,15 +588,23 @@ public class TestClient {
                     endTime = System.nanoTime();
                     long duration = endTime - startTime;
                     long waitTime = perTransaction - (long)(duration * Math.pow(10,-6));
+
+                    if (rand.nextInt(2) == 0)
+                        waitTime += rand.nextInt((int) (0.1*waitTime)); // adding randomness
+                    else
+                        waitTime -= rand.nextInt((int) (0.1*waitTime)); // adding randomness
+
                     if (waitTime <= 0)
                         System.out.println("*** client should not wait since real transaction duration: " +
                                 (long)(duration * Math.pow(10,-6))  +
                                 ">=" + " theoretical transaction duration: " +
                                 perTransaction + " defined by client's desired throughput ***");
                     else {
+
                         Thread.sleep(waitTime);
                     }
                 }
+                break;
             }
             case Quit:
                 checkArgumentsCount(1, arguments.size());
@@ -580,7 +615,71 @@ public class TestClient {
         return true;
     }
 
-    private Object[] generateCommand(Integer txid) {
+    private Object[] generateOneTypeOfCommands(Integer txid, TypeOfBooking book) {
+
+        HashMap<Integer, String> commands = new HashMap<Integer, String>();
+        HashMap<Integer, Object[]> commandArgs = new HashMap<Integer, Object[]>();
+
+        // doesn't matter what type of transaction we are running we always need to add customer first before reserving stuff
+        commands.put(0, "AddCustomerID");
+        commandArgs.put(0, new Object[]{txid, 1000});
+
+        switch (book){
+            case FLIGHTS:
+                commands.put(1, "AddFlight");
+                commandArgs.put(1, new Object[]{txid, 911, 100, 50});
+
+                commands.put(2, "QueryFlight");
+                commandArgs.put(2, new Object[]{txid, 911});
+
+                commands.put(3, "QueryFlightPrice");
+                commandArgs.put(3, new Object[]{txid, 911});
+
+                commands.put(4, "ReserveFlight");
+                commandArgs.put(4, new Object[]{txid, 1000, 911});
+
+                commands.put(5, "DeleteFlight");
+                commandArgs.put(5, new Object[]{txid, 911});
+                break;
+            case CARS:
+                commands.put(1, "AddCars");
+                commandArgs.put(1, new Object[]{txid, "chicago", 100, 150});
+
+                commands.put(2, "QueryCars");
+                commandArgs.put(2, new Object[]{txid, "chicago"});
+
+                commands.put(3, "QueryCarsPrice");
+                commandArgs.put(3, new Object[]{txid, "chicago"});
+
+                commands.put(4, "ReserveCar");
+                commandArgs.put(4, new Object[]{txid, 1000, "chicago"});
+
+                commands.put(5, "DeleteCars");
+                commandArgs.put(5, new Object[]{txid, "chicago"});
+                break;
+            case ROOMS:
+                commands.put(1, "AddRooms");
+                commandArgs.put(1, new Object[]{txid, "medellin", 100, 2000});
+
+                commands.put(2, "QueryRooms");
+                commandArgs.put(2, new Object[]{txid, "medellin"});
+
+                commands.put(3, "QueryRoomsPrice");
+                commandArgs.put(3, new Object[]{txid, "medellin"});
+
+                commands.put(4, "ReserveRoom");
+                commandArgs.put(4, new Object[]{txid, 1000, "medellin"});
+
+                commands.put(5, "DeleteRooms");
+                commandArgs.put(5, new Object[]{txid, "medellin"});
+                break;
+        }
+
+        return new Object[]{commands, commandArgs};
+    }
+
+
+    private Object[] generateAllCommands(Integer txid) {
 
         // default values - flightNum = 911, Location = montreal, CustomerID = 1000
 
@@ -602,47 +701,47 @@ public class TestClient {
         commands.put(4, "AddCustomerID");
         commandArgs.put(4, new Object[]{txid, 1000});
 
-        commands.put(5, "DeleteFlight");
+        commands.put(5, "QueryFlight");
         commandArgs.put(5, new Object[]{txid, 911});
 
-        commands.put(6, "DeleteCars");
+        commands.put(6, "QueryCars");
         commandArgs.put(6, new Object[]{txid, "montreal"});
 
-        commands.put(7, "DeleteRooms");
+        commands.put(7, "QueryRooms");
         commandArgs.put(7, new Object[]{txid, "toronto"});
 
-        commands.put(8, "DeleteCustomer");
+        commands.put(8, "QueryCustomer");
         commandArgs.put(8, new Object[]{txid, 1000});
 
-        commands.put(9, "QueryFlight");
+        commands.put(9, "QueryFlightPrice");
         commandArgs.put(9, new Object[]{txid, 911});
 
-        commands.put(10, "QueryCars");
+        commands.put(10, "QueryCarsPrice");
         commandArgs.put(10, new Object[]{txid, "montreal"});
 
-        commands.put(11, "QueryRooms");
+        commands.put(11, "QueryRoomsPrice");
         commandArgs.put(11, new Object[]{txid, "toronto"});
 
-        commands.put(12, "QueryCustomer");
-        commandArgs.put(12, new Object[]{txid, 1000});
+        commands.put(12, "ReserveFlight");
+        commandArgs.put(12, new Object[]{txid, 1000, 911});
 
-        commands.put(13, "QueryFlightPrice");
-        commandArgs.put(13, new Object[]{txid, 911});
+        commands.put(13, "ReserveCar");
+        commandArgs.put(13, new Object[]{txid, 1000, "montreal"});
 
-        commands.put(14, "QueryCarsPrice");
-        commandArgs.put(14, new Object[]{txid, "montreal"});
+        commands.put(14, "ReserveRoom");
+        commandArgs.put(14, new Object[]{txid, 1000, "toronto"});
 
-        commands.put(15, "QueryRoomsPrice");
-        commandArgs.put(15, new Object[]{txid, "toronto"});
+        commands.put(15, "DeleteFlight");
+        commandArgs.put(15, new Object[]{txid, 911});
 
-        commands.put(16, "ReserveFlight");
-        commandArgs.put(16, new Object[]{txid, 1000, 911});
+        commands.put(16, "DeleteCars");
+        commandArgs.put(16, new Object[]{txid, "montreal"});
 
-        commands.put(17, "ReserveCar");
-        commandArgs.put(17, new Object[]{txid, 1000, "montreal"});
+        commands.put(17, "DeleteRooms");
+        commandArgs.put(17, new Object[]{txid, "toronto"});
 
-        commands.put(18, "ReserveRoom");
-        commandArgs.put(18, new Object[]{txid, 1000, "toronto"});
+        commands.put(18, "DeleteCustomer");
+        commandArgs.put(18, new Object[]{txid, 1000});
 
         commands.put(19, "Bundle");
         commandArgs.put(19, new Object[]{txid, 1000, 911, "montreal", 1, 1});
