@@ -2,9 +2,9 @@ package Server.Middleware;
 
 import Server.Common.*;
 import Server.Interface.IResourceManager;
-import Server.Interface.TransactionAbortedException;
+import Server.Exception.TransactionAbortedException;
 import Server.LockManager.DeadlockException;
-import Server.Interface.InvalidTransactionException;
+import Server.Exception.InvalidTransactionException;
 import Server.LockManager.LockManager;
 import Server.LockManager.TransactionLockObject;
 import Server.ResourceServer.ServerSocketThread;
@@ -33,12 +33,14 @@ public class Middleware implements IResourceManager {
 
     private TransactionManager transactionManager;
     private LockManager lockManager;
+    private TransactionDataManager transactionDataManager;
 
     public Middleware() {
         try {
             this.customersList = new RMHashMap();
             this.transactionManager = new TransactionManager();
             this.lockManager = new LockManager();
+            this.transactionDataManager = new TransactionDataManager();
         } catch (Exception e) {
             System.out.println("\n*** Middleware error: " + e.getMessage() + " ***\n");
         }
@@ -59,8 +61,7 @@ public class Middleware implements IResourceManager {
         if (args.length > 6) middlewareRegistryPortNum = Integer.parseInt(args[6]);
 
         Middleware server= new Middleware();
-        try
-        {
+        try {
             server.runServerThread();
         } catch (IOException e) {
 
@@ -101,6 +102,7 @@ public class Middleware implements IResourceManager {
                 }
             }
         } catch (DeadlockException e) {
+            passivelyAbort(e.getXId());
             e.printStackTrace();
         }
         return null;
@@ -114,10 +116,12 @@ public class Middleware implements IResourceManager {
             Boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
             if (lockGranted) {
                 synchronized(this.customersList) {
+                    transactionDataManager.addUndoInfo(xid, key, customersList.get(key));
                     this.customersList.put(key, value);
                 }
             }
         } catch (DeadlockException e) {
+            passivelyAbort(e.getXId());
             e.printStackTrace();
         }
     }
@@ -130,11 +134,27 @@ public class Middleware implements IResourceManager {
             Boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
             if (lockGranted) {
                 synchronized(this.customersList) {
+                    transactionDataManager.addUndoInfo(xid, key, customersList.get(key));
                     this.customersList.remove(key);
                 }
             }
         } catch (DeadlockException e) {
+            passivelyAbort(e.getXId());
             e.printStackTrace();
+        }
+    }
+    protected void undoWriteData(int xid, String key, RMItem value)
+    {
+        try {
+            boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
+            if (lockGranted) {
+                synchronized(customersList) {
+                    if (value == null) customersList.remove(key);
+                    else customersList.put(key, value);
+                }
+            }
+        } catch (Exception e) {
+
         }
     }
 
@@ -143,7 +163,7 @@ public class Middleware implements IResourceManager {
         Boolean response = false;
         try {
             response = (Boolean) callResourceServerMethod(ResourceServer.Flights, "addFlight", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNum), Integer.valueOf(flightSeats), Integer.valueOf(flightPrice)});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware addFlight response:" + response);
@@ -154,7 +174,7 @@ public class Middleware implements IResourceManager {
         Boolean response = false;
         try {
             response = (Boolean) callResourceServerMethod(ResourceServer.Cars, "addCars", new Object[]{Integer.valueOf(xid), location, Integer.valueOf(numCars), Integer.valueOf(price)});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware addCars response:" + response);
@@ -165,7 +185,7 @@ public class Middleware implements IResourceManager {
         Boolean response = false;
         try {
             response = (Boolean) callResourceServerMethod(ResourceServer.Rooms, "addRooms", new Object[]{Integer.valueOf(xid), location, Integer.valueOf(numRooms), Integer.valueOf(price)});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware addRooms response:" + response);
@@ -202,16 +222,15 @@ public class Middleware implements IResourceManager {
         }
     }
 
-    public void cancelReservations(Object customer, int xid, int customerID)
-    {
-        //should not enter here
+    public void cancelReservations(Customer customer, int xid, int customerID) throws DeadlockException {
+
     }
 
     public boolean deleteFlight(int xid, int flightNum) {
         Boolean response = false;
         try {
             response = (Boolean) callResourceServerMethod(ResourceServer.Flights, "deleteFlight", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNum)});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware deleteFlight response:" + response);
@@ -222,7 +241,7 @@ public class Middleware implements IResourceManager {
         Boolean response = false;
         try {
             response = (Boolean) callResourceServerMethod(ResourceServer.Cars, "deleteCars", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware deleteCars response:" + response);
@@ -233,7 +252,7 @@ public class Middleware implements IResourceManager {
         Boolean response = false;
         try {
             response = (Boolean) callResourceServerMethod(ResourceServer.Rooms, "deleteRooms", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware deleteRooms response:" + response);
@@ -260,7 +279,7 @@ public class Middleware implements IResourceManager {
                 Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") succeeded");
                 return true;
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return false;
@@ -270,7 +289,7 @@ public class Middleware implements IResourceManager {
         int response = 0;
         try {
             response = (Integer) callResourceServerMethod(ResourceServer.Flights, "queryFlight", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNumber)});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware queryFlight response:" + response);
@@ -281,7 +300,7 @@ public class Middleware implements IResourceManager {
         int response = 0;
         try {
             response = (Integer)callResourceServerMethod(ResourceServer.Cars, "queryCars", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware queryCars response:" + response);
@@ -292,7 +311,7 @@ public class Middleware implements IResourceManager {
         int response = 0;
         try {
             response = (Integer)callResourceServerMethod(ResourceServer.Rooms, "queryRooms", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware queryRooms response:" + response);
@@ -321,7 +340,7 @@ public class Middleware implements IResourceManager {
         int response = 0;
         try {
             response = (Integer)callResourceServerMethod(ResourceServer.Flights, "queryFlightPrice", new Object[]{Integer.valueOf(xid), Integer.valueOf(flightNumber)});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware addFlight queryFlightPrice:" + response);
@@ -332,7 +351,7 @@ public class Middleware implements IResourceManager {
         int response = 0;
         try {
             response = (Integer)callResourceServerMethod(ResourceServer.Cars, "queryCarsPrice", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware queryCarsPrice response:" + response);
@@ -343,7 +362,7 @@ public class Middleware implements IResourceManager {
         int response = 0;
         try {
             response = (Integer)callResourceServerMethod(ResourceServer.Rooms, "queryRoomsPrice", new Object[]{Integer.valueOf(xid), location});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         System.out.println("Middleware queryRoomsPrice response:" + response);
@@ -368,7 +387,7 @@ public class Middleware implements IResourceManager {
                 writeData(xid, customer.getKey(), customer);
                 response = true;
             }
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return response;
@@ -392,7 +411,7 @@ public class Middleware implements IResourceManager {
                 writeData(xid, customer.getKey(), customer);
                 response = true;
             }
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return response;
@@ -416,13 +435,13 @@ public class Middleware implements IResourceManager {
                 writeData(xid, customer.getKey(), customer);
                 response = true;
             }
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return response;
     }
 
-    public int reserveFlightItem(int xid, int customerID, int flightNumber) {
+    public int reserveFlightItem(int xid, int customerID, int flightNumber) throws DeadlockException {
         //Should not enter
         return 0;
     }
@@ -477,7 +496,7 @@ public class Middleware implements IResourceManager {
             }
             writeData(xid, customer.getKey(), customer);
             Trace.info("RM::bundle(" + xid + ", " + customerId + ", " + flightNumbers + ", " + location + ", " + car + ", " + room + ") succeeded");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
@@ -494,7 +513,7 @@ public class Middleware implements IResourceManager {
         String response = null;
         try {
             response = (String) callResourceServerMethod(ResourceServer.Flights, "queryReservableFlights", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return response;
@@ -504,7 +523,7 @@ public class Middleware implements IResourceManager {
         String response = null;
         try {
             response = (String) callResourceServerMethod(ResourceServer.Cars, "queryReservableCars", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return response;
@@ -514,7 +533,7 @@ public class Middleware implements IResourceManager {
         String response = null;
         try {
             response = (String) callResourceServerMethod(ResourceServer.Rooms, "queryReservableRooms", new Object[]{Integer.valueOf(xid)});
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return response;
@@ -527,7 +546,7 @@ public class Middleware implements IResourceManager {
             if (cars) response += callResourceServerMethod(ResourceServer.Cars, "queryReservableCars", new Object[]{Integer.valueOf(xid)});
             if (rooms) response += callResourceServerMethod(ResourceServer.Rooms, "queryReservableRooms", new Object[]{Integer.valueOf(xid)});
             Trace.info("RM::queryReservableItems(" + xid + ", " + flights + ", " + cars + ", " + rooms + ") succeed");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
@@ -606,26 +625,62 @@ public class Middleware implements IResourceManager {
         return transactionManager.start();
     }
 
-    public boolean commit(int xid) {
+    public boolean commit(int xid) throws InvalidTransactionException, TransactionAbortedException{
+        checkTransaction(xid, "commit");
         try {
             Trace.info("Middleware::commit(" + xid + ") called");
-            HashSet<ResourceServer> serverTypes = transactionManager.dataOperationsOfTransaction(xid);
-            Trace.info("serverTypes = " + serverTypes);
-            for (ResourceServer type: serverTypes)
+            for (ResourceServer type: transactionManager.dataOperationsOfTransaction(xid))
                 if (type == ResourceServer.Middleware) {
+                    transactionDataManager.cleanTransaction(xid);
                     if (!lockManager.UnlockAll(xid)) return false;
                 } else {
                     if (!(Boolean)callResourceServerMethod(type, "commit", new Object[]{Integer.valueOf(xid)})) return false;
                 }
             return transactionManager.commit(xid);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return false;
     }
 
-    public void abort(int xid) {
+    public void abort(int xid) throws InvalidTransactionException {
+        try {
+            checkTransaction(xid, "abort");
+            Trace.info("Middleware::abort(" + xid + ") called");
+            for (ResourceServer type: transactionManager.dataOperationsOfTransaction(xid))
+                if (type == ResourceServer.Middleware) {
+                    RMHashMap undo = transactionDataManager.undoTransactionDataList(xid);
+                    if (undo != null && undo.size() > 0)
+                        for (Map.Entry<String, RMItem> entry: undo.entrySet())
+                            undoWriteData(xid, entry.getKey(), entry.getValue());
+                    lockManager.UnlockAll(xid);
+                } else {
+                    callResourceServerMethod(type, "abort", new Object[]{Integer.valueOf(xid)});
+                }
+            transactionManager.abort(xid);
+        } catch (Throwable e) {
+            if (e instanceof InvalidTransactionException) throw (InvalidTransactionException) e;
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+        }
+    }
 
+    public void passivelyAbort(int xid) {
+        try {
+            Trace.info("Middleware::passivelyAbort(" + xid + ") called");
+            for (ResourceServer type: transactionManager.dataOperationsOfTransaction(xid))
+                if (type == ResourceServer.Middleware) {
+                    RMHashMap undo = transactionDataManager.undoTransactionDataList(xid);
+                    if (undo != null && undo.size() > 0)
+                        for (Map.Entry<String, RMItem> entry: undo.entrySet())
+                            undoWriteData(xid, entry.getKey(), entry.getValue());
+                    lockManager.UnlockAll(xid);
+                } else {
+                    callResourceServerMethod(type, "abort", new Object[]{Integer.valueOf(xid)});
+                }
+            transactionManager.abort(xid);
+        } catch (Throwable e) {
+            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+        }
     }
 
     public boolean shutdown() {
@@ -634,10 +689,10 @@ public class Middleware implements IResourceManager {
 
     public void checkTransaction(int transactionId, String methodName) throws TransactionAbortedException, InvalidTransactionException {
         Trace.info("Middleware::checkTransaction(" + transactionId + "," + methodName + ") called");
-        if (!transactionManager.isActive(transactionId)) throw new InvalidTransactionException(transactionId, methodName);
+        transactionManager.checkTransaction(transactionId, methodName);
     }
 
-    public Object callResourceServerMethod(ResourceServer resourceServer, String methodName, Object[] argList) throws IOException, ClassNotFoundException {
+    public Object callResourceServerMethod(ResourceServer resourceServer, String methodName, Object[] argList) throws Throwable {
         String host = "";
         int port = 0;
         switch (resourceServer)
@@ -658,6 +713,13 @@ public class Middleware implements IResourceManager {
         outToServer.writeObject(methodName);
         outToServer.writeObject(argList);
         Object returnObj =  inFromServer.readObject();
+
+        if (returnObj instanceof Throwable) {
+            if (returnObj instanceof DeadlockException) {
+                passivelyAbort(((DeadlockException)returnObj).getXId());
+            }
+            throw (Throwable) returnObj;
+        }
         return returnObj;
     }
 }

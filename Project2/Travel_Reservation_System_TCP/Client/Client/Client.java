@@ -1,6 +1,7 @@
 package Client;
 
-import Server.Interface.InvalidTransactionException;
+import Server.Exception.InvalidTransactionException;
+import Server.Exception.TransactionAbortedException;
 
 import java.io.*;
 import java.net.Socket;
@@ -64,30 +65,29 @@ public class Client {
                 Command cmd = Command.fromString((String)arguments.elementAt(0));
                 if (!execute(cmd, arguments)) break;
             }
-            catch (IllegalArgumentException e) {
-                System.err.println((char)27 + "[31;1mCommand exception: " + (char)27 + "[0m" + e.getLocalizedMessage());
-            }
-            catch (InvalidTransactionException e) {
-                System.err.println((char)27 + "[31;1mInvalid transactionID (xid): " + (char)27 + "[0m" + e.getLocalizedMessage());
-            }
-            catch (Exception e) {
-                System.err.println((char)27 + "[31;1mCommand exception: " + (char)27 + "[0mUncaught exception");
-                e.printStackTrace();
+            catch (Throwable e) {
+                if (e instanceof IllegalArgumentException) System.err.println((char)27 + "[31;1mCommand exception: " + (char)27 + "[0m" + e.getLocalizedMessage());
+                else if (e instanceof InvalidTransactionException) System.err.println((char)27 + "[31;1mInvalid transactionID (xid): " + (char)27 + "[0m" + e.getLocalizedMessage());
+                else if (e instanceof TransactionAbortedException) System.err.println((char)27 + "[31;1mTransaction aborted (xid): " + (char)27 + "[0m" + e.getLocalizedMessage());
+                else {
+                    System.err.println((char)27 + "[31;1mCommand exception: " + (char)27 + "[0mUncaught exception");
+                    e.printStackTrace();
+                }
             }
         }
         socket.close();
     }
 
-    public Object callServer(String methodName, Object[] argList) throws IOException, ClassNotFoundException, InvalidTransactionException {
+    public Object callServer(String methodName, Object[] argList) throws Throwable {
         outToServer.writeObject(methodName);
         if (argList == null) return null;
         outToServer.writeObject(argList);
         Object response = inFromServer.readObject();
-        if (response.getClass() == InvalidTransactionException.class) throw (InvalidTransactionException) response;
+        if (response instanceof Throwable) throw (Throwable)response;
         return response;
     }
 
-    public boolean execute(Command cmd, Vector<String> arguments) throws NumberFormatException, IOException, ClassNotFoundException, InvalidTransactionException {
+    public boolean execute(Command cmd, Vector<String> arguments) throws Throwable {
         switch (cmd)
         {
             case Help:

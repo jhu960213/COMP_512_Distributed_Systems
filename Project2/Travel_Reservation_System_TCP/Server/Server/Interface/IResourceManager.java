@@ -1,5 +1,10 @@
 package Server.Interface;
 
+import Server.Common.Customer;
+import Server.Exception.InvalidTransactionException;
+import Server.Exception.TransactionAbortedException;
+import Server.LockManager.DeadlockException;
+
 import java.util.Map;
 import java.util.Vector;
 
@@ -31,7 +36,7 @@ public interface IResourceManager
      *
      * @return Success
      */
-    public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice); 
+    public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice) throws DeadlockException;
     
     /**
      * Add car at a location.
@@ -41,7 +46,7 @@ public interface IResourceManager
      *
      * @return Success
      */
-    public boolean addCars(int id, String location, int numCars, int price); 
+    public boolean addCars(int id, String location, int numCars, int price) throws DeadlockException;
    
     /**
      * Add room at a location.
@@ -51,7 +56,7 @@ public interface IResourceManager
      *
      * @return Success
      */
-    public boolean addRooms(int id, String location, int numRooms, int price);
+    public boolean addRooms(int id, String location, int numRooms, int price) throws DeadlockException;
 			    
     /**
      * Add customer.
@@ -73,7 +78,7 @@ public interface IResourceManager
      *
      * @return True upon success
      */
-    public void cancelReservations(Object customer, int xid, int customerID);
+    public void cancelReservations(Customer customer, int xid, int customerID) throws DeadlockException;
 
     /**
      * Delete the flight.
@@ -83,7 +88,7 @@ public interface IResourceManager
      *
      * @return Success
      */   
-    public boolean deleteFlight(int id, int flightNum);
+    public boolean deleteFlight(int id, int flightNum) throws DeadlockException;
     
     /**
      * Delete all cars at a location.
@@ -92,7 +97,7 @@ public interface IResourceManager
      *
      * @return Success
      */		    
-    public boolean deleteCars(int id, String location);
+    public boolean deleteCars(int id, String location) throws DeadlockException;
 
     /**
      * Delete all rooms at a location.
@@ -101,7 +106,7 @@ public interface IResourceManager
      *
      * @return Success
      */
-    public boolean deleteRooms(int id, String location);
+    public boolean deleteRooms(int id, String location) throws DeadlockException;
     
     /**
      * Delete a customer and associated reservations.
@@ -115,21 +120,21 @@ public interface IResourceManager
      *
      * @return Number of empty seats
      */
-    public int queryFlight(int id, int flightNumber);
+    public int queryFlight(int id, int flightNumber) throws DeadlockException;
 
     /**
      * Query the status of a car location.
      *
      * @return Number of available cars at this location
      */
-    public int queryCars(int id, String location);
+    public int queryCars(int id, String location) throws DeadlockException;
 
     /**
      * Query the status of a room location.
      *
      * @return Number of available rooms at this location
      */
-    public int queryRooms(int id, String location);
+    public int queryRooms(int id, String location) throws DeadlockException;
 
     /**
      * Query the customer reservations.
@@ -143,63 +148,63 @@ public interface IResourceManager
      *
      * @return Price of a seat in this flight
      */
-    public int queryFlightPrice(int id, int flightNumber);
+    public int queryFlightPrice(int id, int flightNumber) throws DeadlockException;
 
     /**
      * Query the status of a car location.
      *
      * @return Price of car
      */
-    public int queryCarsPrice(int id, String location);
+    public int queryCarsPrice(int id, String location) throws DeadlockException;
 
     /**
      * Query the status of a room location.
      *
      * @return Price of a room
      */
-    public int queryRoomsPrice(int id, String location);
+    public int queryRoomsPrice(int id, String location) throws DeadlockException;
 
     /**
      * Reserve a seat on this flight.
      *
      * @return Success
      */
-    public boolean reserveFlight(int id, int customerID, int flightNumber);
+    public boolean reserveFlight(int id, int customerID, int flightNumber) throws DeadlockException;
 
     /**
      * Reserve a car at this location.
      *
      * @return Success
      */
-    public boolean reserveCar(int id, int customerID, String location);
+    public boolean reserveCar(int id, int customerID, String location) throws DeadlockException;
 
     /**
      * Reserve a room at this location.
      *
      * @return Success
      */
-    public boolean reserveRoom(int id, int customerID, String location);
+    public boolean reserveRoom(int id, int customerID, String location) throws DeadlockException;
 
     /**
      * Reserve a seat on this flight.
      *
      * @return Price of the reserved flight, -1 for failure
      */
-    public int reserveFlightItem(int id, int customerID, int flightNumber);
+    public int reserveFlightItem(int id, int customerID, int flightNumber) throws DeadlockException;
 
     /**
      * Reserve a car at this location.
      *
      * @return Price of the reserved car, -1 for failure
      */
-    public int reserveCarItem(int id, int customerID, String location);
+    public int reserveCarItem(int id, int customerID, String location) throws DeadlockException;
 
     /**
      * Reserve a room at this location.
      *
      * @return Price of the reserved room, -1 for failure
      */
-    public int reserveRoomItem(int id, int customerID, String location);
+    public int reserveRoomItem(int id, int customerID, String location) throws DeadlockException;
 
     /**
      * Reserve a bundle for the trip.
@@ -213,7 +218,7 @@ public interface IResourceManager
      *
      * @return Prices of flights
      */
-    public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers);
+    public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers) throws DeadlockException;
 
     // added from project1
     public String queryReservableFlights(int xid);

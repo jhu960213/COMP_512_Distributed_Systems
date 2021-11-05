@@ -1,6 +1,7 @@
 package Server.Common;
 
-import java.rmi.RemoteException;
+import Server.LockManager.DeadlockException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -14,7 +15,7 @@ public class FlightsResourceManager extends ResourceManager {
 
     // Create a new flight, or add seats to existing flight
     // NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
-    public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice)
+    public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice) throws DeadlockException
     {
         Trace.info("RM::addFlight(" + xid + ", " + flightNum + ", " + flightSeats + ", $" + flightPrice + ") called");
         Flight curObj = (Flight)readData(xid, Flight.getKey(flightNum));
@@ -40,31 +41,32 @@ public class FlightsResourceManager extends ResourceManager {
     }
 
     // Deletes flight
-    public boolean deleteFlight(int xid, int flightNum) 
+    public boolean deleteFlight(int xid, int flightNum) throws DeadlockException
     {
         return deleteItem(xid, Flight.getKey(flightNum));
     }
 
     // Returns the number of empty seats in this flight
-    public int queryFlight(int xid, int flightNum) 
+    public int queryFlight(int xid, int flightNum) throws DeadlockException
     {
         return queryNum(xid, Flight.getKey(flightNum));
     }
 
     // Returns price of a seat in this flight
-    public int queryFlightPrice(int xid, int flightNum) 
+    public int queryFlightPrice(int xid, int flightNum) throws DeadlockException
     {
         return queryPrice(xid, Flight.getKey(flightNum));
     }
 
     // Adds flight reservation to this customer
-    public int reserveFlightItem(int xid, int customerID, int flightNumber)
+    public int reserveFlightItem(int xid, int customerID, int flightNumber) throws DeadlockException
     {
         Trace.info("RM::reserveFlightItem(" + xid + ", " + customerID + ", " + flightNumber + ") called");
         return reserveItem(xid, customerID, Flight.getKey(flightNumber), String.valueOf(flightNumber));
     }
 
-    public Map<String, Integer> reserveFlightItemBundle(int xid, int customerID, Vector<String> flightNumbers)  {
+    public Map<String, Integer> reserveFlightItemBundle(int xid, int customerID, Vector<String> flightNumbers) throws DeadlockException
+    {
         Trace.info("RM::reserveFlightItemBundle(" + xid + ", " + customerID + ", " + flightNumbers + ") called");
         Map<String, Integer> prices = new HashMap<>();
         for (String flightNum:flightNumbers)
@@ -75,7 +77,8 @@ public class FlightsResourceManager extends ResourceManager {
         return prices;
     }
 
-    public String queryReservableFlights(int xid)  {
+    public String queryReservableFlights(int xid)
+    {
         Trace.info("RM::queryReservableFlights(" + xid + ") called");
         String response = this.m_data.values().size() > 0 ? "Flights:\n" : "";
         for (RMItem item:this.m_data.values())

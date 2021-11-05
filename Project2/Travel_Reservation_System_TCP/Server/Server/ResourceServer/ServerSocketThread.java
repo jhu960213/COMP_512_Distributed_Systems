@@ -1,12 +1,11 @@
 package Server.ResourceServer;
 
 import Server.Interface.IResourceManager;
-import Server.Interface.InvalidTransactionException;
-import Server.Interface.TransactionAbortedException;
+import Server.Exception.InvalidTransactionException;
+import Server.Exception.TransactionAbortedException;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.*;
 import java.lang.reflect.*;
 
 public class ServerSocketThread extends Thread
@@ -47,28 +46,24 @@ public class ServerSocketThread extends Thread
 //                    Object returnObj = method.invoke(this.resourceManager, argList);
 //                    outToClient.writeObject(returnObj);
                 } catch (InvocationTargetException e) {
-                    Throwable cause = e.getCause();
-                    if (cause.getClass() == InvalidTransactionException.class || cause.getClass() == TransactionAbortedException.class)
-                    {
-                        try {
-                            outToClient.writeObject(e.getCause());
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                        }
-                    } else e.printStackTrace();
-                } catch (InvalidTransactionException | TransactionAbortedException e) {
+                    try {
+                        outToClient.writeObject(e.getCause());
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                    e.printStackTrace();
+                } catch (InvalidTransactionException | TransactionAbortedException | IllegalAccessException e) {
                     try {
                         outToClient.writeObject(e);
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
-                } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
             }
             this.socket.close();
         } catch (IOException | ClassNotFoundException e) {
-            if (e.getClass() == EOFException.class) {
+            if (e instanceof EOFException) {
                 try {
                     this.socket.close();
                 } catch (IOException ex) {

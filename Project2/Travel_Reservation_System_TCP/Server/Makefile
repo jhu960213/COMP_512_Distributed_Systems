@@ -8,15 +8,15 @@ java.policy: FORCE
 
 FORCE: ;
 
-ServerInterface.jar: Server/Interface/*.java
+ServerInterface.jar: Server/Exception/*.java
 	@echo "Compiling server interface"
-	javac Server/Interface/*.java
-	jar cvf ServerInterface.jar Server/Interface/*.class
+	javac Server/Exception/*.java
+	jar cvf ServerInterface.jar Server/Exception/*.class
 
 compile-server:
-	javac Server/Interface/*.java Server/ResourceServer/*.java Server/Common/*.java Server/Middleware/*.java Server/LockManager/*.java
+	javac Server/Interface/*.java Server/Exception/*.java Server/ResourceServer/*.java Server/Common/*.java Server/Middleware/*.java Server/LockManager/*.java
 
 clean:
-	rm -f Server/Common/*.class Server/Interface/*.class Server/ResourceServer/*.class Server/Middleware/*.class Server/LockManager/*.class
+	rm -f Server/Common/*.class Server/Exception/*.class Server/Interface/*.class Server/ResourceServer/*.class Server/Middleware/*.class Server/LockManager/*.class
 	rm -f ServerInterface.jar
 	rm -f java.policy 

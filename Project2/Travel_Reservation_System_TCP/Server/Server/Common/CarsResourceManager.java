@@ -1,5 +1,7 @@
 package Server.Common;
 
+import Server.LockManager.DeadlockException;
+
 import java.rmi.RemoteException;
 
 public class CarsResourceManager extends ResourceManager {
@@ -10,7 +12,7 @@ public class CarsResourceManager extends ResourceManager {
 
     // Create a new car location or add cars to an existing location
     // NOTE: if price <= 0 and the location already exists, it maintains its current price
-    public boolean addCars(int xid, String location, int count, int price)
+    public boolean addCars(int xid, String location, int count, int price) throws DeadlockException
     {
         Trace.info("RM::addCars(" + xid + ", " + location + ", " + count + ", $" + price + ") called");
         Car curObj = (Car)readData(xid, Car.getKey(location));
@@ -36,25 +38,25 @@ public class CarsResourceManager extends ResourceManager {
     }
 
     // Delete cars at a location
-    public boolean deleteCars(int xid, String location)
+    public boolean deleteCars(int xid, String location) throws DeadlockException
     {
         return deleteItem(xid, Car.getKey(location));
     }
 
     // Returns the number of cars available at a location
-    public int queryCars(int xid, String location)
+    public int queryCars(int xid, String location) throws DeadlockException
     {
         return queryNum(xid, Car.getKey(location));
     }
 
     // Returns price of cars at this location
-    public int queryCarsPrice(int xid, String location)
+    public int queryCarsPrice(int xid, String location) throws DeadlockException
     {
         return queryPrice(xid, Car.getKey(location));
     }
 
     // Adds car reservation to this customer
-    public int reserveCarItem(int xid, int customerID, String location) {
+    public int reserveCarItem(int xid, int customerID, String location) throws DeadlockException {
         Trace.info("RM::reserveCarItem(" + xid + ", " + customerID + ", " + location + ") called");
         return reserveItem(xid, customerID, Car.getKey(location), location);
     }

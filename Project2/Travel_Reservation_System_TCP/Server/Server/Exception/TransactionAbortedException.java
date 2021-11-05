@@ -1,4 +1,4 @@
-package Server.Interface;
+package Server.Exception;
 
 public class TransactionAbortedException extends Exception {
 

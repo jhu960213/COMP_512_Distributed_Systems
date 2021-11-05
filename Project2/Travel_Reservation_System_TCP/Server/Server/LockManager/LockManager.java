@@ -106,9 +106,8 @@ public class LockManager
 	{
 
 		Trace.info("LM::unlockAll(" + xid + ") called");
-		//log
-		System.out.println(this.lockTable.allElements());
-
+//		//log
+//		System.out.println(this.lockTable.allElements());
 
 		// If any parameter is invalid, then return false
 		if (xid < 0) {

@@ -8,7 +8,7 @@ java.policy: FORCE
 
 FORCE: ;
 
-../Server/ServerInterface.jar: ../Server/Server/Interface/*.java
+../Server/ServerInterface.jar: ../Server/Server/Exception/*.java
 	make -C ../Server/ ServerInterface.jar
 
 compile-client: ../Server/ServerInterface.jar

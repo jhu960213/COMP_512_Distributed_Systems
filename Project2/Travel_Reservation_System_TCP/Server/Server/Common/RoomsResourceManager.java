@@ -1,5 +1,7 @@
 package Server.Common;
 
+import Server.LockManager.DeadlockException;
+
 import java.rmi.RemoteException;
 
 public class RoomsResourceManager extends ResourceManager {
@@ -10,7 +12,7 @@ public class RoomsResourceManager extends ResourceManager {
 
     // Create a new room location or add rooms to an existing location
     // NOTE: if price <= 0 and the room location already exists, it maintains its current price
-    public boolean addRooms(int xid, String location, int count, int price) {
+    public boolean addRooms(int xid, String location, int count, int price) throws DeadlockException {
         Trace.info("RM::addRooms(" + xid + ", " + location + ", " + count + ", $" + price + ") called");
         Room curObj = (Room) readData(xid, Room.getKey(location));
         if (curObj == null) {
@@ -31,22 +33,22 @@ public class RoomsResourceManager extends ResourceManager {
     }
 
     // Delete rooms at a location
-    public boolean deleteRooms(int xid, String location) {
+    public boolean deleteRooms(int xid, String location) throws DeadlockException {
         return deleteItem(xid, Room.getKey(location));
     }
 
     // Returns the amount of rooms available at a location
-    public int queryRooms(int xid, String location) {
+    public int queryRooms(int xid, String location) throws DeadlockException {
         return queryNum(xid, Room.getKey(location));
     }
 
     // Returns room price at this location
-    public int queryRoomsPrice(int xid, String location) {
+    public int queryRoomsPrice(int xid, String location) throws DeadlockException {
         return queryPrice(xid, Room.getKey(location));
     }
 
     // Adds room reservation to this customer
-    public int reserveRoomItem(int xid, int customerID, String location) {
+    public int reserveRoomItem(int xid, int customerID, String location) throws DeadlockException {
         Trace.info("RM::reserveRoomItem(" + xid + ", " + customerID + ", " + location + ") called");
         return reserveItem(xid, customerID, Room.getKey(location), location);
     }
