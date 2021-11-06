@@ -658,7 +658,7 @@ public class Middleware implements IResourceManager {
                 }
             transactionManager.abort(xid);
         } catch (Throwable e) {
-            if (e instanceof InvalidTransactionException) throw (InvalidTransactionException) e;
+            if (e instanceof InvalidTransactionException || e instanceof TransactionAbortedException) throw (InvalidTransactionException) e;
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
     }
