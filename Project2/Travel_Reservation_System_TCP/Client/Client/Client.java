@@ -14,7 +14,7 @@ public class Client {
     private ObjectOutputStream outToServer;
     private ObjectInputStream inFromServer;
 
-    public static void main(String args[]) throws IOException
+    public static void loadArgs(String args[])
     {
         if (args.length > 0)
         {
@@ -29,7 +29,11 @@ public class Client {
             System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0mUsage: java client.RMIClient [server_hostname [server_rmiobject]]");
             System.exit(1);
         }
+    }
 
+    public static void main(String args[]) throws IOException
+    {
+        loadArgs(args);
         Client client = new Client();
         client.start();
     }
@@ -40,7 +44,6 @@ public class Client {
         outToServer = new ObjectOutputStream(socket.getOutputStream());
         inFromServer = new ObjectInputStream(socket.getInputStream());
         // Prepare for reading commands
-        System.out.println("*** Welcome to TCP Client Test Suite Interface ***");
         System.out.println("Please use command: \"help\" for a list of supported commands");
 
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
@@ -422,10 +425,7 @@ public class Client {
                 int id = toInt(arguments.elementAt(1));
                 int customerID = toInt(arguments.elementAt(2));
                 Vector<String> flightNumbers = new Vector<>();
-                for (int i = 0; i < arguments.size() - 6; ++i)
-                {
-                    flightNumbers.add(arguments.elementAt(3+i));
-                }
+                for (int i = 0; i < arguments.size() - 6; ++i) flightNumbers.add(arguments.elementAt(3+i));
                 String location = arguments.elementAt(arguments.size()-3);
                 boolean car = toBoolean(arguments.elementAt(arguments.size()-2));
                 boolean room = toBoolean(arguments.elementAt(arguments.size()-1));
@@ -512,11 +512,15 @@ public class Client {
                 }
                 break;
             }
-            case Quit:
+            case Quit: {
                 checkArgumentsCount(1, arguments.size());
                 callServer("Quit", null);
                 System.out.println("Quitting client");
                 return false;
+            }
+            default: {
+                System.err.println((char)27 + "[31;1mThis command is not available on this client." + (char)27 + "[0m");
+            }
         }
         return true;
     }
