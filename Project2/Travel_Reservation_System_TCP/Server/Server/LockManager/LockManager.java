@@ -66,6 +66,7 @@ public class LockManager
 							 xLockObject.setLockType(TransactionLockObject.LockType.LOCK_READ);
 							 TransactionLockObject l_xLockObject = (TransactionLockObject)this.lockTable.get(xLockObject);
 							 l_xLockObject.setLockType(TransactionLockObject.LockType.LOCK_WRITE);
+
 							 dataLockObject.setLockType(TransactionLockObject.LockType.LOCK_READ);
 							 DataLockObject l_dataLockObject = (DataLockObject)this.lockTable.get(dataLockObject);
 							 l_dataLockObject.setLockType(TransactionLockObject.LockType.LOCK_WRITE);
@@ -85,7 +86,13 @@ public class LockManager
 					WaitLock(dataLockObject);
 				}
 //				//log
+//				System.out.println("After Lock(" + xid + ", " + data + ", " + lockType + "):");
+//				System.out.println("LockTable:");
 //				System.out.println(this.lockTable.allElements());
+//				System.out.println("WaitTable:");
+//				System.out.println(this.waitTable.allElements());
+//				System.out.println("StampTable:");
+//				System.out.println(this.stampTable.allElements());
 			}
 		} 
 		catch (DeadlockException deadlock) {
@@ -106,8 +113,6 @@ public class LockManager
 	{
 
 		Trace.info("LM::unlockAll(" + xid + ") called");
-//		//log
-//		System.out.println(this.lockTable.allElements());
 
 		// If any parameter is invalid, then return false
 		if (xid < 0) {
@@ -201,8 +206,16 @@ public class LockManager
 					}
 				} 
 			}
-		} 
+		}
 
+//		//log
+//		System.out.println("After UnlockAll(" + xid + "):");
+//		System.out.println("LockTable:");
+//		System.out.println(this.lockTable.allElements());
+//		System.out.println("WaitTable:");
+//		System.out.println(this.waitTable.allElements());
+//		System.out.println("StampTable:");
+//		System.out.println(this.stampTable.allElements());
 		return true;
 	}
 
@@ -317,6 +330,15 @@ public class LockManager
 			// Else lock manager already knows the transaction is waiting
 		}
 
+//		//log
+//		Trace.info("After waitLock(" + dataLockObject.getXId() + ", " + dataLockObject.getDataName() + ", " + dataLockObject.getLockType() + ") called");
+//		System.out.println("LockTable:");
+//		System.out.println(this.lockTable.allElements());
+//		System.out.println("WaitTable:");
+//		System.out.println(this.waitTable.allElements());
+//		System.out.println("StampTable:");
+//		System.out.println(this.stampTable.allElements());
+
 		synchronized (thisThread) {
 			try {
 				thisThread.wait(LockManager.DEADLOCK_TIMEOUT - timeBlocked);
@@ -333,6 +355,7 @@ public class LockManager
 				System.out.println("Thread interrupted");
 			}
 		}
+
 	}
 
 
@@ -346,6 +369,17 @@ public class LockManager
 				this.waitTable.remove(waitLockObject);
 			}
 		}
+
+//		//log
+//		Trace.info("After cleanupDeadlock(" + waitLockObject.getXId() + ", " + waitLockObject.getDataName() + ", " + waitLockObject.getLockType() + ") called");
+//		System.out.println("LockTable:");
+//		System.out.println(this.lockTable.allElements());
+//		System.out.println("WaitTable:");
+//		System.out.println(this.waitTable.allElements());
+//		System.out.println("StampTable:");
+//		System.out.println(this.stampTable.allElements());
+
 		throw new DeadlockException(waitLockObject.getXId(), "Sleep timeout: deadlocked");
 	}
+
 }
