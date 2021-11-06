@@ -12,6 +12,7 @@ public class ServerSocketThread extends Thread
 {
     Socket socket;
     IResourceManager resourceManager;
+
     public ServerSocketThread(Socket socket, IResourceManager resourceManager)
     {
         this.socket = socket;

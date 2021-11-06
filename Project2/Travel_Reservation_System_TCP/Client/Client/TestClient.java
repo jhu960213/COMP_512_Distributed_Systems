@@ -1,7 +1,6 @@
 package Client;
 
 import java.io.*;
-import java.net.Socket;
 import java.util.*;
 import java.lang.Math;
 
@@ -203,7 +202,6 @@ public class TestClient extends Client {
         return new Object[]{commands, commandArgs};
     }
 
-
     private Object[] generateAllCommands(Integer txid) {
 
         // default values - flightNum = 911, Location = montreal, CustomerID = 1000
@@ -275,5 +273,4 @@ public class TestClient extends Client {
 
         return new Object[]{commands, commandArgs};
     }
-
 }

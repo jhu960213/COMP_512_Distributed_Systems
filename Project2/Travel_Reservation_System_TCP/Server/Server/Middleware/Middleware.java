@@ -30,7 +30,6 @@ public class Middleware implements IResourceManager {
     private static int roomsResourceServerPort = 4004;
 
     protected RMHashMap customersList;
-
     private TransactionManager transactionManager;
     private LockManager lockManager;
     private TransactionDataManager transactionDataManager;

@@ -18,13 +18,17 @@ import static Server.Common.Trace.info;
 public class ResourceManager implements IResourceManager
 {
 	protected String m_name = "";
-	protected RMHashMap m_data = new RMHashMap();
-	private LockManager lockManager = new LockManager();
-	private TransactionDataManager transactionDataManager = new TransactionDataManager();
+	protected RMHashMap m_data;
+	private LockManager lockManager;
+	private TransactionDataManager transactionDataManager;
 
 	public ResourceManager(String p_name)
 	{
-		m_name = p_name;
+		this.m_name = p_name;
+		this.m_data = new RMHashMap();
+		this.lockManager = new LockManager();
+		this.transactionDataManager = new TransactionDataManager();
+
 	}
 
 	// Reads a data item

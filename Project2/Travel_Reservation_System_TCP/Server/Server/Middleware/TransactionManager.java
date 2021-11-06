@@ -9,52 +9,89 @@ import java.util.HashSet;
 
 public class TransactionManager {
 
-    private HashSet<Integer> activeTransactions = new HashSet<>();
-    private HashSet<Integer> abortedTransactions = new HashSet<>();
-    private HashMap<Integer, HashSet<Middleware.ResourceServer>> transactionDataOps = new HashMap<>();
-    private Integer transactionId = 0;
+    private HashSet<Integer> activeTransactions;
+    private HashSet<Integer> abortedTransactions;
+    private HashMap<Integer, HashSet<Middleware.ResourceServer>> transactionDataOps;
+    private Integer transactionId;
 
+    public TransactionManager() {
+        this.activeTransactions  = new HashSet<>();
+        this.abortedTransactions = new HashSet<>();
+        this.transactionDataOps = new HashMap<>();
+        this.transactionId = 0;
+    }
 
-    public synchronized int start()
-    {
-        transactionId++;
-        activeTransactions.add(transactionId);
-        transactionDataOps.put(transactionId, new HashSet<Middleware.ResourceServer>());
+    public HashSet<Integer> getActiveTransactions() {
+        return activeTransactions;
+    }
+
+    public void setActiveTransactions(HashSet<Integer> activeTransactions) {
+        this.activeTransactions = activeTransactions;
+    }
+
+    public HashSet<Integer> getAbortedTransactions() {
+        return abortedTransactions;
+    }
+
+    public void setAbortedTransactions(HashSet<Integer> abortedTransactions) {
+        this.abortedTransactions = abortedTransactions;
+    }
+
+    public HashMap<Integer, HashSet<Middleware.ResourceServer>> getTransactionDataOps() {
+        return transactionDataOps;
+    }
+
+    public void setTransactionDataOps(HashMap<Integer, HashSet<Middleware.ResourceServer>> transactionDataOps) {
+        this.transactionDataOps = transactionDataOps;
+    }
+
+    public Integer getTransactionId() {
         return transactionId;
     }
 
+    public void setTransactionId(Integer transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public synchronized int start()
+    {
+        this.transactionId++;
+        this.activeTransactions.add(transactionId);
+        this.transactionDataOps.put(transactionId, new HashSet<Middleware.ResourceServer>());
+        return transactionId;
+    }
 
     public synchronized boolean commit(int xid)
     {
         Trace.info("TM::commit(" + xid + ") called");
-        transactionDataOps.remove(xid);
-        activeTransactions.remove(xid);
+        this.transactionDataOps.remove(xid);
+        this.activeTransactions.remove(xid);
         return true;
     }
 
     public synchronized void abort(int xid)
     {
         Trace.info("TM::abort(" + xid + ") called");
-        transactionDataOps.remove(xid);
-        activeTransactions.remove(xid);
-        abortedTransactions.add(xid);
+        this.transactionDataOps.remove(xid);
+        this.activeTransactions.remove(xid);
+        this.abortedTransactions.add(xid);
     }
 
     public synchronized void checkTransaction(int xid, String caller) throws InvalidTransactionException, TransactionAbortedException
     {
-        if (xid > transactionId) throw new InvalidTransactionException(xid, caller);
-        if (abortedTransactions.contains(xid)) throw new TransactionAbortedException(xid, caller);
-        if (!activeTransactions.contains(xid)) throw new InvalidTransactionException(xid, caller);
+        if (xid > this.transactionId) throw new InvalidTransactionException(xid, caller);
+        if (this.abortedTransactions.contains(xid)) throw new TransactionAbortedException(xid, caller);
+        if (!this.activeTransactions.contains(xid)) throw new InvalidTransactionException(xid, caller);
     }
 
     public synchronized HashSet<Middleware.ResourceServer> dataOperationsOfTransaction(int xid)
     {
-        if (!activeTransactions.contains(xid)) return null;
-        return transactionDataOps.get(xid);
+        if (!this.activeTransactions.contains(xid)) return null;
+        return this.transactionDataOps.get(xid);
     }
 
     public synchronized void addDataOperation(int xid, Middleware.ResourceServer rm)
     {
-        if (transactionDataOps.containsKey(xid)) transactionDataOps.get(xid).add(rm);
+        if (this.transactionDataOps.containsKey(xid)) this.transactionDataOps.get(xid).add(rm);
     }
 }
