@@ -333,7 +333,7 @@ public class ResourceManager implements IResourceManager
 		return null;
 	}
 
-	public void cancelReservations(Customer customer, int xid, int customerID) throws DeadlockException
+	public void cancelReservations(int xid, Customer customer, int customerID) throws DeadlockException
 	{
 		// loop through all the reservations the customer currently has and cancel them
 		RMHashMap reservations = customer.getReservations();

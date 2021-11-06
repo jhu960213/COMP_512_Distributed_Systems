@@ -222,7 +222,7 @@ public class Middleware implements IResourceManager {
         }
     }
 
-    public void cancelReservations(Customer customer, int xid, int customerID) throws DeadlockException {
+    public void cancelReservations(int xid, Customer customer, int customerID) throws DeadlockException {
 
     }
 
@@ -271,9 +271,9 @@ public class Middleware implements IResourceManager {
             else
             {
                 // canceling the reservations in all 3 resource servers
-                callResourceServerMethod(ResourceServer.Flights, "cancelReservations", new Object[]{customer, Integer.valueOf(xid), Integer.valueOf(customerID)});
-                callResourceServerMethod(ResourceServer.Cars, "cancelReservations", new Object[]{customer, Integer.valueOf(xid), Integer.valueOf(customerID)});
-                callResourceServerMethod(ResourceServer.Rooms, "cancelReservations", new Object[]{customer, Integer.valueOf(xid), Integer.valueOf(customerID)});
+                callResourceServerMethod(ResourceServer.Flights, "cancelReservations", new Object[]{Integer.valueOf(xid), customer, Integer.valueOf(customerID)});
+                callResourceServerMethod(ResourceServer.Cars, "cancelReservations", new Object[]{Integer.valueOf(xid), customer, Integer.valueOf(customerID)});
+                callResourceServerMethod(ResourceServer.Rooms, "cancelReservations", new Object[]{Integer.valueOf(xid), customer, Integer.valueOf(customerID)});
                 // Remove the customer from the storage
                 removeData(xid, customer.getKey());
                 Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") succeeded");

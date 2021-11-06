@@ -78,7 +78,7 @@ public interface IResourceManager
      *
      * @return True upon success
      */
-    public void cancelReservations(Customer customer, int xid, int customerID) throws DeadlockException;
+    public void cancelReservations(int xid, Customer customer, int customerID) throws DeadlockException;
 
     /**
      * Delete the flight.
