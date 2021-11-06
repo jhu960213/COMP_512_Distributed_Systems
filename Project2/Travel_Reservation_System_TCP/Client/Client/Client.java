@@ -507,6 +507,7 @@ public class Client {
                 System.out.println("Shutting down the system...");
                 if ((Boolean) callServer("shutdown", new Object[]{})) {
                     System.out.println("System shut down completed.");
+                    return false;
                 } else {
                     System.out.println("System shut down failed.");
                 }

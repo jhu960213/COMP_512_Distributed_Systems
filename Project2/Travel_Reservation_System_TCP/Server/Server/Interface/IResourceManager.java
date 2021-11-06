@@ -254,5 +254,6 @@ public interface IResourceManager
 
     public boolean shutdown();
 
+
     public void checkTransaction(int transactionId, String methodName) throws TransactionAbortedException, InvalidTransactionException;
 }

@@ -33,12 +33,6 @@ public class ServerSocketThread extends Thread
                 try {
                     if (argList.length > 0 && !methodName.equals("commit") && !methodName.equals("abort"))
                         resourceManager.checkTransaction((int)argList[0], methodName);
-//                    for (Method method : this.resourceManager.getClass().getMethods())
-//                        if (method.getName().equals(methodName) && method.getParameterCount() == argList.length) {
-//                            Object returnObj = method.invoke(this.resourceManager, argList);
-//                            outToClient.writeObject(returnObj);
-//                            break;
-//                        }
                     Class[] argTypes = new Class[argList.length];
                     for (int i = 0; i < argList.length; i++) {
                         Class cls = argList[i].getClass();
@@ -49,6 +43,8 @@ public class ServerSocketThread extends Thread
                     Method method = resourceManager.getClass().getMethod(methodName, argTypes);
                     Object returnObj = method.invoke(this.resourceManager, argList);
                     outToClient.writeObject(returnObj);
+                    if (methodName.equals("shutdown") && (returnObj instanceof Boolean) && (Boolean)returnObj)
+                        System.exit(1);
                 } catch (InvocationTargetException e) {
                     try {
                         outToClient.writeObject(e.getCause());

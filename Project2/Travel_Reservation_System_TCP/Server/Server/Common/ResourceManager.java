@@ -371,7 +371,8 @@ public class ResourceManager implements IResourceManager
 	}
 
 	public boolean shutdown() {
-		return false;
+		Trace.info("RM::shutdown() called");
+		return true;
 	}
 	public void checkTransaction(int transactionId, String methodName) {
 	}

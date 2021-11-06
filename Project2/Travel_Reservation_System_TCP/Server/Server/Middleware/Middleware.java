@@ -684,9 +684,26 @@ public class Middleware implements IResourceManager {
     }
 
     public boolean shutdown() {
-        return false;
-    }
+        Trace.info("Middleware::shutdown() called");
+        try {
+            Boolean res = (Boolean) callResourceServerMethod(ResourceServer.Flights, "shutdown", new Object[]{});
+            if (!res) return false;
+        } catch (Throwable e) {
+        }
 
+        try {
+            Boolean res = (Boolean) callResourceServerMethod(ResourceServer.Cars, "shutdown", new Object[]{});
+            if (!res) return false;
+        } catch (Throwable e) {
+        }
+
+        try {
+            Boolean res = (Boolean) callResourceServerMethod(ResourceServer.Rooms, "shutdown", new Object[]{});
+            if (!res) return false;
+        } catch (Throwable e) {
+        }
+        return true;
+    }
     public void checkTransaction(int transactionId, String methodName) throws TransactionAbortedException, InvalidTransactionException {
         Trace.info("Middleware::checkTransaction(" + transactionId + "," + methodName + ") called");
         transactionManager.checkTransaction(transactionId, methodName);
