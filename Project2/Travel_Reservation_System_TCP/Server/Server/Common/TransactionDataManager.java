@@ -4,7 +4,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TransactionDataManager {
-    HashMap<Integer, RMHashMap> hashMap = new HashMap<Integer, RMHashMap>();
+
+    HashMap<Integer, RMHashMap> hashMap;
+
+    public TransactionDataManager() {
+        this.hashMap= new HashMap<Integer, RMHashMap>();
+    }
+
+    public HashMap<Integer, RMHashMap> getHashMap() {
+        return hashMap;
+    }
+
+    public void setHashMap(HashMap<Integer, RMHashMap> hashMap) {
+        this.hashMap = hashMap;
+    }
+
     public synchronized void addUndoInfo(int xid, String dataName, RMItem data)
     {
         Trace.info("TDM::addUndoInfo(" + xid +"," + dataName + " ,) called");
