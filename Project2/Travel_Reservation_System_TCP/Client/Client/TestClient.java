@@ -108,12 +108,12 @@ public class TestClient extends Client {
                     endTime = System.currentTimeMillis();
                     clientLogger.recordEnd(txid, endTime);
                     long duration = endTime - startTime;
-                    long waitTime = ((long)perTransaction * (long)Math.pow(10, 3)) - duration;
+                    long waitTime = (long)(perTransaction * Math.pow(10, 3)) - duration;
                     if (waitTime <= 0)
                         System.out.println("*** client should not wait since real transaction duration: " +
                                 duration +
                                 "(ms) >=" + " theoretical transaction duration: " +
-                                perTransaction + "(ms) defined by client's desired throughput ***");
+                                perTransaction * Math.pow(10, 3) + "(ms) defined by client's desired throughput ***");
                     else {
                         // check that this is actually correct
                         int tmp = rand.nextInt(2);
