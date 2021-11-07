@@ -46,7 +46,7 @@ public class TransactionRecordUtil {
             bufferWriter = new BufferedWriter(fw);
             bufferWriter.write(TransactionRecord.columns());
 
-        }catch(IOException e){
+        } catch(IOException e){
             e.printStackTrace();
         }
     }
