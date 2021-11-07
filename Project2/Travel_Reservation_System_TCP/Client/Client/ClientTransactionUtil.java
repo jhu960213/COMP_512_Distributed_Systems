@@ -39,7 +39,7 @@ public class ClientTransactionUtil {
 
             File dirFile = new File("./Log/");
             dirFile.mkdirs();
-            File file = new File(fileName + sdf.format(date) + ".csv");
+            File file = new File("./Log/" + fileName + sdf.format(date) + ".csv");
             if(!file.exists()) {
                 file.createNewFile();
             }

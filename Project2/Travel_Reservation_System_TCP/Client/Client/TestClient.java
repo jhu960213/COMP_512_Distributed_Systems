@@ -137,9 +137,9 @@ public class TestClient extends Client {
                     boolean commitResponse = (boolean)callServer("commit", new Object[]{txid});
                     if (debug) {
                         if (commitResponse)
-                            System.out.println("*** transactions ID: " + txid + "committed successfully.");
+                            System.out.println("*** transactions ID: " + txid + " committed successfully.");
                         else {
-                            System.out.println("*** transactions ID: " + txid + "failed to commit.");
+                            System.out.println("*** transactions ID: " + txid + " failed to commit.");
                         }
                     }
 
