@@ -39,13 +39,12 @@ public class ClientTransactionUtil {
 
             File dirFile = new File("./Log/");
             dirFile.mkdirs();
-            File file = new File(fileName + sdf.format(date) + ".csv");
+            File file = new File("./Log/" + fileName + sdf.format(date) + ".csv");
             if(!file.exists()) {
                 file.createNewFile();
             }
             FileWriter fw = new FileWriter(file.getAbsoluteFile());
             this.bufferWriter = new BufferedWriter(fw);
-            this.bufferWriter.write(TransactionRecord.columns());
 
         } catch(IOException e){
             e.printStackTrace();
@@ -79,6 +78,7 @@ public class ClientTransactionUtil {
 
     public void dumpRecords() throws IOException {
         Set<Integer> keys = this.txHashMap.keySet();
+        bufferWriter.write(TransactionRecord.columns());
         for (Integer k: keys) {
             TransactionRecord record = readRecord(k);
             try {
@@ -86,6 +86,11 @@ public class ClientTransactionUtil {
             } catch (Exception e) {
                 System.out.println("Error writing transaction: " + record.toString() + " to csv...");
             }
+        }
+        try {
+            bufferWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
