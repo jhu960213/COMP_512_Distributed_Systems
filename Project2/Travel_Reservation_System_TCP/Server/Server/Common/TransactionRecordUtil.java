@@ -16,6 +16,9 @@ public class TransactionRecordUtil {
         long endTime;
         long readTime;
         long writeTime;
+        public static String columns() { //transactionId,state,startTime,endTime,executeTime,readTime,writeTime,databaseTime
+            return "Xid, State, StartTime, EndTime, ExecuteTime, ReadTime, WriteTime, DBTime\n";
+        }
         public String toString() { //transactionId,state,startTime,endTime,executeTime,readTime,writeTime,databaseTime
             return transactionId + ", " + state + ", " + startTime + ", " + endTime + ", " + (endTime - startTime) + ", " + readTime + ", " + writeTime + ", " + (readTime + writeTime) + "\n";
         }
@@ -31,15 +34,14 @@ public class TransactionRecordUtil {
             sdf.applyPattern("yyyyMMddHHmmss");
             Date date = new Date();
 
-            File file =new File(rmName + sdf.format(date) + ".data");
+            File file =new File(rmName + sdf.format(date) + ".csv");
             if(!file.exists()){
                 file.createNewFile();
             }
 
             FileWriter fw = new FileWriter(file.getAbsoluteFile());
             bufferWriter = new BufferedWriter(fw);
-//            bw.write(content);
-//            bw.close();
+            bufferWriter.write(TransactionRecord.columns());
 
         }catch(IOException e){
             e.printStackTrace();
