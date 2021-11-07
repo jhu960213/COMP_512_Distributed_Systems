@@ -73,7 +73,7 @@ public class TestClient extends Client {
                 checkArgumentsCount(3, arguments.size());
                 int transactionType = toInt(arguments.elementAt(1));
                 int numberOfTransaction = toInt(arguments.elementAt(2));
-                test(transactionType, numberOfTransaction);
+                test(transactionType, numberOfTransaction, 0, 10, 10, true);
                 break;
             }
             case ExecuteTestSuite: {
@@ -145,6 +145,7 @@ public class TestClient extends Client {
                     // sleeping to adjust for correct throughput
                     endTime = System.currentTimeMillis();
                     clientLogger.recordEnd(txid, endTime);
+                    //write a line
                     long duration = endTime - startTime;
                     long waitTime = perTransaction - duration;
                     if (waitTime <= 0)
@@ -496,26 +497,30 @@ public class TestClient extends Client {
     }
 
 
-    public void test(int transactionType, int numberOfTransactions) throws Throwable {
+    public void test(int transactionType, int numberOfTransactions, int throughput, int itemDataSize, int customerDataSize, boolean random) throws Throwable {
         // create file
         for (int i=0; i<numberOfTransactions; i++) {
             // start time
             int xid = 0;
             switch (transactionType) {
                 case 0: {
-                    xid = transactionAddAndQueryFlight(i + 1, 10000, 10000);
+                    xid = transactionAddAndQueryFlight(i, 10000, 10000);
                     break;
                 }
                 case 1: {
-                    xid = transactionAddAndQueryCars("montreal" + i, 10000, 10000);
+                    xid = transactionAddAndQueryCars("location" + i, 10000, 10000);
                     break;
                 }
                 case 2: {
-                    xid = transactionAddAndQueryRooms("montreal" + i, 10000, 10000);
+                    xid = transactionAddAndQueryRooms("location" + i, 10000, 10000);
                     break;
                 }
                 case 3: {
-                    xid = transactionReserveAll(1, "montreal");
+                    int number = i % itemDataSize;
+                    if (random) {
+                        //Todo
+                    }
+                    xid = transactionReserveAll(number, "location" + number);
                     break;
                 }
             }
