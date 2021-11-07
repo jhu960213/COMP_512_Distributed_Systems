@@ -21,6 +21,7 @@ public class ResourceManager implements IResourceManager
 	protected RMHashMap m_data;
 	private LockManager lockManager;
 	private TransactionDataManager transactionDataManager;
+	private TransactionRecordUtil transactionRecordUtil;
 
 	public ResourceManager(String p_name)
 	{
@@ -28,16 +29,19 @@ public class ResourceManager implements IResourceManager
 		this.m_data = new RMHashMap();
 		this.lockManager = new LockManager();
 		this.transactionDataManager = new TransactionDataManager();
+		this.transactionRecordUtil = new TransactionRecordUtil(p_name);
 
 	}
 
 	// Reads a data item
 	protected RMItem readData(int xid, String key) throws DeadlockException
 	{
+		long startTime = System.currentTimeMillis();
 		boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_READ);
 		if (lockGranted) {
 			synchronized(m_data) {
 				RMItem item = m_data.get(key);
+				transactionRecordUtil.addReadTime(xid, System.currentTimeMillis() - startTime);
 				if (item != null) {
 					return (RMItem)item.clone();
 				}
@@ -49,11 +53,13 @@ public class ResourceManager implements IResourceManager
 	// Writes a data item
 	protected void writeData(int xid, String key, RMItem value) throws DeadlockException
 	{
+		long startTime = System.currentTimeMillis();
 		boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
 		if (lockGranted) {
 			synchronized(m_data) {
 				transactionDataManager.addUndoInfo(xid, key, m_data.get(key));
 				m_data.put(key, value);
+				transactionRecordUtil.addWriteTime(xid, System.currentTimeMillis() - startTime);
 			}
 		}
 	}
@@ -61,11 +67,13 @@ public class ResourceManager implements IResourceManager
 	// Remove the item out of storage
 	protected void removeData(int xid, String key) throws DeadlockException
 	{
+		long startTime = System.currentTimeMillis();
 		boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
 		if (lockGranted) {
 			synchronized(m_data) {
 				transactionDataManager.addUndoInfo(xid, key, m_data.get(key));
 				m_data.remove(key);
+				transactionRecordUtil.addWriteTime(xid, System.currentTimeMillis() - startTime);
 			}
 		}
 	}
@@ -73,12 +81,14 @@ public class ResourceManager implements IResourceManager
 	// Writes a data item
 	protected void undoWriteData(int xid, String key, RMItem value)
 	{
+		long startTime = System.currentTimeMillis();
 		try {
 			boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
 			if (lockGranted) {
 				synchronized(m_data) {
 					if (value == null) m_data.remove(key);
 					else m_data.put(key, value);
+					transactionRecordUtil.addWriteTime(xid, System.currentTimeMillis() - startTime);
 				}
 			}
 		} catch (Exception e) {
@@ -362,6 +372,7 @@ public class ResourceManager implements IResourceManager
 	public boolean commit(int xid) {
 		Trace.info("RM::commit(" + xid + ") called");
 		transactionDataManager.cleanTransaction(xid);
+		transactionRecordUtil.commit(xid);
 		return lockManager.UnlockAll(xid);
 	}
 
@@ -372,13 +383,16 @@ public class ResourceManager implements IResourceManager
 			for (Map.Entry<String, RMItem> entry: undo.entrySet())
 				undoWriteData(xid, entry.getKey(), entry.getValue());
 		lockManager.UnlockAll(xid);
+		transactionRecordUtil.abort(xid);
 	}
 
 	public boolean shutdown() {
 		Trace.info("RM::shutdown() called");
+		transactionRecordUtil.close();
 		return true;
 	}
 	public void checkTransaction(int transactionId, String methodName) {
+		transactionRecordUtil.start(transactionId);
 	}
 
 	public String getName()
