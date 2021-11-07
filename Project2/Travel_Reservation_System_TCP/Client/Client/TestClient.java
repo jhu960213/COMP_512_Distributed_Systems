@@ -73,6 +73,7 @@ public class TestClient extends Client {
                 checkArgumentsCount(3, arguments.size());
                 int transactionType = toInt(arguments.elementAt(1));
                 int numberOfTransaction = toInt(arguments.elementAt(2));
+                //Todo
                 test(transactionType, numberOfTransaction, 0, 10, 10, true);
                 break;
             }
