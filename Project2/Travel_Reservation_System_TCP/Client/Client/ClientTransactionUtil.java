@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
@@ -53,15 +54,11 @@ public class ClientTransactionUtil {
     }
 
     private TransactionRecord readRecord(Integer txi) {
-        synchronized (this.txHashMap) {
-            return this.txHashMap.get(txi);
-        }
+        return this.txHashMap.get(txi);
     }
 
     private void writeRecord(Integer txi, TransactionRecord record) {
-        synchronized (this.txHashMap) {
-            this.txHashMap.put(txi, record);
-        }
+        this.txHashMap.put(txi, record);
     }
 
     public void recordStart(Integer txid, long time) {
@@ -79,9 +76,11 @@ public class ClientTransactionUtil {
 
     public void dumpRecords() throws IOException {
         Set<Integer> keys = this.txHashMap.keySet();
+        keys.stream().sorted();
         for (Integer k: keys) {
             TransactionRecord record = readRecord(k);
             try {
+                System.out.println(record.toString());
                 bufferWriter.write(record.toString());
             } catch (Exception e) {
                 System.out.println("Error writing transaction: " + record.toString() + " to csv...");
