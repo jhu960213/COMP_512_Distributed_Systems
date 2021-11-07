@@ -9,13 +9,16 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class TransactionRecordUtil {
-    public class TransactionRecord {
+
+    public static class TransactionRecord {
+
         int transactionId;
         int state;
         long startTime;
         long endTime;
         long readTime;
         long writeTime;
+
         public static String columns() { //transactionId,state,startTime,endTime,executeTime,readTime,writeTime,databaseTime
             return "Xid, State, StartTime, EndTime, ExecuteTime, ReadTime, WriteTime, DBTime\n";
         }
@@ -28,7 +31,7 @@ public class TransactionRecordUtil {
     private BufferedWriter bufferWriter;
 
     public TransactionRecordUtil (String rmName) {
-        hashMap = new HashMap<>();
+        this.hashMap = new HashMap<>();
         try{
             SimpleDateFormat sdf = new SimpleDateFormat();
             sdf.applyPattern("yyyyMMddHHmmss");
@@ -50,15 +53,15 @@ public class TransactionRecordUtil {
 
     public TransactionRecord readRecord(int transactionId)
     {
-        synchronized (hashMap) {
-            return hashMap.get(transactionId);
+        synchronized (this.hashMap) {
+            return this.hashMap.get(transactionId);
         }
     }
 
     public void writeRecord(int transactionId, TransactionRecord record)
     {
-        synchronized (hashMap) {
-            hashMap.put(transactionId, record);
+        synchronized (this.hashMap) {
+            this.hashMap.put(transactionId, record);
         }
     }
 
