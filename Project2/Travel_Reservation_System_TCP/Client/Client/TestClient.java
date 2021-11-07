@@ -109,19 +109,18 @@ public class TestClient extends Client {
                     clientLogger.recordEnd(txid, endTime);
                     long duration = endTime - startTime;
                     long waitTime = perTransaction - duration;
-
-                    // check that this is actually correct
-                    if (rand.nextInt(2) == 0)
-                        waitTime += rand.nextInt((int) (0.1*waitTime)); // adding randomness
-                    else
-                        waitTime -= rand.nextInt((int) (0.1*waitTime)); // adding randomness
-
                     if (waitTime <= 0)
                         System.out.println("*** client should not wait since real transaction duration: " +
                                 duration +
                                 ">=" + " theoretical transaction duration: " +
                                 perTransaction + " defined by client's desired throughput ***");
                     else {
+                        // check that this is actually correct
+                        int tmp = rand.nextInt(2);
+                        if (tmp == 0)
+                            waitTime += rand.nextInt((int) (0.1*waitTime)); // adding randomness
+                        else
+                            waitTime -= rand.nextInt((int) (0.1*waitTime)); 
                         Thread.sleep(waitTime);
                     }
                 }
