@@ -41,23 +41,23 @@ public class TestClient extends Client {
                 checkArgumentsCount(7, arguments.size());
                 Random rand = new Random(4);
 
-                String transactionSimType = arguments.elementAt(1);
-                int numOperations = toInt(arguments.elementAt(2));
-                int numTransactions = toInt(arguments.elementAt(3));
-                boolean debug = toBoolean(arguments.elementAt(4));
-                int throughPut = toInt(arguments.elementAt(5));
-                String transactionType = arguments.elementAt(6);
+                String simType = arguments.elementAt(1);
+                int numTransactions = toInt(arguments.elementAt(2));
+                boolean debug = toBoolean(arguments.elementAt(3));
+                int throughPut = toInt(arguments.elementAt(4));
+                String transLength = arguments.elementAt(5);
+                String transType = arguments.elementAt(6);
 
                 long perTransaction = (long)1/((long)throughPut);
                 long startTime;
                 long endTime;
 
-                System.out.println("Executing test suite - |TranSimType=" + transactionSimType +
+                System.out.println("Executing test suite - |simType=" + simType +
                         " |# of Transactions=" + numTransactions
-                        + " |# of Operations/Trans=" + numOperations
                         + " |Debug=" + debug
                         + " |Throughput=" + throughPut + " trans/s"
-                        + " |TransactionType=" + transactionType);
+                        + " |TransLength=" + transLength
+                        + " |TransType=" + transType);
 
                 for (int tx = 0; tx < numTransactions; tx++)
                 {
@@ -67,28 +67,24 @@ public class TestClient extends Client {
                     if (debug)
                         System.out.println("\nRunning transaction ID: " + txid + "...");
 
-                    // choosing between hetero or homo transaction simulation
+                    // generate parametrized transaction - structure is fixed but parameters vary with the tx var
                     Object[] commandAndArgs;
-                    if (transactionSimType.equals("hetero")) {
-                         commandAndArgs = generateAllCommands(txid);
+                    if (transLength.equals("short")) {
+                        commandAndArgs = generateShortTransaction(txid, simType, transType, tx);
+                    } else if (transLength.equals("med")) {
+                        commandAndArgs = generateMedTransaction(txid, simType, transType, tx);
                     } else {
-                        TypeOfBooking simType;
-                        if (transactionType.equals("flight"))
-                            simType = TypeOfBooking.FLIGHTS;
-                        else if (transactionType.equals("cars"))
-                            simType = TypeOfBooking.CARS;
-                        else
-                            simType = TypeOfBooking.ROOMS;
-                        commandAndArgs = generateOneTypeOfCommands(txid, simType);
+                        commandAndArgs = generateLongTransaction(txid, simType, transType, tx);
                     }
 
-                    // submitting all operations within a transaction
-                    for(int op = 0; op < numOperations; op++)
+                    // executing the operations of a transaction
+                    Set<Integer> keys = ((HashMap<Integer, String>)commandAndArgs[0]).keySet();
+                    for (Integer k: keys)
                     {
-                        String command = ((HashMap<Integer, String>)commandAndArgs[0]).get(op);
-                        Object[] args = ((HashMap<Integer, Object[]>)commandAndArgs[1]).get(op);
+                        String command = ((HashMap<Integer, String>)commandAndArgs[0]).get(k);
+                        Object[] args = ((HashMap<Integer, Object[]>)commandAndArgs[1]).get(k);
                         if (debug)
-                            System.out.println("*** executing client operation " + op + " " + command + "... ***");
+                            System.out.println("*** executing client operation: " + command + "... ***");
                         Object response = callServer(command, args);
                         if (debug)
                             System.out.println("*** server response to client operation: ***\n" + response.toString());
@@ -120,7 +116,6 @@ public class TestClient extends Client {
                                 ">=" + " theoretical transaction duration: " +
                                 perTransaction + " defined by client's desired throughput ***");
                     else {
-
                         Thread.sleep(waitTime);
                     }
                 }
@@ -139,137 +134,308 @@ public class TestClient extends Client {
         return true;
     }
 
-    private Object[] generateOneTypeOfCommands(Integer txid, TypeOfBooking book) {
+    // 3 operations each for "short" transaction, when simType = homo -> transType = car or flight or room
+    // when simType = hetero -> transType = don't care
+    private Object[] generateShortTransaction(Integer txid, String simtype, String transType, int id) {
 
         HashMap<Integer, String> commands = new HashMap<Integer, String>();
         HashMap<Integer, Object[]> commandArgs = new HashMap<Integer, Object[]>();
 
-        // doesn't matter what type of transaction we are running we always need to add customer first before reserving stuff
         commands.put(0, "newCustomer");
-        commandArgs.put(0, new Object[]{txid, 1000});
+        commandArgs.put(0, new Object[]{txid, id + 1000});
 
-        switch (book){
-            case FLIGHTS:
-                commands.put(1, "addFlight");
-                commandArgs.put(1, new Object[]{txid, 911, 100, 50});
+        switch (simtype) {
+           case "homo": {
+               switch (transType) {
+                   case "car": {
+                       commands.put(1, "addCars");
+                       commandArgs.put(1, new Object[]{txid, "montreal" + id,  100 + id, 200 + id});
 
-                commands.put(2, "queryFlight");
-                commandArgs.put(2, new Object[]{txid, 911});
+                       commands.put(2, "queryCars");
+                       commandArgs.put(2, new Object[]{txid, "montreal" + id});
+                       break;
+                   }
+                   case "room": {
+                       commands.put(1, "addRooms");
+                       commandArgs.put(1, new Object[]{txid, "medellin" + id, 100 + id, 2000 + id});
 
-                commands.put(3, "queryFlightPrice");
-                commandArgs.put(3, new Object[]{txid, 911});
+                       commands.put(2, "queryRooms");
+                       commandArgs.put(2, new Object[]{txid, "medellin" + id});
+                       break;
+                   }
+                   case "flight": {
+                       commands.put(1, "addFlight");
+                       commandArgs.put(1, new Object[]{txid, 900 + id, 100 + id, 50 + id});
 
-                commands.put(4, "reserveFlight");
-                commandArgs.put(4, new Object[]{txid, 1000, 911});
+                       commands.put(2, "queryFlight");
+                       commandArgs.put(2, new Object[]{txid, 900 + id});
+                       break;
+                   }
+               }
+               break;
+           }
+           case "hetero": {
 
-                commands.put(5, "deleteFlight");
-                commandArgs.put(5, new Object[]{txid, 911});
+               commands.put(1, "addCars");
+               commandArgs.put(1, new Object[]{txid, "montreal" + id,  100 + id, 200 + id});
+
+               commands.put(2, "addFlight");
+               commandArgs.put(2, new Object[]{txid, 900 + id, 100 + id, 50 + id});
+               break;
+           }
+       }
+       
+       return new Object[]{commands, commandArgs};
+    }
+
+    // 6 operations for each "med" transaction
+    private Object[] generateMedTransaction(Integer txid, String simtype, String transType, int id) {
+
+        HashMap<Integer, String> commands = new HashMap<Integer, String>();
+        HashMap<Integer, Object[]> commandArgs = new HashMap<Integer, Object[]>();
+
+        commands.put(0, "newCustomer");
+        commandArgs.put(0, new Object[]{txid, 1000 + id});
+
+        switch (simtype) {
+            case "homo": {
+
+                switch (transType) {
+                    case "car": {
+                        commands.put(1, "addCars");
+                        commandArgs.put(1, new Object[]{txid, "montreal" + id,  100 + id, 200 + id});
+
+                        commands.put(2, "queryCars");
+                        commandArgs.put(2, new Object[]{txid, "montreal" + id});
+
+                        commands.put(3, "queryCarsPrice");
+                        commandArgs.put(3, new Object[]{txid, "montreal" + id});
+
+                        commands.put(4, "reserveCar");
+                        commandArgs.put(4, new Object[]{txid, 1000 + id, "montreal" + id});
+
+                        commands.put(5, "deleteCars");
+                        commandArgs.put(5, new Object[]{txid, "montreal" + id});
+                        break;
+                    }
+                    case "room": {
+                        commands.put(1, "addRooms");
+                        commandArgs.put(1, new Object[]{txid, "medellin" + id, 100 + id, 2000 + id});
+
+                        commands.put(2, "queryRooms");
+                        commandArgs.put(2, new Object[]{txid, "medellin" + id});
+
+                        commands.put(3, "queryRoomsPrice");
+                        commandArgs.put(3, new Object[]{txid, "medellin" + id});
+
+                        commands.put(4, "reserveRoom");
+                        commandArgs.put(4, new Object[]{txid, 1000 + id, "medellin" + id});
+
+                        commands.put(5, "deleteRooms");
+                        commandArgs.put(5, new Object[]{txid, "medellin" + id});
+                        break;
+                    }
+                    case "flight": {
+                        commands.put(1, "addFlight");
+                        commandArgs.put(1, new Object[]{txid, 900 + id, 100 + id, 50 + id});
+
+                        commands.put(2, "queryFlight");
+                        commandArgs.put(2, new Object[]{txid, 900 + id});
+
+                        commands.put(3, "queryFlightPrice");
+                        commandArgs.put(3, new Object[]{txid, 900 + id});
+
+                        commands.put(4, "reserveFlight");
+                        commandArgs.put(4, new Object[]{txid, 1000 + id, 900 + id});
+
+                        commands.put(5, "deleteFlight");
+                        commandArgs.put(5, new Object[]{txid, 900 + id});
+                        break;
+                    }
+                }
                 break;
-            case CARS:
+            }
+            case "hetero": {
+
                 commands.put(1, "addCars");
-                commandArgs.put(1, new Object[]{txid, "chicago", 100, 150});
+                commandArgs.put(1, new Object[]{txid, "montreal" + id, 100 + id, 200 + id});
 
-                commands.put(2, "queryCars");
-                commandArgs.put(2, new Object[]{txid, "chicago"});
+                commands.put(2, "addFlight");
+                commandArgs.put(2, new Object[]{txid, 900 + id, 100 + id, 50 + id});
 
-                commands.put(3, "queryCarsPrice");
-                commandArgs.put(3, new Object[]{txid, "chicago"});
+                commands.put(3, "queryFlight");
+                commandArgs.put(3, new Object[]{txid, 900 + id});
 
-                commands.put(4, "deleteCar");
-                commandArgs.put(4, new Object[]{txid, 1000, "chicago"});
-
-                commands.put(5, "deleteCars");
-                commandArgs.put(5, new Object[]{txid, "chicago"});
-                break;
-            case ROOMS:
-                commands.put(1, "addRooms");
-                commandArgs.put(1, new Object[]{txid, "medellin", 100, 2000});
-
-                commands.put(2, "queryRooms");
-                commandArgs.put(2, new Object[]{txid, "medellin"});
-
-                commands.put(3, "queryRoomsPrice");
-                commandArgs.put(3, new Object[]{txid, "medellin"});
-
-                commands.put(4, "deleteRoom");
-                commandArgs.put(4, new Object[]{txid, 1000, "medellin"});
+                commands.put(4, "addRooms");
+                commandArgs.put(4, new Object[]{txid, "medellin" + id, 100 + id, 2000 + id});
 
                 commands.put(5, "deleteRooms");
-                commandArgs.put(5, new Object[]{txid, "medellin"});
+                commandArgs.put(5, new Object[]{txid, "medellin" + id});
                 break;
+            }
         }
 
         return new Object[]{commands, commandArgs};
     }
 
-    private Object[] generateAllCommands(Integer txid) {
-
-        // default values - flightNum = 911, Location = montreal, CustomerID = 1000
+    // 12 operations for each "long" transaction
+    private Object[] generateLongTransaction(Integer txid, String simtype, String transType, int id) {
 
         HashMap<Integer, String> commands = new HashMap<Integer, String>();
         HashMap<Integer, Object[]> commandArgs = new HashMap<Integer, Object[]>();
 
-        commands.put(0, "addFlight");
-        commandArgs.put(0, new Object[]{txid, 911, 100, 50});
+        commands.put(0, "newCustomer");
+        commandArgs.put(0, new Object[]{txid, 1000 + id});
 
-        commands.put(1, "addCars");
-        commandArgs.put(1, new Object[]{txid, "montreal", 100, 150});
+        switch (simtype) {
+            case "homo": {
 
-        commands.put(2, "addRooms");
-        commandArgs.put(2, new Object[]{txid, "toronto", 100, 2000});
+                switch (transType) {
+                    case "car": {
+                        commands.put(1, "addCars");
+                        commandArgs.put(1, new Object[]{txid, "montreal" + id,  100 + id, 200 + id});
 
-        commands.put(3, "newCustomer");
-        commandArgs.put(3, new Object[]{txid});
+                        commands.put(2, "queryCars");
+                        commandArgs.put(2, new Object[]{txid, "montreal" + id});
 
-        commands.put(4, "newCustomer");
-        commandArgs.put(4, new Object[]{txid, 1000});
+                        commands.put(3, "queryCarsPrice");
+                        commandArgs.put(3, new Object[]{txid, "montreal" + id});
 
-        commands.put(5, "queryFlight");
-        commandArgs.put(5, new Object[]{txid, 911});
+                        commands.put(4, "reserveCar");
+                        commandArgs.put(4, new Object[]{txid, 1000 + id, "montreal" + id});
 
-        commands.put(6, "queryCars");
-        commandArgs.put(6, new Object[]{txid, "montreal"});
+                        commands.put(5, "deleteCars");
+                        commandArgs.put(5, new Object[]{txid, "montreal" + id});
 
-        commands.put(7, "queryRooms");
-        commandArgs.put(7, new Object[]{txid, "toronto"});
+                        commands.put(6, "addCars");
+                        commandArgs.put(6, new Object[]{txid, "montreal" + id,  100 + id, 200 + id});
 
-        commands.put(8, "queryCustomerInfo");
-        commandArgs.put(8, new Object[]{txid, 1000});
+                        commands.put(7, "queryCars");
+                        commandArgs.put(7, new Object[]{txid, "montreal" + id});
 
-        commands.put(9, "queryFlightPrice");
-        commandArgs.put(9, new Object[]{txid, 911});
+                        commands.put(8, "queryCarsPrice");
+                        commandArgs.put(8, new Object[]{txid, "montreal" + id});
 
-        commands.put(10, "queryCarsPrice");
-        commandArgs.put(10, new Object[]{txid, "montreal"});
+                        commands.put(9, "reserveCar");
+                        commandArgs.put(9, new Object[]{txid, 1000 + id, "montreal" + id});
 
-        commands.put(11, "queryRoomsPrice");
-        commandArgs.put(11, new Object[]{txid, "toronto"});
+                        commands.put(10, "deleteCars");
+                        commandArgs.put(10, new Object[]{txid, "montreal" + id});
 
-        commands.put(12, "reserveFlight");
-        commandArgs.put(12, new Object[]{txid, 1000, 911});
+                        commands.put(11, "deleteCustomer");
+                        commandArgs.put(11, new Object[]{txid, 1000 + id});
+                        break;
+                    }
+                    case "room": {
+                        commands.put(1, "addRooms");
+                        commandArgs.put(1, new Object[]{txid, "medellin" + id, 100 + id, 2000 + id});
 
-        commands.put(13, "reserveCar");
-        commandArgs.put(13, new Object[]{txid, 1000, "montreal"});
+                        commands.put(2, "queryRooms");
+                        commandArgs.put(2, new Object[]{txid, "medellin" + id});
 
-        commands.put(14, "reserveRoom");
-        commandArgs.put(14, new Object[]{txid, 1000, "toronto"});
+                        commands.put(3, "queryRoomsPrice");
+                        commandArgs.put(3, new Object[]{txid, "medellin" + id});
 
-        commands.put(15, "deleteFlight");
-        commandArgs.put(15, new Object[]{txid, 911});
+                        commands.put(4, "reserveRoom");
+                        commandArgs.put(4, new Object[]{txid, 1000 + id, "medellin" + id});
 
-        commands.put(16, "deleteCars");
-        commandArgs.put(16, new Object[]{txid, "montreal"});
+                        commands.put(5, "deleteRooms");
+                        commandArgs.put(5, new Object[]{txid, "medellin" + id});
 
-        commands.put(17, "deleteRooms");
-        commandArgs.put(17, new Object[]{txid, "toronto"});
+                        commands.put(6, "addRooms");
+                        commandArgs.put(6, new Object[]{txid, "medellin" + id, 100 + id, 2000 + id});
 
-        commands.put(18, "deleteCustomer");
-        commandArgs.put(18, new Object[]{txid, 1000});
+                        commands.put(7, "queryRooms");
+                        commandArgs.put(7, new Object[]{txid, "medellin" + id});
 
-        commands.put(19, "bundle");
-        Vector<String> flights = new Vector<>();
-        flights.add("911");
-        commandArgs.put(19, new Object[]{txid, 1000, flights, "montreal", true, true});
+                        commands.put(8, "queryRoomsPrice");
+                        commandArgs.put(8, new Object[]{txid, "medellin" + id});
+
+                        commands.put(9, "reserveRoom");
+                        commandArgs.put(9, new Object[]{txid, 1000 + id, "medellin" + id});
+
+                        commands.put(10, "deleteRooms");
+                        commandArgs.put(10, new Object[]{txid, "medellin" + id});
+
+                        commands.put(11, "deleteCustomer");
+                        commandArgs.put(11, new Object[]{txid, 1000 + id});
+                        break;
+                    }
+                    case "flight": {
+                        commands.put(1, "addFlight");
+                        commandArgs.put(1, new Object[]{txid, 900 + id, 100 + id, 50 + id});
+
+                        commands.put(2, "queryFlight");
+                        commandArgs.put(2, new Object[]{txid, 900 + id});
+
+                        commands.put(3, "queryFlightPrice");
+                        commandArgs.put(3, new Object[]{txid, 900 + id});
+
+                        commands.put(4, "reserveFlight");
+                        commandArgs.put(4, new Object[]{txid, 1000 + id, 900 + id});
+
+                        commands.put(5, "deleteFlight");
+                        commandArgs.put(5, new Object[]{txid, 900 + id});
+
+                        commands.put(6, "addFlight");
+                        commandArgs.put(6, new Object[]{txid, 900 + id, 100 + id, 50 + id});
+
+                        commands.put(7, "queryFlight");
+                        commandArgs.put(7, new Object[]{txid, 900 + id});
+
+                        commands.put(8, "queryFlightPrice");
+                        commandArgs.put(8, new Object[]{txid, 900 + id});
+
+                        commands.put(9, "reserveFlight");
+                        commandArgs.put(9, new Object[]{txid, 1000 + id, 900 + id});
+
+                        commands.put(10, "deleteFlight");
+                        commandArgs.put(10, new Object[]{txid, 900 + id});
+
+                        commands.put(11, "deleteCustomer");
+                        commandArgs.put(11, new Object[]{txid, 1000 + id});
+                        break;
+                    }
+                }
+                break;
+            }
+            case "hetero": {
+
+                commands.put(1, "addCars");
+                commandArgs.put(1, new Object[]{txid, "montreal" + id, 100 + id, 200 + id});
+
+                commands.put(2, "addFlight");
+                commandArgs.put(2, new Object[]{txid, 900 + id, 100 + id, 50 + id});
+
+                commands.put(3, "queryFlight");
+                commandArgs.put(3, new Object[]{txid, 900 + id});
+
+                commands.put(4, "addRooms");
+                commandArgs.put(4, new Object[]{txid, "medellin" + id, 100 + id, 2000 + id});
+
+                commands.put(5, "reserveFlight");
+                commandArgs.put(5, new Object[]{txid, 1000 + id, 900 + id});
+
+                commands.put(6, "reserveRoom");
+                commandArgs.put(6, new Object[]{txid, 1000 + id, "medellin" + id});
+
+                commands.put(7, "queryCars");
+                commandArgs.put(7, new Object[]{txid, "montreal" + id});
+
+                commands.put(8, "queryRooms");
+                commandArgs.put(8, new Object[]{txid, "medellin" + id});
+
+                commands.put(9, "reserveCar");
+                commandArgs.put(9, new Object[]{txid, 1000 + id, "montreal" + id});
+
+                commands.put(10, "deleteRooms");
+                commandArgs.put(10, new Object[]{txid, "medellin" + id});
+
+                commands.put(11, "deleteCustomer");
+                commandArgs.put(11, new Object[]{txid, 1000 + id});
+                break;
+            }
+        }
 
         return new Object[]{commands, commandArgs};
     }
