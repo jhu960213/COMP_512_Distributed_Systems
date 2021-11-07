@@ -598,11 +598,20 @@ public class Client {
         return xid;
     }
 
+    public int transactionAddAndQueryCustomer(int customerId) throws Throwable {
+        Integer xid = (Integer) callServer("start", new Object[]{});
+        System.out.println("Transaction with id: " + xid + " has been started.");
+        //Todo
+        return xid;
+    }
+
     public int transactionReserveAll(int flightNum, String location) throws Throwable {
         Integer xid = (Integer) callServer("start", new Object[]{});
         System.out.println("Transaction with id: " + xid + " has been started.");
+
         Integer customerID = (Integer) callServer("newCustomer", new Object[]{xid});
         System.out.println("Add customer ID: " + customerID);
+
         Boolean res = (Boolean) callServer("reserveFlight", new Object[]{xid, customerID, flightNum});
         System.out.println(res ? ("Flight Reserved for " + customerID) : ("Flight could not be reserved for " + customerID));
         res = (Boolean) callServer("reserveCar", new Object[]{xid, customerID, location});
@@ -611,6 +620,13 @@ public class Client {
         System.out.println(res ? ("Room Reserved for " + customerID) : ("Room could not be reserved for " + customerID));
         res = (Boolean) callServer("commit", new Object[]{xid});
         System.out.println(res ? ("Transaction " + xid + " committed.") : ("Transaction " + xid + " failed to be committed."));
+        return xid;
+    }
+
+    public int transactionReserveForCustomer(int customerId, int flightNum, String location) throws Throwable {
+        Integer xid = (Integer) callServer("start", new Object[]{});
+        System.out.println("Transaction with id: " + xid + " has been started.");
+        //Todo
         return xid;
     }
 
