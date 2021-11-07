@@ -20,10 +20,10 @@ public class ClientTransactionUtil {
         long endTime;
 
         public static String columns() {
-            return "TXid, StartTime, EndTime\n";
+            return "TXid, StartTime, EndTime, ResponseTime\n";
         }
         public String toString() {
-            return transactionId + ", " + startTime + ", " + endTime + ", " + "\n";
+            return transactionId + ", " + startTime + ", " + endTime + ", " + (endTime - startTime) + "\n";
         }
     }
 
@@ -37,11 +37,12 @@ public class ClientTransactionUtil {
             sdf.applyPattern("yyyyMMddHHmmss");
             Date date = new Date();
 
+            File dirFile = new File("./Log/");
+            dirFile.mkdirs();
             File file = new File(fileName + sdf.format(date) + ".csv");
             if(!file.exists()) {
                 file.createNewFile();
             }
-
             FileWriter fw = new FileWriter(file.getAbsoluteFile());
             this.bufferWriter = new BufferedWriter(fw);
             this.bufferWriter.write(TransactionRecord.columns());
