@@ -11,6 +11,7 @@ public class TestClient extends Client {
         CARS,
         ROOMS
     }
+    private ClientTransactionUtil clientLogger;
 
     public static void main(String args[]) throws IOException
     {
@@ -76,7 +77,7 @@ public class TestClient extends Client {
                 break;
             }
             case ExecuteTestSuite: {
-                checkArgumentsCount(7, arguments.size());
+                checkArgumentsCount(8, arguments.size());
                 Random rand = new Random(4);
 
                 String simType = arguments.elementAt(1);
@@ -85,11 +86,13 @@ public class TestClient extends Client {
                 int throughPut = toInt(arguments.elementAt(4));
                 String transLength = arguments.elementAt(5);
                 String transType = arguments.elementAt(6);
+                String clientName = arguments.elementAt(7);
 
                 long perTransaction = (long)1/((long)throughPut);
                 long startTime;
                 long endTime;
 
+                this.clientLogger = new ClientTransactionUtil(clientName);
                 System.out.println("Executing test suite - |simType=" + simType +
                         " |# of Transactions=" + numTransactions
                         + " |Debug=" + debug
@@ -100,10 +103,11 @@ public class TestClient extends Client {
                 for (int tx = 0; tx < numTransactions; tx++)
                 {
                     // starting a new transaction
-                    startTime = System.nanoTime();
+                    startTime = System.currentTimeMillis();
                     Integer txid = (Integer) callServer("start", new Object[]{});
                     if (debug)
                         System.out.println("\nRunning transaction ID: " + txid + "...");
+                    clientLogger.recordStart(txid, startTime);
 
                     // generate parametrized transaction - structure is fixed but parameters vary with the tx var
                     Object[] commandAndArgs;
@@ -139,10 +143,12 @@ public class TestClient extends Client {
                     }
 
                     // sleeping to adjust for correct throughput
-                    endTime = System.nanoTime();
+                    endTime = System.currentTimeMillis();
+                    clientLogger.recordEnd(txid, endTime);
                     long duration = endTime - startTime;
-                    long waitTime = perTransaction - (long)(duration * Math.pow(10,-6));
+                    long waitTime = perTransaction - duration;
 
+                    // check that this is actually correct
                     if (rand.nextInt(2) == 0)
                         waitTime += rand.nextInt((int) (0.1*waitTime)); // adding randomness
                     else
@@ -150,13 +156,14 @@ public class TestClient extends Client {
 
                     if (waitTime <= 0)
                         System.out.println("*** client should not wait since real transaction duration: " +
-                                (long)(duration * Math.pow(10,-6))  +
+                                duration +
                                 ">=" + " theoretical transaction duration: " +
                                 perTransaction + " defined by client's desired throughput ***");
                     else {
                         Thread.sleep(waitTime);
                     }
                 }
+                clientLogger.dumpRecords();
                 break;
             }
             case Shutdown: {

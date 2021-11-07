@@ -46,7 +46,8 @@ public enum Command {
 
 	TestTransactions("Test transactions", "<Transaction Type(number)><NumTransactions>"),
 
-	ExecuteTestSuite("Client can execute test suites with different length transactions", "<SimType><NumTransactions><Debug><Transactions/(s)><TransLength><TransType>"),
+
+	ExecuteTestSuite("Client can execute test suites with different length transactions", "<SimType><NumTransactions><Debug><Transactions/(s)><TransLength><TransType><ClientName>"),
 
 	Quit("Exit the client application", "");
 
