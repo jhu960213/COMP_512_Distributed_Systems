@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class TransactionDataManager {
 
-    HashMap<Integer, RMHashMap> hashMap;
+    private HashMap<Integer, RMHashMap> hashMap;
 
     public TransactionDataManager() {
         this.hashMap= new HashMap<Integer, RMHashMap>();

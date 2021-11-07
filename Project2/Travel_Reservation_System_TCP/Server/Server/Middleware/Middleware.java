@@ -33,6 +33,7 @@ public class Middleware implements IResourceManager {
     private TransactionManager transactionManager;
     private LockManager lockManager;
     private TransactionDataManager transactionDataManager;
+    private TransactionRecordUtil transactionRecordUtil;
 
     public Middleware() {
         try {
@@ -40,6 +41,7 @@ public class Middleware implements IResourceManager {
             this.transactionManager = new TransactionManager();
             this.lockManager = new LockManager();
             this.transactionDataManager = new TransactionDataManager();
+            this.transactionRecordUtil = new TransactionRecordUtil(this.getName());
         } catch (Exception e) {
             System.out.println("\n*** Middleware error: " + e.getMessage() + " ***\n");
         }
@@ -89,12 +91,14 @@ public class Middleware implements IResourceManager {
     // Reads a data item
     protected RMItem readData(int xid, String key)
     {
+        long startTime = System.currentTimeMillis();
         transactionManager.addDataOperation(xid, ResourceServer.Middleware);
         try {
             Boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_READ);
             if (lockGranted) {
                 synchronized(this.customersList) {
                     RMItem item = this.customersList.get(key);
+                    transactionRecordUtil.addReadTime(xid, System.currentTimeMillis() - startTime);
                     if (item != null) {
                         return (RMItem)item.clone();
                     }
@@ -110,6 +114,7 @@ public class Middleware implements IResourceManager {
     // Writes a data item
     protected void writeData(int xid, String key, RMItem value)
     {
+        long startTime = System.currentTimeMillis();
         transactionManager.addDataOperation(xid, ResourceServer.Middleware);
         try {
             Boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
@@ -117,6 +122,7 @@ public class Middleware implements IResourceManager {
                 synchronized(this.customersList) {
                     transactionDataManager.addUndoInfo(xid, key, customersList.get(key));
                     this.customersList.put(key, value);
+                    transactionRecordUtil.addWriteTime(xid, System.currentTimeMillis() - startTime);
                 }
             }
         } catch (DeadlockException e) {
@@ -128,6 +134,7 @@ public class Middleware implements IResourceManager {
     // Remove the item out of storage
     protected void removeData(int xid, String key)
     {
+        long startTime = System.currentTimeMillis();
         transactionManager.addDataOperation(xid, ResourceServer.Middleware);
         try {
             Boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
@@ -135,6 +142,7 @@ public class Middleware implements IResourceManager {
                 synchronized(this.customersList) {
                     transactionDataManager.addUndoInfo(xid, key, customersList.get(key));
                     this.customersList.remove(key);
+                    transactionRecordUtil.addWriteTime(xid, System.currentTimeMillis() - startTime);
                 }
             }
         } catch (DeadlockException e) {
@@ -144,12 +152,14 @@ public class Middleware implements IResourceManager {
     }
     protected void undoWriteData(int xid, String key, RMItem value)
     {
+        long startTime = System.currentTimeMillis();
         try {
             boolean lockGranted = lockManager.Lock(xid, key, TransactionLockObject.LockType.LOCK_WRITE);
             if (lockGranted) {
                 synchronized(customersList) {
                     if (value == null) customersList.remove(key);
                     else customersList.put(key, value);
+                    transactionRecordUtil.addWriteTime(xid, System.currentTimeMillis() - startTime);
                 }
             }
         } catch (Exception e) {
@@ -621,7 +631,9 @@ public class Middleware implements IResourceManager {
 
     public int start() {
         Trace.info("Middleware::start() called");
-        return transactionManager.start();
+        int xid = transactionManager.start();
+        transactionRecordUtil.start(xid);
+        return xid;
     }
 
     public boolean commit(int xid) throws InvalidTransactionException, TransactionAbortedException{
@@ -635,6 +647,7 @@ public class Middleware implements IResourceManager {
                 } else {
                     if (!(Boolean)callResourceServerMethod(type, "commit", new Object[]{Integer.valueOf(xid)})) return false;
                 }
+            transactionRecordUtil.commit(xid);
             return transactionManager.commit(xid);
         } catch (Throwable e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -657,6 +670,7 @@ public class Middleware implements IResourceManager {
                     callResourceServerMethod(type, "abort", new Object[]{Integer.valueOf(xid)});
                 }
             transactionManager.abort(xid);
+            transactionRecordUtil.abort(xid);
         } catch (Throwable e) {
             if (e instanceof InvalidTransactionException || e instanceof TransactionAbortedException) throw (InvalidTransactionException) e;
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -677,6 +691,7 @@ public class Middleware implements IResourceManager {
                     callResourceServerMethod(type, "abort", new Object[]{Integer.valueOf(xid)});
                 }
             transactionManager.abort(xid);
+            transactionRecordUtil.abort(xid);
         } catch (Throwable e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
@@ -701,6 +716,7 @@ public class Middleware implements IResourceManager {
             if (!res) return false;
         } catch (Throwable e) {
         }
+        transactionRecordUtil.close();
         return true;
     }
     public void checkTransaction(int transactionId, String methodName) throws TransactionAbortedException, InvalidTransactionException {
