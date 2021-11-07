@@ -82,7 +82,7 @@ public class ClientTransactionUtil {
         for (Integer k: keys) {
             TransactionRecord record = readRecord(k);
             try {
-                bufferWriter.write(record.toString());
+                this.bufferWriter.write(record.toString());
             } catch (Exception e) {
                 System.out.println("Error writing transaction: " + record.toString() + " to csv...");
             }
