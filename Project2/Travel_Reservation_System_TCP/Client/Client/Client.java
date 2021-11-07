@@ -117,7 +117,6 @@ public class Client {
                 int flightNum = toInt(arguments.elementAt(2));
                 int flightSeats = toInt(arguments.elementAt(3));
                 int flightPrice = toInt(arguments.elementAt(4));
-
                 Boolean res = (Boolean) callServer("addFlight", new Object[]{id, flightNum, flightSeats, flightPrice});
                 if (res) {
                     System.out.println("Flight added");
@@ -480,7 +479,7 @@ public class Client {
                 checkArgumentsCount(1, arguments.size());
                 System.out.println("Starting a transaction...");
                 Integer xid = (Integer) callServer("start", new Object[]{});
-                System.out.println("Transaction with id: " + xid + " have been started.");
+                System.out.println("Transaction with id: " + xid + " has been started.");
                 break;
             }
             case Commit: {
@@ -488,9 +487,9 @@ public class Client {
                 System.out.println("Committing a transaction [xid=" + arguments.elementAt(1) + "]...");
                 int id = toInt(arguments.elementAt(1));
                 if ((Boolean) callServer("commit", new Object[]{id})) {
-                    System.out.println("Transaction committed.");
+                    System.out.println("Transaction " + id + " committed.");
                 } else {
-                    System.out.println("Transaction failed to be committed.");
+                    System.out.println("Transaction " + id + " failed to be committed.");
                 }
                 break;
             }
@@ -499,7 +498,38 @@ public class Client {
                 System.out.println("Aborting a transaction [xid=" + arguments.elementAt(1) + "]...");
                 int id = toInt(arguments.elementAt(1));
                 callServer("abort", new Object[]{id});
-                System.out.println("Transaction aborted.");
+                System.out.println("Transaction " + id + " aborted.");
+                break;
+            }
+            case TransactionAddAndQueryFlight: {
+                checkArgumentsCount(4, arguments.size());
+                int flightNum = toInt(arguments.elementAt(1));
+                int flightSeats = toInt(arguments.elementAt(2));
+                int flightPrice = toInt(arguments.elementAt(3));
+                transactionAddAndQueryFlight(flightNum, flightSeats, flightPrice);
+                break;
+            }
+            case TransactionAddAndQueryCars: {
+                checkArgumentsCount(4, arguments.size());
+                String location = arguments.elementAt(1);
+                int number = toInt(arguments.elementAt(2));
+                int price = toInt(arguments.elementAt(3));
+                transactionAddAndQueryCars(location, number, price);
+                break;
+            }
+            case TransactionAddAndQueryRooms: {
+                checkArgumentsCount(4, arguments.size());
+                String location = arguments.elementAt(1);
+                int number = toInt(arguments.elementAt(2));
+                int price = toInt(arguments.elementAt(3));
+                transactionAddAndQueryRooms(location, number, price);
+                break;
+            }
+            case TransactionReserveAll: {
+                checkArgumentsCount(3, arguments.size());
+                int flightNum = toInt(arguments.elementAt(1));
+                String location = arguments.elementAt(2);
+                transactionReserveAll(flightNum, location);
                 break;
             }
             case Shutdown: {
@@ -524,6 +554,64 @@ public class Client {
             }
         }
         return true;
+    }
+
+    //Transactions
+    public int transactionAddAndQueryFlight(int flightNum, int flightSeats, int flightPrice) throws Throwable {
+        Integer xid = (Integer) callServer("start", new Object[]{});
+        System.out.println("Transaction with id: " + xid + " has been started.");
+        Boolean res = (Boolean) callServer("addFlight", new Object[]{xid, flightNum, flightSeats, flightPrice});
+        System.out.println(res ? "Flight added" : "Flight could not be added");
+        Integer seats = (Integer) callServer("queryFlight", new Object[]{xid, flightNum});
+        System.out.println("Number of seats available: " + seats);
+        Integer price = (Integer) callServer("queryFlightPrice", new Object[]{xid, flightNum});
+        System.out.println("Price of a seat: " + price);
+        res = (Boolean) callServer("commit", new Object[]{xid});
+        System.out.println(res ? ("Transaction " + xid + " committed.") : ("Transaction " + xid + " failed to be committed."));
+        return xid;
+    }
+
+    public int transactionAddAndQueryCars(String location, int number, int price) throws Throwable {
+        Integer xid = (Integer) callServer("start", new Object[]{});
+        System.out.println("Transaction with id: " + xid + " has been started.");
+        Boolean res = (Boolean) callServer("addCars", new Object[]{xid, location, number, price});
+        System.out.println(res ? "Cars added" : "Cars could not be added");
+        Integer cars = (Integer) callServer("queryCars", new Object[]{xid, location});
+        System.out.println("Number of cars available: " + cars);
+        Integer p = (Integer) callServer("queryCarsPrice", new Object[]{xid, location});
+        System.out.println("Price of car: " + p);
+        res = (Boolean) callServer("commit", new Object[]{xid});
+        System.out.println(res ? ("Transaction " + xid + " committed.") : ("Transaction " + xid + " failed to be committed."));
+        return xid;
+    }
+    public int transactionAddAndQueryRooms(String location, int number, int price) throws Throwable {
+        Integer xid = (Integer) callServer("start", new Object[]{});
+        System.out.println("Transaction with id: " + xid + " has been started.");
+        Boolean res = (Boolean) callServer("addRooms", new Object[]{xid, location, number, price});
+        System.out.println(res ? "Cars added" : "Cars could not be added");
+        Integer rooms = (Integer) callServer("queryRooms", new Object[]{xid, location});
+        System.out.println("Number of rooms available: " + rooms);
+        Integer p = (Integer) callServer("queryRoomsPrice", new Object[]{xid, location});
+        System.out.println("Price of room: " + p);
+        res = (Boolean) callServer("commit", new Object[]{xid});
+        System.out.println(res ? ("Transaction " + xid + " committed.") : ("Transaction " + xid + " failed to be committed."));
+        return xid;
+    }
+
+    public int transactionReserveAll(int flightNum, String location) throws Throwable {
+        Integer xid = (Integer) callServer("start", new Object[]{});
+        System.out.println("Transaction with id: " + xid + " has been started.");
+        Integer customerID = (Integer) callServer("newCustomer", new Object[]{xid});
+        System.out.println("Add customer ID: " + customerID);
+        Boolean res = (Boolean) callServer("reserveFlight", new Object[]{xid, customerID, flightNum});
+        System.out.println(res ? ("Flight Reserved for " + customerID) : ("Flight could not be reserved for " + customerID));
+        res = (Boolean) callServer("reserveCar", new Object[]{xid, customerID, location});
+        System.out.println(res ? ("Car Reserved for " + customerID) : ("Car could not be reserved for " + customerID));
+        res = (Boolean) callServer("reserveRoom", new Object[]{xid, customerID, location});
+        System.out.println(res ? ("Room Reserved for " + customerID) : ("Room could not be reserved for " + customerID));
+        res = (Boolean) callServer("commit", new Object[]{xid});
+        System.out.println(res ? ("Transaction " + xid + " committed.") : ("Transaction " + xid + " failed to be committed."));
+        return xid;
     }
 
     public static Vector<String> parse(String command)

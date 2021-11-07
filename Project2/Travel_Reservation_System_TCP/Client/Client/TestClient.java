@@ -38,6 +38,44 @@ public class TestClient extends Client {
                 break;
             }
 
+            case TransactionAddAndQueryFlight: {
+                checkArgumentsCount(4, arguments.size());
+                int flightNum = toInt(arguments.elementAt(1));
+                int flightSeats = toInt(arguments.elementAt(2));
+                int flightPrice = toInt(arguments.elementAt(3));
+                transactionAddAndQueryFlight(flightNum, flightSeats, flightPrice);
+                break;
+            }
+            case TransactionAddAndQueryCars: {
+                checkArgumentsCount(4, arguments.size());
+                String location = arguments.elementAt(1);
+                int number = toInt(arguments.elementAt(2));
+                int price = toInt(arguments.elementAt(3));
+                transactionAddAndQueryCars(location, number, price);
+                break;
+            }
+            case TransactionAddAndQueryRooms: {
+                checkArgumentsCount(4, arguments.size());
+                String location = arguments.elementAt(1);
+                int number = toInt(arguments.elementAt(2));
+                int price = toInt(arguments.elementAt(3));
+                transactionAddAndQueryRooms(location, number, price);
+                break;
+            }
+            case TransactionReserveAll: {
+                checkArgumentsCount(3, arguments.size());
+                int flightNum = toInt(arguments.elementAt(1));
+                String location = arguments.elementAt(2);
+                transactionReserveAll(flightNum, location);
+                break;
+            }
+            case TestTransactions: {
+                checkArgumentsCount(3, arguments.size());
+                int transactionType = toInt(arguments.elementAt(1));
+                int numberOfTransaction = toInt(arguments.elementAt(2));
+                test(transactionType, numberOfTransaction);
+                break;
+            }
             case ExecuteTestSuite: {
                 checkArgumentsCount(8, arguments.size());
                 Random rand = new Random(4);
@@ -455,5 +493,35 @@ public class TestClient extends Client {
         }
 
         return new Object[]{commands, commandArgs};
+    }
+
+
+    public void test(int transactionType, int numberOfTransactions) throws Throwable {
+        // create file
+        for (int i=0; i<numberOfTransactions; i++) {
+            // start time
+            int xid = 0;
+            switch (transactionType) {
+                case 0: {
+                    xid = transactionAddAndQueryFlight(i + 1, 10000, 10000);
+                    break;
+                }
+                case 1: {
+                    xid = transactionAddAndQueryCars("montreal" + i, 10000, 10000);
+                    break;
+                }
+                case 2: {
+                    xid = transactionAddAndQueryRooms("montreal" + i, 10000, 10000);
+                    break;
+                }
+                case 3: {
+                    xid = transactionReserveAll(1, "montreal");
+                    break;
+                }
+            }
+            // end time
+            // log response time
+        }
+        // save file
     }
 }

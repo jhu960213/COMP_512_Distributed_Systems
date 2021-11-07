@@ -38,6 +38,15 @@ public enum Command {
 	Commit("Commit a transaction", "<transaction_id>"),
 	Abort("Abort a transaction", "<transaction_id>"),
 	Shutdown("Shutdown the system", ""),
+
+	TransactionAddAndQueryFlight("Execute a transaction to add and query a flight", "<FlightNumber>,<NumberOfSeats>,<PricePerSeat>"),
+	TransactionAddAndQueryCars("Execute a transaction to add and query cars", "<Location>,<NumberOfCar>,<Price>"),
+	TransactionAddAndQueryRooms("Execute a transaction to add and query rooms", "<Location>,<NumberOfRoom>,<Price>"),
+	TransactionReserveAll("Execute a transaction to add a customer and reserve all", "<FlightNumber>,<Location>"),
+
+	TestTransactions("Test transactions", "<Transaction Type(number)><NumTransactions>"),
+
+
 	ExecuteTestSuite("Client can execute test suites with different length transactions", "<SimType><NumTransactions><Debug><Transactions/(s)><TransLength><TransType><ClientName>"),
 
 	Quit("Exit the client application", "");

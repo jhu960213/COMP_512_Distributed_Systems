@@ -37,7 +37,9 @@ public class TransactionRecordUtil {
             sdf.applyPattern("yyyyMMddHHmmss");
             Date date = new Date();
 
-            File file =new File(rmName + sdf.format(date) + ".csv");
+            File dirFile = new File("./Log/");
+            dirFile.mkdirs();
+            File file =new File("./Log/" + rmName + sdf.format(date) + ".csv");
             if(!file.exists()){
                 file.createNewFile();
             }
