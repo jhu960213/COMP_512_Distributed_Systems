@@ -21,7 +21,7 @@ public class TransactionRecordUtil {
         long writeTime;
 
         public static String columns() { //transactionId,state,startTime,endTime,executeTime,readTime,writeTime,databaseTime
-            return "Xid, State, StartTime, EndTime, TransactionTime, ExecuteTime, CommunicationTime ReadTime, WriteTime, DBTime\n";
+            return "Xid, State, StartTime, EndTime, TransactionTime, ExecuteTime, CommunicationTime, ReadTime, WriteTime, DBTime\n";
         }
         public String toString() { //transactionId,state,startTime,endTime,executeTime,readTime,writeTime,databaseTime
             return transactionId + ", " + state + ", " + startTime + ", " + endTime + ", " + (endTime - startTime) + ", " + executeTime + ", " + (endTime - startTime - executeTime) + ", " + readTime + ", " + writeTime + ", " + (readTime + writeTime) + "\n";
