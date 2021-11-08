@@ -76,7 +76,7 @@ public class TestClient extends Client {
                 checkArgumentsCount(7, arguments.size());
                 int transactionType = toInt(arguments.elementAt(1));
                 int numberOfTransaction = toInt(arguments.elementAt(2));
-                int throughput = toInt(arguments.elementAt(3));
+                double throughput = toInt(arguments.elementAt(3));
                 int itemDataSize = toInt(arguments.elementAt(4));
                 int customerIDBase = toInt(arguments.elementAt(5));
                 String clientName = arguments.elementAt(6);
@@ -504,10 +504,10 @@ public class TestClient extends Client {
     }
 
 
-    public void test(int transactionType, int numberOfTransactions, int throughput, int itemDataSize, int customerIDBase, boolean random, String clientName) throws Throwable {
+    public void test(int transactionType, int numberOfTransactions, double throughput, int itemDataSize, int customerIDBase, boolean random, String clientName) throws Throwable {
 
         clientLogger = new ClientTransactionUtil(clientName);
-        double perTransaction = (1.0/(double)throughput);
+        double perTransaction = (1.0/throughput);
         Random rand = new Random(4);
         for (int i=0; i<numberOfTransactions; i++) {
             long startTime = System.currentTimeMillis();
