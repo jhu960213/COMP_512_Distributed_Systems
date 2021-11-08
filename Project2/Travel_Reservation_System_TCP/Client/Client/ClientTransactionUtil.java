@@ -88,4 +88,13 @@ public class ClientTransactionUtil {
             }
         }
     }
+
+    public void close()
+    {
+        try {
+            this.bufferWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
