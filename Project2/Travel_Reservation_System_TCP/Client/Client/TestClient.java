@@ -1,5 +1,8 @@
 package Client;
 
+import Server.Exception.InvalidTransactionException;
+import Server.Exception.TransactionAbortedException;
+
 import java.io.*;
 import java.util.*;
 import java.lang.Math;
@@ -111,7 +114,6 @@ public class TestClient extends Client {
                     Integer txid = (Integer) callServer("start", new Object[]{});
                     if (debug)
                         System.out.println("\nRunning transaction ID: " + txid + "...");
-                    clientLogger.recordStart(txid, startTime);
 
                     // generate parametrized transaction - structure is fixed but parameters vary with the tx var
                     Object[] commandAndArgs;
@@ -148,7 +150,7 @@ public class TestClient extends Client {
 
                     // sleeping to adjust for correct throughput
                     endTime = System.currentTimeMillis();
-                    clientLogger.recordEnd(txid, endTime);
+                    clientLogger.record(txid, startTime, endTime, false);
                     //write a line
                     long duration = endTime - startTime;
                     long waitTime = (long)(perTransaction * Math.pow(10, 3)) - duration;
@@ -510,47 +512,49 @@ public class TestClient extends Client {
         for (int i=0; i<numberOfTransactions; i++) {
             long startTime = System.currentTimeMillis();
             int xid = 0;
-            switch (transactionType) {
-                case 0: {
-                    xid = transactionAddAndQueryFlight(i, 10000, 10000, false);
-                    clientLogger.recordStart(xid, startTime);
-                    break;
-                }
-                case 1: {
-                    xid = transactionAddAndQueryCars("location" + i, 10000, 10000, false);
-                    clientLogger.recordStart(xid, startTime);
-                    break;
-                }
-                case 2: {
-                    xid = transactionAddAndQueryRooms("location" + i, 10000, 10000, false);
-                    clientLogger.recordStart(xid, startTime);
-                    break;
-                }
-                case 3: {
-                    int number = i % itemDataSize;
-                    if (random) {
-                        number = rand.nextInt(itemDataSize);
+            try {
+                switch (transactionType) {
+                    case 0: {
+                        xid = transactionAddAndQueryFlight(i, 10000, 10000, false);
+                        break;
                     }
-                    xid = transactionReserveAll(i + customerIDBase, number, "location" + number, false);
-                    clientLogger.recordStart(xid, startTime);
-                    break;
+                    case 1: {
+                        xid = transactionAddAndQueryCars("location" + i, 10000, 10000, false);
+                        break;
+                    }
+                    case 2: {
+                        xid = transactionAddAndQueryRooms("location" + i, 10000, 10000, false);
+                        break;
+                    }
+                    case 3: {
+                        int number = i % itemDataSize;
+                        if (random) {
+                            number = rand.nextInt(itemDataSize);
+                        }
+                        xid = transactionReserveAll(i + customerIDBase, number, "location" + number, false);
+                        break;
+                    }
                 }
-            }
 
-            // end time
-            long endTime = System.currentTimeMillis();
-            clientLogger.recordEnd(xid, endTime);
-            long duration = endTime - startTime;
-            long waitTime = (long)(perTransaction * 1000) - duration;
-            if (waitTime <= 0) {
-                System.out.println("*** client real transaction time: " + duration + " (ms) " + "| theoretical transaction time: " + perTransaction * 1000 + " (ms)");
-            } else {
-                int tmp = rand.nextInt(2);
-                if (tmp == 0)
-                    waitTime += rand.nextInt((int) (0.1*waitTime)); // adding randomness
-                else
-                    waitTime -= Math.max(rand.nextInt((int) (0.1*waitTime)), waitTime);
-                if (waitTime > 0) Thread.sleep(waitTime);
+                // end time
+                long endTime = System.currentTimeMillis();
+                clientLogger.record(xid, startTime, endTime, false);
+                long duration = endTime - startTime;
+                long waitTime = (long)(perTransaction * 1000) - duration;
+                if (waitTime <= 0) {
+                    System.out.println("*** client real transaction time: " + duration + " (ms) " + "| theoretical transaction time: " + perTransaction * 1000 + " (ms)");
+                } else {
+                    if (waitTime >= 10) {
+                        int tmp = rand.nextInt(2);
+                        if (tmp == 0)
+                            waitTime += rand.nextInt((int) (0.1*waitTime)); // adding randomness
+                        else
+                            waitTime -= rand.nextInt((int) (0.1*waitTime));
+                    }
+                    if (waitTime > 0) Thread.sleep(waitTime);
+                }
+            } catch (TransactionAbortedException | InvalidTransactionException e) {
+                clientLogger.record(xid, startTime, System.currentTimeMillis(), true);
             }
         }
         // save file
