@@ -562,6 +562,10 @@ public class Client {
     public int transactionAddAndQueryFlight(int flightNum, int flightSeats, int flightPrice, boolean log) throws Throwable {
         Integer xid = (Integer) callServer("start", new Object[]{});
         if (log) System.out.println("Transaction with id: " + xid + " has been started.");
+
+        int customerID = (Integer) callServer("newCustomer", new Object[]{xid});
+        if (log) System.out.println("Add customer ID: " + customerID);
+
         Boolean res = (Boolean) callServer("addFlight", new Object[]{xid, flightNum, flightSeats, flightPrice});
         if (log) System.out.println(res ? "Flight added" : "Flight could not be added");
         Integer seats = (Integer) callServer("queryFlight", new Object[]{xid, flightNum});
@@ -576,6 +580,8 @@ public class Client {
     public int transactionAddAndQueryCars(String location, int number, int price, boolean log) throws Throwable {
         Integer xid = (Integer) callServer("start", new Object[]{});
         if (log) System.out.println("Transaction with id: " + xid + " has been started.");
+        int customerID = (Integer) callServer("newCustomer", new Object[]{xid});
+        if (log) System.out.println("Add customer ID: " + customerID);
         Boolean res = (Boolean) callServer("addCars", new Object[]{xid, location, number, price});
         if (log) System.out.println(res ? "Cars added" : "Cars could not be added");
         Integer cars = (Integer) callServer("queryCars", new Object[]{xid, location});
@@ -589,6 +595,8 @@ public class Client {
     public int transactionAddAndQueryRooms(String location, int number, int price, boolean log) throws Throwable {
         Integer xid = (Integer) callServer("start", new Object[]{});
         if (log) System.out.println("Transaction with id: " + xid + " has been started.");
+        int customerID = (Integer) callServer("newCustomer", new Object[]{xid});
+        if (log) System.out.println("Add customer ID: " + customerID);
         Boolean res = (Boolean) callServer("addRooms", new Object[]{xid, location, number, price});
         if (log) System.out.println(res ? "Cars added" : "Cars could not be added");
         Integer rooms = (Integer) callServer("queryRooms", new Object[]{xid, location});

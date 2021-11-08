@@ -395,6 +395,10 @@ public class ResourceManager implements IResourceManager
 		transactionRecordUtil.start(transactionId);
 	}
 
+	public void addExecuteTime(int transactionId, long executeTime) {
+		transactionRecordUtil.addExecuteTime(transactionId, executeTime);
+	}
+
 	public String getName()
 	{
 		return m_name;

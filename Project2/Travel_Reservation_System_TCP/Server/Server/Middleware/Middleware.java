@@ -724,6 +724,11 @@ public class Middleware implements IResourceManager {
         transactionManager.checkTransaction(transactionId, methodName);
     }
 
+
+    public void addExecuteTime(int transactionId, long executeTime) {
+        transactionRecordUtil.addExecuteTime(transactionId, executeTime);
+    }
+
     public Object callResourceServerMethod(ResourceServer resourceServer, String methodName, Object[] argList) throws Throwable {
         String host = "";
         int port = 0;
