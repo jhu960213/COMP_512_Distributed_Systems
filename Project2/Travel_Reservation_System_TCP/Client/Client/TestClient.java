@@ -76,7 +76,7 @@ public class TestClient extends Client {
                 checkArgumentsCount(7, arguments.size());
                 int transactionType = toInt(arguments.elementAt(1));
                 int numberOfTransaction = toInt(arguments.elementAt(2));
-                double throughput = toInt(arguments.elementAt(3));
+                double throughput = toDouble(arguments.elementAt(3));
                 int itemDataSize = toInt(arguments.elementAt(4));
                 int customerIDBase = toInt(arguments.elementAt(5));
                 String clientName = arguments.elementAt(6);

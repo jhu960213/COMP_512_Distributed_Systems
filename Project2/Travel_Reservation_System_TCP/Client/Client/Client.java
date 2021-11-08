@@ -667,6 +667,10 @@ public class Client {
         }
     }
 
+    public static double toDouble(String string)
+    {
+        return (Double.valueOf(string)).doubleValue();
+    }
     public static int toInt(String string) throws NumberFormatException
     {
         return (Integer.valueOf(string)).intValue();
