@@ -745,7 +745,8 @@ public class Middleware implements IResourceManager {
         outToServer.writeObject(methodName);
         outToServer.writeObject(argList);
         Object returnObj =  inFromServer.readObject();
-
+        outToServer.writeObject("Quit");
+        socket.close();
         if (returnObj instanceof Throwable) {
             if (returnObj instanceof DeadlockException) {
                 passivelyAbort(((DeadlockException)returnObj).getXId());
