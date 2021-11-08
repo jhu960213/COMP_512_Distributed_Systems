@@ -553,8 +553,10 @@ public class TestClient extends Client {
                     }
                     if (waitTime > 0) Thread.sleep(waitTime);
                 }
-            } catch (TransactionAbortedException | InvalidTransactionException e) {
-                clientLogger.record(xid, startTime, System.currentTimeMillis(), true);
+            } catch (TransactionAbortedException e) {
+                clientLogger.record(e.getXId(), startTime, System.currentTimeMillis(), true);
+            } catch (InvalidTransactionException e) {
+                clientLogger.record(e.getXId(), startTime, System.currentTimeMillis(), true);
             }
         }
         // save file
