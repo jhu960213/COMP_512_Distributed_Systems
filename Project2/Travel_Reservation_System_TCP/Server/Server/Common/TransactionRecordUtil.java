@@ -16,14 +16,15 @@ public class TransactionRecordUtil {
         int state;
         long startTime;
         long endTime;
+        long executeTime;
         long readTime;
         long writeTime;
 
         public static String columns() { //transactionId,state,startTime,endTime,executeTime,readTime,writeTime,databaseTime
-            return "Xid, State, StartTime, EndTime, ExecuteTime, ReadTime, WriteTime, DBTime\n";
+            return "Xid, State, StartTime, EndTime, TransactionTime, ExecuteTime, CommunicationTime ReadTime, WriteTime, DBTime\n";
         }
         public String toString() { //transactionId,state,startTime,endTime,executeTime,readTime,writeTime,databaseTime
-            return transactionId + ", " + state + ", " + startTime + ", " + endTime + ", " + (endTime - startTime) + ", " + readTime + ", " + writeTime + ", " + (readTime + writeTime) + "\n";
+            return transactionId + ", " + state + ", " + startTime + ", " + endTime + ", " + (endTime - startTime) + ", " + executeTime + ", " + (endTime - startTime - executeTime) + ", " + readTime + ", " + writeTime + ", " + (readTime + writeTime) + "\n";
         }
     }
 
@@ -107,12 +108,29 @@ public class TransactionRecordUtil {
             removeRecord(transactionId);
         }
     }
+    public void addExecuteTime(int transactionId, long time)
+    {
+        TransactionRecord record = readRecord(transactionId);
+        if (record != null) {
+            record.executeTime += time;
+            writeRecord(transactionId, record);
+        }
+    }
 
     public void addReadTime(int transactionId, long time)
     {
         TransactionRecord record = readRecord(transactionId);
         if (record != null) {
             record.readTime += time;
+            writeRecord(transactionId, record);
+        }
+    }
+
+    public void addWriteTime(int transactionId, long time)
+    {
+        TransactionRecord record = readRecord(transactionId);
+        if (record != null) {
+            record.writeTime += time;
             writeRecord(transactionId, record);
         }
     }
@@ -129,15 +147,6 @@ public class TransactionRecordUtil {
             }
         });
         t.start();
-    }
-
-    public void addWriteTime(int transactionId, long time)
-    {
-        TransactionRecord record = readRecord(transactionId);
-        if (record != null) {
-            record.writeTime += time;
-            writeRecord(transactionId, record);
-        }
     }
 
     public void close()

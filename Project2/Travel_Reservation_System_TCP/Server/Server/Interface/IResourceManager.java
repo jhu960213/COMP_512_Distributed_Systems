@@ -256,4 +256,6 @@ public interface IResourceManager
 
 
     public void checkTransaction(int transactionId, String methodName) throws TransactionAbortedException, InvalidTransactionException;
+
+    public void addExecuteTime(int transactionId, long executeTime);
 }
