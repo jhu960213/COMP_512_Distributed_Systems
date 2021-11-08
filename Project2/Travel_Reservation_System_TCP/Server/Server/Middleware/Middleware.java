@@ -38,7 +38,7 @@ public class Middleware implements IResourceManager {
     public Middleware() {
         try {
             this.customersList = new RMHashMap();
-            this.transactionManager = new TransactionManager();
+            this.transactionManager = new TransactionManager(this);
             this.lockManager = new LockManager();
             this.transactionDataManager = new TransactionDataManager();
             this.transactionRecordUtil = new TransactionRecordUtil(this.getName());
@@ -672,7 +672,7 @@ public class Middleware implements IResourceManager {
             transactionManager.abort(xid);
             transactionRecordUtil.abort(xid);
         } catch (Throwable e) {
-            if (e instanceof InvalidTransactionException || e instanceof TransactionAbortedException) throw (InvalidTransactionException) e;
+            if (e instanceof InvalidTransactionException || e instanceof TransactionAbortedException) throw new InvalidTransactionException(xid, "abort");
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
     }

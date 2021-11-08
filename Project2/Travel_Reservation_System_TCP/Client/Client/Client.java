@@ -38,6 +38,7 @@ public class Client {
         client.start();
     }
 
+
     public void start() throws IOException {
 
         Socket socket = new Socket(s_serverHost, s_serverPort); // establish a socket with a server using the given port#
