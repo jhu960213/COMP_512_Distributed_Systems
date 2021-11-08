@@ -542,16 +542,15 @@ public class TestClient extends Client {
             clientLogger.recordEnd(xid, endTime);
             long duration = endTime - startTime;
             long waitTime = (long)(perTransaction * 1000) - duration;
-            if (waitTime <= 10) {
+            if (waitTime <= 0) {
                 System.out.println("*** client real transaction time: " + duration + " (ms) " + "| theoretical transaction time: " + perTransaction * 1000 + " (ms)");
             } else {
-                // check that this is actually correct
                 int tmp = rand.nextInt(2);
                 if (tmp == 0)
                     waitTime += rand.nextInt((int) (0.1*waitTime)); // adding randomness
                 else
-                    waitTime -= rand.nextInt((int) (0.1*waitTime));
-                Thread.sleep(waitTime);
+                    waitTime -= Math.max(rand.nextInt((int) (0.1*waitTime)), waitTime);
+                if (waitTime > 0) Thread.sleep(waitTime);
             }
         }
         // save file
