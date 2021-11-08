@@ -75,9 +75,9 @@ public class TestClient extends Client {
                 int numberOfTransaction = toInt(arguments.elementAt(2));
                 int throughput = toInt(arguments.elementAt(3));
                 int itemDataSize = toInt(arguments.elementAt(4));
-                int customerDataSize = toInt(arguments.elementAt(5));
+                int customerIDBase = toInt(arguments.elementAt(5));
                 String clientName = arguments.elementAt(6);
-                test(transactionType, numberOfTransaction, throughput, itemDataSize, customerDataSize, true, clientName);
+                test(transactionType, numberOfTransaction, throughput, itemDataSize, customerIDBase, true, clientName);
                 break;
             }
             case ExecuteTestSuite: {
@@ -502,7 +502,7 @@ public class TestClient extends Client {
     }
 
 
-    public void test(int transactionType, int numberOfTransactions, int throughput, int itemDataSize, int customerDataSize, boolean random, String clientName) throws Throwable {
+    public void test(int transactionType, int numberOfTransactions, int throughput, int itemDataSize, int customerIDBase, boolean random, String clientName) throws Throwable {
 
         clientLogger = new ClientTransactionUtil(clientName);
         double perTransaction = (1.0/(double)throughput);
@@ -531,7 +531,7 @@ public class TestClient extends Client {
                     if (random) {
                         number = rand.nextInt(itemDataSize);
                     }
-                    xid = transactionReserveAll(i, number, "location" + number, false);
+                    xid = transactionReserveAll(i + customerIDBase, number, "location" + number, false);
                     clientLogger.recordStart(xid, startTime);
                     break;
                 }
