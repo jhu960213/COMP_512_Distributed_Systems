@@ -37,13 +37,12 @@ public class TestClient extends Client {
                 }
                 break;
             }
-
             case TransactionAddAndQueryFlight: {
                 checkArgumentsCount(4, arguments.size());
                 int flightNum = toInt(arguments.elementAt(1));
                 int flightSeats = toInt(arguments.elementAt(2));
                 int flightPrice = toInt(arguments.elementAt(3));
-                transactionAddAndQueryFlight(flightNum, flightSeats, flightPrice);
+                transactionAddAndQueryFlight(flightNum, flightSeats, flightPrice, true);
                 break;
             }
             case TransactionAddAndQueryCars: {
@@ -51,7 +50,7 @@ public class TestClient extends Client {
                 String location = arguments.elementAt(1);
                 int number = toInt(arguments.elementAt(2));
                 int price = toInt(arguments.elementAt(3));
-                transactionAddAndQueryCars(location, number, price);
+                transactionAddAndQueryCars(location, number, price, true);
                 break;
             }
             case TransactionAddAndQueryRooms: {
@@ -59,23 +58,26 @@ public class TestClient extends Client {
                 String location = arguments.elementAt(1);
                 int number = toInt(arguments.elementAt(2));
                 int price = toInt(arguments.elementAt(3));
-                transactionAddAndQueryRooms(location, number, price);
+                transactionAddAndQueryRooms(location, number, price, true);
                 break;
             }
             case TransactionReserveAll: {
-                checkArgumentsCount(3, arguments.size());
-                int flightNum = toInt(arguments.elementAt(1));
-                String location = arguments.elementAt(2);
-                transactionReserveAll(flightNum, location);
+                checkArgumentsCount(4, arguments.size());
+                int customerId = toInt(arguments.elementAt(1));
+                int flightNum = toInt(arguments.elementAt(2));
+                String location = arguments.elementAt(3);
+                transactionReserveAll(customerId, flightNum, location, true);
                 break;
             }
             case TestTransactions: {
-                checkArgumentsCount(3, arguments.size());
+                checkArgumentsCount(7, arguments.size());
                 int transactionType = toInt(arguments.elementAt(1));
                 int numberOfTransaction = toInt(arguments.elementAt(2));
-                String clientName = arguments.elementAt(3);
-                //Todo
-                test(transactionType, numberOfTransaction, 0, 10, 10, true, clientName);
+                int throughput = toInt(arguments.elementAt(3));
+                int itemDataSize = toInt(arguments.elementAt(4));
+                int customerDataSize = toInt(arguments.elementAt(5));
+                String clientName = arguments.elementAt(6);
+                test(transactionType, numberOfTransaction, throughput, itemDataSize, customerDataSize, true, clientName);
                 break;
             }
             case ExecuteTestSuite: {
@@ -505,36 +507,31 @@ public class TestClient extends Client {
         clientLogger = new ClientTransactionUtil(clientName);
         double perTransaction = (1.0/(double)throughput);
         Random rand = new Random(4);
-
-        // create file
         for (int i=0; i<numberOfTransactions; i++) {
-
-            // start time
             long startTime = System.currentTimeMillis();
-
             int xid = 0;
             switch (transactionType) {
                 case 0: {
-                    xid = transactionAddAndQueryFlight(i, 10000, 10000);
+                    xid = transactionAddAndQueryFlight(i, 10000, 10000, false);
                     clientLogger.recordStart(xid, startTime);
                     break;
                 }
                 case 1: {
-                    xid = transactionAddAndQueryCars("location" + i, 10000, 10000);
+                    xid = transactionAddAndQueryCars("location" + i, 10000, 10000, false);
                     clientLogger.recordStart(xid, startTime);
                     break;
                 }
                 case 2: {
-                    xid = transactionAddAndQueryRooms("location" + i, 10000, 10000);
+                    xid = transactionAddAndQueryRooms("location" + i, 10000, 10000, false);
                     clientLogger.recordStart(xid, startTime);
                     break;
                 }
                 case 3: {
                     int number = i % itemDataSize;
                     if (random) {
-                        //Todo
+                        number = rand.nextInt(itemDataSize);
                     }
-                    xid = transactionReserveAll(number, "location" + number);
+                    xid = transactionReserveAll(i, number, "location" + number, false);
                     clientLogger.recordStart(xid, startTime);
                     break;
                 }
@@ -544,9 +541,9 @@ public class TestClient extends Client {
             long endTime = System.currentTimeMillis();
             clientLogger.recordEnd(xid, endTime);
             long duration = endTime - startTime;
-            long waitTime = (long)(perTransaction * Math.pow(10, 3)) - duration;
-            if (waitTime <= 0) {
-                System.out.println("*** client real transaction time: " + duration + " (ms) " + "| theoretical transaction time: " + perTransaction * Math.pow(10, 3) + " (ms)");
+            long waitTime = (long)(perTransaction * 1000) - duration;
+            if (waitTime <= 10) {
+                System.out.println("*** client real transaction time: " + duration + " (ms) " + "| theoretical transaction time: " + perTransaction * 1000 + " (ms)");
             } else {
                 // check that this is actually correct
                 int tmp = rand.nextInt(2);

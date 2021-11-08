@@ -44,7 +44,7 @@ public enum Command {
 	TransactionAddAndQueryRooms("Execute a transaction to add and query rooms", "<Location>,<NumberOfRoom>,<Price>"),
 	TransactionReserveAll("Execute a transaction to add a customer and reserve all", "<FlightNumber>,<Location>"),
 
-	TestTransactions("Test transactions", "<Transaction Type(number)><NumTransactions>"),
+	TestTransactions("Test transactions", "<Transaction Type(number)><NumTransactions><Throughput><ItemDataSize><CustomerDataSize><LogName>"),
 
 
 	ExecuteTestSuite("Client can execute test suites with different length transactions", "<SimType><NumTransactions><Debug><Transactions/(s)><TransLength><TransType><ClientName>"),
