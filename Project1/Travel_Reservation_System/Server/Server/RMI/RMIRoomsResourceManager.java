@@ -9,20 +9,16 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class RMIRoomsResourceManager extends  RoomsResourceManager {
-    private static String s_serverName = "FlightsServer";
+
+    private static String s_serverName = "RoomsServer";
     private static int s_portNum = 4004;
-    //TODO: ADD YOUR GROUP NUMBER TO COMPLETE
     private static String s_rmiPrefix = "group_04_";
 
     public static void main(String args[])
     {
         if (args.length > 0)
         {
-            s_serverName = args[0];
-        }
-        if (args.length > 1)
-        {
-            s_portNum = Integer.parseInt(args[1]);
+            s_portNum = Integer.parseInt(args[0]);
         }
 
         // Create the RMI server entry

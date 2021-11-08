@@ -1,0 +1,3 @@
+grant codebase "file:/Users/jhu69/Desktop/McGill_Masters/Fall_2021/COMP_512/COMP_512_Projects/Project2/Travel_Reservation_System_TCP/Client/" {
+permission java.security.AllPermission;
+};

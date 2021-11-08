@@ -1,5 +1,7 @@
 package Server.Interface;
 
+import Server.Common.RMItem;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -71,6 +73,15 @@ public interface IResourceManager extends Remote
      * @return Success
      */
     public boolean newCustomer(int id, int cid)
+        throws RemoteException;
+
+
+    /**
+     * Cancels all reservations pertaining to a specific customer upon deletion of said customer (called by deleteCustomer)
+     *
+     * @return True upon success
+     */
+    public void cancelReservations(Object customer, int xid, int customerID)
         throws RemoteException;
 
     /**
@@ -190,7 +201,31 @@ public interface IResourceManager extends Remote
      * @return Success
      */
     public boolean reserveRoom(int id, int customerID, String location) 
-	throws RemoteException; 
+	throws RemoteException;
+
+    /**
+     * Reserve a seat on this flight.
+     *
+     * @return Price of the reserved flight, -1 for failure
+     */
+    public int reserveFlightItem(int id, int customerID, int flightNumber)
+            throws RemoteException;
+
+    /**
+     * Reserve a car at this location.
+     *
+     * @return Price of the reserved car, -1 for failure
+     */
+    public int reserveCarItem(int id, int customerID, String location)
+            throws RemoteException;
+
+    /**
+     * Reserve a room at this location.
+     *
+     * @return Price of the reserved room, -1 for failure
+     */
+    public int reserveRoomItem(int id, int customerID, String location)
+            throws RemoteException;
 
     /**
      * Reserve a bundle for the trip.
@@ -198,8 +233,34 @@ public interface IResourceManager extends Remote
      * @return Success
      */
     public boolean bundle(int id, int customerID, Vector<String> flightNumbers, String location, boolean car, boolean room)
-	throws RemoteException; 
+	throws RemoteException;
 
+    /**
+     * Reserve a bundle of flights
+     *
+     * @return Prices of flights
+     */
+    public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers)
+            throws RemoteException;
+
+
+    public String queryReservableFlights(int xid)
+            throws RemoteException;
+
+    public String queryReservableCars(int xid)
+            throws RemoteException;
+
+    public String queryReservableRooms(int xid)
+            throws RemoteException;
+
+    public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms)
+            throws RemoteException;
+
+    public String queryFlightReservers(int xid) throws RemoteException;
+
+    public String queryCarReservers(int xid) throws RemoteException;
+
+    public String queryRoomReservers(int xid) throws RemoteException;
     /**
      * Convenience for probing the resource manager.
      *

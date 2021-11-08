@@ -18,45 +18,45 @@ public abstract class ReservableItem extends RMItem implements Serializable
 	public ReservableItem(String location, int count, int price)
 	{
 		super();
-		m_location = location;
-		m_nCount = count;
-		m_nPrice = price;
-		m_nReserved = 0;
+		this.m_location = location;
+		this.m_nCount = count;
+		this.m_nPrice = price;
+		this.m_nReserved = 0;
 	}
 
 	public void setCount(int count)
 	{
-		m_nCount = count;
+		this.m_nCount = count;
 	}
 
 	public int getCount()
 	{
-		return m_nCount;
+		return this.m_nCount;
 	}
 
 	public void setPrice(int price)
 	{
-		m_nPrice = price;
+		this.m_nPrice = price;
 	}
 
 	public int getPrice()
 	{
-		return m_nPrice;
+		return this.m_nPrice;
 	}
 
 	public void setReserved(int r)
 	{
-		m_nReserved = r;
+		this.m_nReserved = r;
 	}
 
 	public int getReserved()
 	{
-		return m_nReserved;
+		return this.m_nReserved;
 	}
 
 	public String getLocation()
 	{
-		return m_location;
+		return this.m_location;
 	}
 
 	public String toString()
@@ -70,10 +70,10 @@ public abstract class ReservableItem extends RMItem implements Serializable
 	public Object clone()
 	{
 		ReservableItem obj = (ReservableItem)super.clone();
-		obj.m_location = m_location;
-		obj.m_nCount = m_nCount;
-		obj.m_nPrice = m_nPrice;
-		obj.m_nReserved = m_nReserved;
+		obj.m_location = this.m_location;
+		obj.m_nCount = this.m_nCount;
+		obj.m_nPrice = this.m_nPrice;
+		obj.m_nReserved = this.m_nReserved;
 		return obj;
 	}
 }
