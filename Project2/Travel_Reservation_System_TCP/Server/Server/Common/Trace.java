@@ -11,15 +11,15 @@ public class Trace
 {
 	public static void info(String msg)
 	{
-		System.out.println(getThreadID() + " INFO: " + msg);
+//		System.out.println(getThreadID() + " INFO: " + msg);
 	}
 	public static void warn(String msg)
 	{
-		System.out.println(getThreadID() + " WARN: " + msg);
+//		System.out.println(getThreadID() + " WARN: " + msg);
 	}
 	public static void error(String msg)
 	{
-		System.err.println(getThreadID() + " ERROR: " + msg);
+//		System.err.println(getThreadID() + " ERROR: " + msg);
 	}
 	private static String getThreadID()
 	{
