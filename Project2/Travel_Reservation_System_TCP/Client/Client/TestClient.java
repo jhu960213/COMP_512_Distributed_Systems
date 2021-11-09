@@ -9,6 +9,11 @@ import java.lang.Math;
 
 public class TestClient extends Client {
 
+    private int testCount = 0;
+    public TestClient(int num) {
+        super(num);
+    }
+
     private enum TypeOfBooking{
         FLIGHTS,
         CARS,
@@ -19,7 +24,12 @@ public class TestClient extends Client {
     public static void main(String args[]) throws IOException
     {
         loadArgs(args);
-        TestClient client = new TestClient();
+        int clientNum = 0;
+        if (args.length > 2)
+        {
+            clientNum = Integer.parseInt(args[2]);
+        }
+        TestClient client = new TestClient(clientNum);
         client.start();
     }
 
@@ -84,14 +94,25 @@ public class TestClient extends Client {
                 break;
             }
             case test: {
-                checkArgumentsCount(6, arguments.size());
+                checkArgumentsCount(5, arguments.size());
                 double throughput = toDouble(arguments.elementAt(1));
                 int itemDataSize = toInt(arguments.elementAt(2));
                 int customerIDBaseBase = toInt(arguments.elementAt(3));
-                int clientNum = toInt(arguments.elementAt(4));
+                int num = toInt(arguments.elementAt(4));
 
-                int base = customerIDBaseBase + 100 * (clientNum - 1);
+                int base = customerIDBaseBase + 100 * (num - 1);
+                String clientName = "C" + num + "-" + throughput + "-" + itemDataSize + "-";
+                test(3, 100, throughput, itemDataSize, base, true, clientName);
+                break;
+            }
+            case t: {
+                checkArgumentsCount(3, arguments.size());
+                double throughput = toDouble(arguments.elementAt(1));
+                int itemDataSize = toInt(arguments.elementAt(2));
+
+                int base = testCount * 2000 + 100 * (clientNum - 1);
                 String clientName = "C" + clientNum + "-" + throughput + "-" + itemDataSize + "-";
+                testCount ++;
                 test(3, 100, throughput, itemDataSize, base, true, clientName);
                 break;
             }

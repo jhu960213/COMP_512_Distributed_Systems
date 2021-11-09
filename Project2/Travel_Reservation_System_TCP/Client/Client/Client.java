@@ -13,7 +13,11 @@ public class Client {
     private static int s_serverPort = 5004;
     private ObjectOutputStream outToServer;
     private ObjectInputStream inFromServer;
+    protected int clientNum=0;
 
+    public Client(int num) {
+        clientNum = num;
+    }
     public static void loadArgs(String args[])
     {
         if (args.length > 0)
@@ -24,7 +28,7 @@ public class Client {
         {
             s_serverPort = Integer.parseInt(args[1]);
         }
-        if (args.length > 2)
+        if (args.length > 3)
         {
             System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0mUsage: java client.RMIClient [server_hostname [server_rmiobject]]");
             System.exit(1);
@@ -34,7 +38,13 @@ public class Client {
     public static void main(String args[]) throws IOException
     {
         loadArgs(args);
-        Client client = new Client();
+        int clientNum = 0;
+        if (args.length > 2)
+        {
+            clientNum = Integer.parseInt(args[2]);
+        }
+        Client client = new Client(clientNum);
+
         client.start();
     }
 

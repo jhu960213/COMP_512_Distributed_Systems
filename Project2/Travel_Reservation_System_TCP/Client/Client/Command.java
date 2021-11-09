@@ -48,6 +48,8 @@ public enum Command {
 
 	test("Test transactions", "<Throughput><ItemDataSize><CustomerBaseBase><ClientNum>"),
 
+	t("Test transactions", "<Throughput><ItemDataSize>"),
+
 
 	ExecuteTestSuite("Client can execute test suites with different length transactions", "<SimType><NumTransactions><Debug><Transactions/(s)><TransLength><TransType><ClientName>"),
 
