@@ -9,6 +9,11 @@ import java.lang.Math;
 
 public class TestClient extends Client {
 
+    private int testCount = 0;
+    public TestClient(int num) {
+        super(num);
+    }
+
     private enum TypeOfBooking{
         FLIGHTS,
         CARS,
@@ -19,13 +24,17 @@ public class TestClient extends Client {
     public static void main(String args[]) throws IOException
     {
         loadArgs(args);
-        TestClient client = new TestClient();
+        int clientNum = 0;
+        if (args.length > 2)
+        {
+            clientNum = Integer.parseInt(args[2]);
+        }
+        TestClient client = new TestClient(clientNum);
         client.start();
     }
 
     // executes a specific command
     public boolean execute(Command cmd, Vector<String> arguments) throws Throwable {
-
         switch (cmd)
         {
             case Help:
@@ -76,11 +85,34 @@ public class TestClient extends Client {
                 checkArgumentsCount(7, arguments.size());
                 int transactionType = toInt(arguments.elementAt(1));
                 int numberOfTransaction = toInt(arguments.elementAt(2));
-                int throughput = toInt(arguments.elementAt(3));
+                double throughput = toDouble(arguments.elementAt(3));
                 int itemDataSize = toInt(arguments.elementAt(4));
                 int customerIDBase = toInt(arguments.elementAt(5));
                 String clientName = arguments.elementAt(6);
                 test(transactionType, numberOfTransaction, throughput, itemDataSize, customerIDBase, true, clientName);
+                break;
+            }
+            case test: {
+                checkArgumentsCount(5, arguments.size());
+                double throughput = toDouble(arguments.elementAt(1));
+                int itemDataSize = toInt(arguments.elementAt(2));
+                int customerIDBaseBase = toInt(arguments.elementAt(3));
+                int num = toInt(arguments.elementAt(4));
+
+                int base = customerIDBaseBase + 100 * (num - 1);
+                String clientName = "C" + num + "-" + throughput + "-" + itemDataSize + "-";
+                test(3, 100, throughput, itemDataSize, base, true, clientName);
+                break;
+            }
+            case t: {
+                checkArgumentsCount(3, arguments.size());
+                double throughput = toDouble(arguments.elementAt(1));
+                int itemDataSize = toInt(arguments.elementAt(2));
+
+                int base = testCount * 2000 + 100 * (clientNum - 1);
+                String clientName = "C" + this.clientNum + "-" + throughput + "-" + itemDataSize + "-";
+                testCount ++;
+                test(3, 100, throughput, itemDataSize, base, true, clientName);
                 break;
             }
             case ExecuteTestSuite: {
@@ -504,10 +536,10 @@ public class TestClient extends Client {
     }
 
 
-    public void test(int transactionType, int numberOfTransactions, int throughput, int itemDataSize, int customerIDBase, boolean random, String clientName) throws Throwable {
+    public void test(int transactionType, int numberOfTransactions, double throughput, int itemDataSize, int customerIDBase, boolean random, String clientName) throws Throwable {
 
         clientLogger = new ClientTransactionUtil(clientName);
-        double perTransaction = (1.0/(double)throughput);
+        double perTransaction = (1.0/throughput);
         Random rand = new Random(4);
         for (int i=0; i<numberOfTransactions; i++) {
             long startTime = System.currentTimeMillis();
@@ -531,7 +563,7 @@ public class TestClient extends Client {
                         if (random) {
                             number = rand.nextInt(itemDataSize);
                         }
-                        xid = transactionReserveAll(i + customerIDBase, number, "location" + number, false);
+                        xid = transactionReserveAll(i + customerIDBase, number, "location" + number, true);
                         break;
                     }
                 }
@@ -553,8 +585,10 @@ public class TestClient extends Client {
                     }
                     if (waitTime > 0) Thread.sleep(waitTime);
                 }
-            } catch (TransactionAbortedException | InvalidTransactionException e) {
-                clientLogger.record(xid, startTime, System.currentTimeMillis(), true);
+            } catch (TransactionAbortedException e) {
+                clientLogger.record(e.getXId(), startTime, System.currentTimeMillis(), true);
+            } catch (InvalidTransactionException e) {
+                clientLogger.record(e.getXId(), startTime, System.currentTimeMillis(), true);
             }
         }
         // save file

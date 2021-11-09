@@ -74,6 +74,7 @@ public class ClientTransactionUtil {
 
     public void record(Integer txid, long start, long end, boolean aborted) throws Exception {
         TransactionRecord record = new TransactionRecord();
+        record.transactionId = txid;
         record.startTime = start;
         record.endTime = end;
         record.aborted = aborted;

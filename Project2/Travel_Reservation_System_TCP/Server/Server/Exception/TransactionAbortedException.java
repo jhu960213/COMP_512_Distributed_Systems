@@ -10,7 +10,7 @@ public class TransactionAbortedException extends Exception {
         m_xid = xid;
     }
 
-    int getXId()
+    public int getXId()
     {
         return m_xid;
     }
