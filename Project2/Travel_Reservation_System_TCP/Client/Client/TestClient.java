@@ -35,7 +35,6 @@ public class TestClient extends Client {
 
     // executes a specific command
     public boolean execute(Command cmd, Vector<String> arguments) throws Throwable {
-
         switch (cmd)
         {
             case Help:
@@ -111,7 +110,7 @@ public class TestClient extends Client {
                 int itemDataSize = toInt(arguments.elementAt(2));
 
                 int base = testCount * 2000 + 100 * (clientNum - 1);
-                String clientName = "C" + clientNum + "-" + throughput + "-" + itemDataSize + "-";
+                String clientName = "C" + this.clientNum + "-" + throughput + "-" + itemDataSize + "-";
                 testCount ++;
                 test(3, 100, throughput, itemDataSize, base, true, clientName);
                 break;
@@ -564,7 +563,7 @@ public class TestClient extends Client {
                         if (random) {
                             number = rand.nextInt(itemDataSize);
                         }
-                        xid = transactionReserveAll(i + customerIDBase, number, "location" + number, false);
+                        xid = transactionReserveAll(i + customerIDBase, number, "location" + number, true);
                         break;
                     }
                 }
