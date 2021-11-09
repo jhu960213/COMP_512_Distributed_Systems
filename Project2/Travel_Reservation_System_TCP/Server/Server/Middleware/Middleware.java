@@ -742,7 +742,7 @@ public class Middleware implements IResourceManager {
         if (argList.length > 0 && !methodName.equals("commit") && !methodName.equals("abort")) {
             transactionManager.addDataOperation((Integer) argList[0], resourceServer);
         }
-
+        long startTime = System.currentTimeMillis();
         Socket socket= new Socket(host, port);
         ObjectOutputStream outToServer = new ObjectOutputStream(socket.getOutputStream());
         ObjectInputStream inFromServer = new ObjectInputStream(socket.getInputStream());
@@ -758,6 +758,7 @@ public class Middleware implements IResourceManager {
             }
             throw (Throwable) returnObj;
         }
+        if (argList.length > 0) transactionRecordUtil.addCallRMTime((Integer) argList[0], System.currentTimeMillis() -startTime);
         return returnObj;
     }
 }
