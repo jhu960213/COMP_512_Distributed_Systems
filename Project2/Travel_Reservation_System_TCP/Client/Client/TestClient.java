@@ -83,6 +83,18 @@ public class TestClient extends Client {
                 test(transactionType, numberOfTransaction, throughput, itemDataSize, customerIDBase, true, clientName);
                 break;
             }
+            case test: {
+                checkArgumentsCount(6, arguments.size());
+                double throughput = toDouble(arguments.elementAt(1));
+                int itemDataSize = toInt(arguments.elementAt(2));
+                int customerIDBaseBase = toInt(arguments.elementAt(3));
+                int clientNum = toInt(arguments.elementAt(4));
+
+                int base = customerIDBaseBase + 100 * (clientNum - 1);
+                String clientName = "C" + clientNum + "-" + throughput + "-" + itemDataSize + "-";
+                test(3, 100, throughput, itemDataSize, base, true, clientName);
+                break;
+            }
             case ExecuteTestSuite: {
                 checkArgumentsCount(8, arguments.size());
                 Random rand = new Random(4);
