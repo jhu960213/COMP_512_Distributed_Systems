@@ -647,7 +647,6 @@ public class Middleware implements IResourceManager {
                 } else {
                     if (!(Boolean)callResourceServerMethod(type, "commit", new Object[]{Integer.valueOf(xid)})) return false;
                 }
-            transactionRecordUtil.commit(xid);
             return transactionManager.commit(xid);
         } catch (Throwable e) {
             Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -669,7 +668,6 @@ public class Middleware implements IResourceManager {
                 } else {
                     callResourceServerMethod(type, "abort", new Object[]{Integer.valueOf(xid)});
                 }
-            transactionManager.abort(xid);
             transactionRecordUtil.abort(xid);
         } catch (Throwable e) {
             if (e instanceof InvalidTransactionException || e instanceof TransactionAbortedException) throw new InvalidTransactionException(xid, "abort");
@@ -691,7 +689,6 @@ public class Middleware implements IResourceManager {
                     callResourceServerMethod(type, "abort", new Object[]{Integer.valueOf(xid)});
                 }
             transactionManager.abort(xid);
-            transactionRecordUtil.abort(xid);
         } catch (Throwable e) {
             Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
@@ -727,6 +724,11 @@ public class Middleware implements IResourceManager {
 
     public void addExecuteTime(int transactionId, long executeTime) {
         transactionRecordUtil.addExecuteTime(transactionId, executeTime);
+    }
+
+    public void commitRecord(int transactionId, boolean aborted) {
+        if (aborted) transactionRecordUtil.abort(transactionId);
+        else transactionRecordUtil.commit(transactionId);
     }
 
     public Object callResourceServerMethod(ResourceServer resourceServer, String methodName, Object[] argList) throws Throwable {
