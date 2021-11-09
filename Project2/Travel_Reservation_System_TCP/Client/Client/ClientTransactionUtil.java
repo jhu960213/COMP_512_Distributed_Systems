@@ -19,6 +19,7 @@ public class ClientTransactionUtil {
         long startTime;
         long endTime;
         boolean aborted;
+
         public static String columns() {
             return "TXid, StartTime, EndTime, ResponseTime, Aborted\n";
         }
@@ -29,11 +30,27 @@ public class ClientTransactionUtil {
 
     private HashMap<Integer, TransactionRecord> txHashMap;
     private BufferedWriter bufferWriter;
-    public String fn;
 
     public ClientTransactionUtil(String fileName) {
         this.txHashMap = new HashMap<>();
-        fn = fileName;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat();
+            sdf.applyPattern("yyyyMMddHHmmss");
+            Date date = new Date();
+
+            File dirFile = new File("./Log/");
+            dirFile.mkdirs();
+            File file = new File("./Log/" + fileName + sdf.format(date) + ".csv");
+            if(!file.exists()) {
+                file.createNewFile();
+            }
+            FileWriter fw = new FileWriter(file.getAbsoluteFile());
+            this.bufferWriter = new BufferedWriter(fw);
+            this.bufferWriter.write(TransactionRecord.columns());
+
+        } catch(IOException e){
+            e.printStackTrace();
+        }
     }
 
     private TransactionRecord readRecord(Integer txi) {
@@ -65,19 +82,6 @@ public class ClientTransactionUtil {
     }
 
     public void dumpRecords() throws IOException {
-
-            File dirFile = new File("./Log/");
-            dirFile.mkdirs();
-            File file = new File("./Log/" + fn + ".csv");
-            boolean exist = true;
-            if(!file.exists()) {
-                file.createNewFile();
-                exist = false;
-            }
-            FileWriter fw = new FileWriter(file.getAbsoluteFile());
-            this.bufferWriter = new BufferedWriter(fw);
-            if (!exist) this.bufferWriter.write(TransactionRecord.columns());
-
         Set<Integer> keys = this.txHashMap.keySet();
         for (Integer k: keys) {
             TransactionRecord record = readRecord(k);

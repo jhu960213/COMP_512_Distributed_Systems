@@ -539,7 +539,7 @@ public class TestClient extends Client {
 
     public void test(int transactionType, int numberOfTransactions, double throughput, int itemDataSize, int customerIDBase, boolean random, String clientName) throws Throwable {
 
-        clientLogger = new ClientTransactionUtil(throughput + "-" + itemDataSize);
+        clientLogger = new ClientTransactionUtil(clientName);
         double perTransaction = (1.0/throughput);
         Random rand = new Random(4);
         for (int i=0; i<numberOfTransactions; i++) {
