@@ -372,7 +372,6 @@ public class ResourceManager implements IResourceManager
 	public boolean commit(int xid) {
 		Trace.info("RM::commit(" + xid + ") called");
 		transactionDataManager.cleanTransaction(xid);
-		transactionRecordUtil.commit(xid);
 		return lockManager.UnlockAll(xid);
 	}
 
@@ -383,7 +382,6 @@ public class ResourceManager implements IResourceManager
 			for (Map.Entry<String, RMItem> entry: undo.entrySet())
 				undoWriteData(xid, entry.getKey(), entry.getValue());
 		lockManager.UnlockAll(xid);
-		transactionRecordUtil.abort(xid);
 	}
 
 	public boolean shutdown() {
@@ -393,6 +391,15 @@ public class ResourceManager implements IResourceManager
 	}
 	public void checkTransaction(int transactionId, String methodName) {
 		transactionRecordUtil.start(transactionId);
+	}
+
+	public void addExecuteTime(int transactionId, long executeTime) {
+		transactionRecordUtil.addExecuteTime(transactionId, executeTime);
+	}
+
+	public void commitRecord(int transactionId, boolean aborted) {
+		if (aborted) transactionRecordUtil.abort(transactionId);
+		else transactionRecordUtil.commit(transactionId);
 	}
 
 	public String getName()

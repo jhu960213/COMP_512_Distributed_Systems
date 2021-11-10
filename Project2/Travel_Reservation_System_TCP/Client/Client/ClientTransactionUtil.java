@@ -18,12 +18,13 @@ public class ClientTransactionUtil {
         int transactionId;
         long startTime;
         long endTime;
+        boolean aborted;
 
         public static String columns() {
-            return "TXid, StartTime, EndTime, ResponseTime\n";
+            return "TXid, StartTime, EndTime, ResponseTime, Aborted\n";
         }
         public String toString() {
-            return transactionId + ", " + startTime + ", " + endTime + ", " + (endTime - startTime) + "\n";
+            return transactionId + ", " + startTime + ", " + endTime + ", " + (endTime - startTime) + (aborted ? ", yes":"") + "\n";
         }
     }
 
@@ -71,9 +72,12 @@ public class ClientTransactionUtil {
         writeRecord(txid, record);
     }
 
-    public void recordEnd(Integer txid, long time) throws Exception {
-        TransactionRecord record = readRecord(txid);
-        record.endTime = time;
+    public void record(Integer txid, long start, long end, boolean aborted) throws Exception {
+        TransactionRecord record = new TransactionRecord();
+        record.transactionId = txid;
+        record.startTime = start;
+        record.endTime = end;
+        record.aborted = aborted;
         writeRecord(txid, record);
     }
 

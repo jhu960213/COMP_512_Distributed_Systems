@@ -13,7 +13,11 @@ public class Client {
     private static int s_serverPort = 5004;
     private ObjectOutputStream outToServer;
     private ObjectInputStream inFromServer;
+    protected int clientNum=0;
 
+    public Client(int num) {
+        clientNum = num;
+    }
     public static void loadArgs(String args[])
     {
         if (args.length > 0)
@@ -24,7 +28,7 @@ public class Client {
         {
             s_serverPort = Integer.parseInt(args[1]);
         }
-        if (args.length > 2)
+        if (args.length > 3)
         {
             System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0mUsage: java client.RMIClient [server_hostname [server_rmiobject]]");
             System.exit(1);
@@ -34,7 +38,13 @@ public class Client {
     public static void main(String args[]) throws IOException
     {
         loadArgs(args);
-        Client client = new Client();
+        int clientNum = 0;
+        if (args.length > 2)
+        {
+            clientNum = Integer.parseInt(args[2]);
+        }
+        Client client = new Client(clientNum);
+
         client.start();
     }
 
@@ -562,6 +572,10 @@ public class Client {
     public int transactionAddAndQueryFlight(int flightNum, int flightSeats, int flightPrice, boolean log) throws Throwable {
         Integer xid = (Integer) callServer("start", new Object[]{});
         if (log) System.out.println("Transaction with id: " + xid + " has been started.");
+
+        int customerID = (Integer) callServer("newCustomer", new Object[]{xid});
+        if (log) System.out.println("Add customer ID: " + customerID);
+
         Boolean res = (Boolean) callServer("addFlight", new Object[]{xid, flightNum, flightSeats, flightPrice});
         if (log) System.out.println(res ? "Flight added" : "Flight could not be added");
         Integer seats = (Integer) callServer("queryFlight", new Object[]{xid, flightNum});
@@ -576,6 +590,8 @@ public class Client {
     public int transactionAddAndQueryCars(String location, int number, int price, boolean log) throws Throwable {
         Integer xid = (Integer) callServer("start", new Object[]{});
         if (log) System.out.println("Transaction with id: " + xid + " has been started.");
+        int customerID = (Integer) callServer("newCustomer", new Object[]{xid});
+        if (log) System.out.println("Add customer ID: " + customerID);
         Boolean res = (Boolean) callServer("addCars", new Object[]{xid, location, number, price});
         if (log) System.out.println(res ? "Cars added" : "Cars could not be added");
         Integer cars = (Integer) callServer("queryCars", new Object[]{xid, location});
@@ -589,6 +605,8 @@ public class Client {
     public int transactionAddAndQueryRooms(String location, int number, int price, boolean log) throws Throwable {
         Integer xid = (Integer) callServer("start", new Object[]{});
         if (log) System.out.println("Transaction with id: " + xid + " has been started.");
+        int customerID = (Integer) callServer("newCustomer", new Object[]{xid});
+        if (log) System.out.println("Add customer ID: " + customerID);
         Boolean res = (Boolean) callServer("addRooms", new Object[]{xid, location, number, price});
         if (log) System.out.println(res ? "Cars added" : "Cars could not be added");
         Integer rooms = (Integer) callServer("queryRooms", new Object[]{xid, location});
@@ -659,6 +677,10 @@ public class Client {
         }
     }
 
+    public static double toDouble(String string)
+    {
+        return (Double.valueOf(string)).doubleValue();
+    }
     public static int toInt(String string) throws NumberFormatException
     {
         return (Integer.valueOf(string)).intValue();
