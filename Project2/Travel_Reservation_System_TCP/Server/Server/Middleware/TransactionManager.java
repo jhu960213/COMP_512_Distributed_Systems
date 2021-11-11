@@ -8,7 +8,7 @@ import Server.LockManager.TransactionObject;
 import java.util.*;
 
 public class TransactionManager {
-    private static int TRANSACTION_TIMEOUT = 20000;
+    private static int TRANSACTION_TIMEOUT = 60000;
 
     private HashMap<Integer, TransactionObject> activeTransactions;
     private HashSet<Integer> abortedTransactions;
