@@ -556,7 +556,6 @@ public class Client {
 //                    System.out.println("System shut down failed.");
 //                }
                 return false;
-                break;
             }
             case Quit: {
                 checkArgumentsCount(1, arguments.size());
