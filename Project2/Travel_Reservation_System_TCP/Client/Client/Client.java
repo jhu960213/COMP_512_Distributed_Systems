@@ -548,14 +548,18 @@ public class Client {
                 checkArgumentsCount(1, arguments.size());
                 System.out.println("Shutting down the system...");
                 callServer("shutdown", new Object[]{});
-                System.out.println("Shutting down the system");
-//                if ((Boolean) callServer("shutdown", new Object[]{})) {
-//                    System.out.println("System shut down completed.");
-//                    return false;
-//                } else {
-//                    System.out.println("System shut down failed.");
-//                }
-                return false;
+                try {
+                    if ((Boolean) callServer("shutdown", new Object[]{})) {
+                        System.out.println("System shut down completed.");
+                        return false;
+                    } else {
+                        System.out.println("System shut down failed.");
+                    }
+                    break;
+                } catch (Exception e) {
+                    System.out.println("System is already shut down.");
+                    return false;
+                }
             }
             case Quit: {
                 checkArgumentsCount(1, arguments.size());
