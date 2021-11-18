@@ -6,6 +6,7 @@ then
 	exit 1
 fi
 
+# shellcheck disable=SC2086
 . $ZOOBINDIR/zkEnv.sh
 
-javac -cp $CLASSPATH:../task:.: DistProcess.java
+javac -cp "$CLASSPATH":../task:.: $(pwd)/dist/DistProcess.java
