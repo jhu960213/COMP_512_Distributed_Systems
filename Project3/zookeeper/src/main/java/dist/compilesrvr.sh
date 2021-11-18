@@ -6,6 +6,6 @@ then
 	exit 1
 fi
 
-. "$ZOOBINDIR"/zkEnv.sh
+. $ZOOBINDIR/zkEnv.sh
 
-javac -cp "$CLASSPATH":../task:.: DistClient.java
+javac -cp $CLASSPATH:../task:.: DistProcess.java
