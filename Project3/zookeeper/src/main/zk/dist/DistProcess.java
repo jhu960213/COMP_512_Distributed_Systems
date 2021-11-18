@@ -159,7 +159,6 @@ public class DistProcess implements Watcher, AsyncCallback.ChildrenCallback
 
 	public static void main(String args[]) throws Exception
 	{
-		//Create a new process
 		//Read the ZooKeeper ensemble information from the environment variable.
 		DistProcess dt = new DistProcess(System.getenv("ZKSERVER"));
 		dt.startProcess();

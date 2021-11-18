@@ -105,14 +105,14 @@ public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCal
 		//	Instead include another thread in your program logic that
 		//   does the time consuming "work" and notify that thread from here.
 
-		System.out.println("DISTAPP : Event received : " + e);
+		System.out.println("DISTAPP - Event received: " + e);
 
 		// The result znode was created.
-		if(e.getType() == Watcher.Event.EventType.NodeCreated && e.getPath().equals(taskNodeName+"/result"))
+		if(e.getType() == Watcher.Event.EventType.NodeCreated && e.getPath().equals(taskNodeName + "/result"))
 		{
-			System.out.println("DISTAPP : Node created : " + e.getPath());
+			System.out.println("DISTAPP - Node created: " + e.getPath());
 			//Ask for data in the result znode (asynchronously). We do not have to watch this znode anymore.
-			zk.getData(this.taskNodeName+"/result", null, this, null);
+			zk.getData(this.taskNodeName + "/result", null, this, null);
 		}
 	}
 
@@ -143,7 +143,7 @@ public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCal
 				// Ideally we should come here only once!, if at all. That will be the time we called
 				//  exists on the result znode immediately after creating the task znode.
 				System.out.println("DISTAPP - processResult - StatCallback: " + Code.get(rc));
-				zk.exists(this.taskNodeName+"/result", this, null, null);
+				zk.exists(this.taskNodeName + "/result", this, null, null);
 				break;
 
 			default:
