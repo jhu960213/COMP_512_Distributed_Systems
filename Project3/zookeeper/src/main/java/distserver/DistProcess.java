@@ -9,6 +9,8 @@ import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.util.List;
 
+import static java.lang.Runtime.getRuntime;
+
 // TODO
 // Replace XX with your group number.
 // You may have to add other interfaces such as for threading, etc., as needed.
@@ -21,13 +23,14 @@ import java.util.List;
 //		you manage the code more modularly.
 //	REMEMBER !! ZK client library is single thread - Watches & CallBacks should not be used for time consuming tasks.
 //		Ideally, Watches & CallBacks should only be used to assign the "work" to a separate thread inside your program.
-public class DistProcess implements Watcher, AsyncCallback.ChildrenCallback
+public class DistProcess extends Thread implements Watcher, AsyncCallback.ChildrenCallback
 {
 	private ZooKeeper zk;
-	private String zkServer, pinfo;
+	private String zkServer;
+	private String pinfo;
 	private boolean isMaster;
 
-	DistProcess(String zkhost)
+	public DistProcess(String zkhost)
 	{
 		this.zkServer = zkhost;
 		this.isMaster = false;
@@ -36,7 +39,56 @@ public class DistProcess implements Watcher, AsyncCallback.ChildrenCallback
 		System.out.println("DISTAPP - Process information: " + this.pinfo);
 	}
 
-	void startProcess() {
+	public ZooKeeper getZk() {
+		return zk;
+	}
+
+	public void setZk(ZooKeeper zk) {
+		this.zk = zk;
+	}
+
+	public String getZkServer() {
+		return zkServer;
+	}
+
+	public void setZkServer(String zkServer) {
+		this.zkServer = zkServer;
+	}
+
+	public String getPinfo() {
+		return pinfo;
+	}
+
+	public void setPinfo(String pinfo) {
+		this.pinfo = pinfo;
+	}
+
+	public boolean isMaster() {
+		return isMaster;
+	}
+
+	public void setMaster(boolean master) {
+		isMaster = master;
+	}
+
+	public void stopProcess() throws InterruptedException {
+		this.zk.close();
+	}
+
+	@Override
+	public void run() {
+		startProcess();
+		System.out.println("DISTAPP - New " + (this.isMaster?"master":"worker") + " started...");
+		while (true) {
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public void startProcess() {
 		try
 		{
 			//connect to ZK, installs a watcher to detect changes in its connection with ensemble.
@@ -52,22 +104,23 @@ public class DistProcess implements Watcher, AsyncCallback.ChildrenCallback
 			// TODO monitor for worker tasks?
 
 		} catch(Exception e)  {
-			isMaster = false;
+			this.isMaster = false;
 			System.out.println("DISTPROCESS::startProcess()::Exception: " + e.getMessage() + "\n");
 
-		} // TODO: What else will you need if this was a worker process?
+			// TODO: What else will you need if this was a worker process?
 
+		}
 		System.out.println("DISTAPP - Role: " + " I will be functioning as " +(this.isMaster?"master":"worker"));
 	}
 
 	// Master fetching task znodes...
-	void getTasks()
+	public void getTasks()
 	{
 		zk.getChildren("/dist04/tasks", this, this, null);
 	}
 
 	// Try to become the master.
-	void runForMaster() {
+	public void runForMaster() {
 		try {
 			// Try to create an ephemeral node to be the master, put the hostname and pid of this process as the data.
 			// This is an example of Synchronous API invocation as the function waits for the execution and no callback is involved..
@@ -159,11 +212,21 @@ public class DistProcess implements Watcher, AsyncCallback.ChildrenCallback
 
 	public static void main(String args[]) throws Exception
 	{
-		//Read the ZooKeeper ensemble information from the environment variable.
-		DistProcess dt = new DistProcess(System.getenv("ZKSERVER"));
-		dt.startProcess();
+		// Read the ZooKeeper ensemble information from the environment variable.
+		DistProcess distProcess = new DistProcess(System.getenv("ZKSERVER"));
+		distProcess.start();
 
-		//Replace this with an approach that will make sure that the process is up and running forever.
-		Thread.sleep(10000); 
+		// Replace this with an approach that will make sure that the process is up and running forever.
+		getRuntime().addShutdownHook(new Thread(() -> {
+			try {
+				distProcess.stopProcess();
+				if (distProcess.isMaster())
+					System.out.print("DISTAPP - Shutting down master process... \n");
+				else
+					System.out.println("DISTAPP - Shutting down worker process... \n");
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}));
 	}
 }

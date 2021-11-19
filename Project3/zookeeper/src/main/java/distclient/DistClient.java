@@ -158,6 +158,10 @@ public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCal
 		return this.dTask;
 	}
 
+	public void showResult(MCPi returnedMCPi) {
+		System.out.println("\n*** result of pie from zookeeper: " + returnedMCPi.getPi() + " ***\n");
+	}
+
 	public static void main(String args[]) throws Exception
 	{
 		// You can accept the number of samples to be used for computing Pi from the command argument.
@@ -186,8 +190,6 @@ public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCal
 
 		// get back our task object
 		mcpi = (MCPi)dt.getDistTask();
-		// And display the results.
-		System.out.println(mcpi.getPi());
-
+		dt.showResult(mcpi);
 	}
 }
