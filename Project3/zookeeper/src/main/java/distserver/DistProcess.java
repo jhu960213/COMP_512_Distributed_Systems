@@ -1,4 +1,4 @@
-package dist;
+package distserver;
 
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.KeeperException.NodeExistsException;

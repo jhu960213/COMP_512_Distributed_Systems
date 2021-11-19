@@ -1,4 +1,4 @@
-package clnt;
+package distclient;
 
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.KeeperException.Code;
