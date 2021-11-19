@@ -10,4 +10,4 @@ fi
 
 . "$ZOOBINDIR"/zkEnv.sh
 
-javac -cp "$CLASSPATH":../task:.: $(pwd)/dist/DistProcess.java
+javac -cp "$CLASSPATH":../task:.: $(pwd)/distserver/DistProcess.java
