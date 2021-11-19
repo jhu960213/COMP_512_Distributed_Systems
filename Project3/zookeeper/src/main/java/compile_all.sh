@@ -1,5 +1,5 @@
 #!/bin/bash
 
 . compiletask.sh
-. compileclnt.sh
-. compilesrvr.sh
+. compileclient.sh
+. compileserver.sh

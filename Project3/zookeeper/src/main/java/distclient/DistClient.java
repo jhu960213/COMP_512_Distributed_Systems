@@ -13,7 +13,8 @@ import java.io.*;
 public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCallback.DataCallback
 {
 	private ZooKeeper zk;
-	private String zkServer, taskNodeName;
+	private String zkServer;
+	private String taskNodeName;
 //	private String pinfo;
 	private DistTask dTask;
 
@@ -21,49 +22,9 @@ public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCal
 	{
 		this.zkServer = zkhost;
 		this.dTask = dt;
-		System.out.println("DISTAPP: ZK Connection information: " + this.zkServer);
+		System.out.println("DISTAPP: ZK connection information: " + this.zkServer);
 //		this.pinfo = ManagementFactory.getRuntimeMXBean().getName();
 //		System.out.println("DISTAPP: Client information: " + this.pinfo);
-	}
-
-	public ZooKeeper getZk() {
-		return zk;
-	}
-
-	public void setZk(ZooKeeper zk) {
-		this.zk = zk;
-	}
-
-	public String getZkServer() {
-		return zkServer;
-	}
-
-	public void setZkServer(String zkServer) {
-		this.zkServer = zkServer;
-	}
-
-	public String getTaskNodeName() {
-		return taskNodeName;
-	}
-
-	public void setTaskNodeName(String taskNodeName) {
-		this.taskNodeName = taskNodeName;
-	}
-
-//	public String getPinfo() {
-//		return pinfo;
-//	}
-//
-//	public void setPinfo(String pinfo) {
-//		this.pinfo = pinfo;
-//	}
-
-	public DistTask getdTask() {
-		return dTask;
-	}
-
-	public void setdTask(DistTask dTask) {
-		this.dTask = dTask;
 	}
 
 	public void startClient() {
