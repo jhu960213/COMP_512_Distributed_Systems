@@ -8,7 +8,7 @@ then
 	exit 1
 fi
 
-. $ZOOBINDIR/zkEnv.sh
+. "$ZOOBINDIR"/zkEnv.sh
 
 #TODO Include your ZooKeeper connection string here. Make sure there are no spaces.
 # 	Replace with your server names and client ports.
