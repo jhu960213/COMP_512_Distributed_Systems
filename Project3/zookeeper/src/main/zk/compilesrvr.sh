@@ -1,12 +1,13 @@
 #!/bin/bash
 
+export ZOOBINDIR=~/apache-zookeeper-3.6.2-bin/bin
+
 if [[ -z "$ZOOBINDIR" ]]
 then
 	echo "Error!! ZOOBINDIR is not set" 1>&2
 	exit 1
 fi
 
-# shellcheck disable=SC2086
-. $ZOOBINDIR/zkEnv.sh
+. "$ZOOBINDIR"/zkEnv.sh
 
 javac -cp "$CLASSPATH":../task:.: $(pwd)/dist/DistProcess.java
