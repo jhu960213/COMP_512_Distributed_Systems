@@ -31,6 +31,7 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 	private String zkServer;
 	private String pInfo;
 	private boolean isMaster;
+	private Long pid;
 	private DistProcessStatus status;
 	private Logger LOG;
 
@@ -39,8 +40,7 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 		this.zkServer = zkhost;
 		this.isMaster = false;
 		this.pInfo = ManagementFactory.getRuntimeMXBean().getName();
-		System.out.println("DISTAPP - ZK Connection information: " + this.zkServer);
-		System.out.println("DISTAPP - Process information: " + this.pInfo);
+		this.pid = ManagementFactory.getRuntimeMXBean().getPid();
 	}
 
 	public ZooKeeper getZk() {
@@ -90,7 +90,6 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		System.out.println("DISTAPP - New " + (this.isMaster?"master":"worker") + " started...");
 		while (true) {
 			try {
 				Thread.sleep(5000);
@@ -101,8 +100,7 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 	}
 
 	public void startProcess() throws IOException, KeeperException, InterruptedException {
-		try
-		{
+		try {
 			//connect to ZK, installs a watcher to detect changes in its connection with ensemble.
 			this.zk = new ZooKeeper(this.zkServer, 1000, this);
 
@@ -117,23 +115,18 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 			getTasks();
 		}
 		catch(NodeExistsException nee)  {
-
-			System.out.println("DISTPROCESS::startProcess()::Exception: " + nee.getMessage() + "\n");
-
+			System.out.println("DISTAPP - Exception: " + nee.getMessage());
 			// Creates worker znode
-			runForWorker();
+			runForWorker(this.pid);
 			this.isMaster = false;
-
 			// Installs monitoring on new tasks that will be created
-
-
-
-
 			// TODO monitor for worker tasks?
-
 			// TODO: What else will you need if this was a worker process?
 		}
+		System.out.println("DISTAPP - ZK Connection information: " + this.zkServer);
 		System.out.println("DISTAPP - Role: " + " I will be functioning as " +(this.isMaster?"master":"worker"));
+		System.out.println("DISTAPP - Process information: " + this.pInfo);
+		System.out.println("DISTAPP - New " + (this.isMaster?"master":"worker") + " started...");
 	}
 
 	// **** DEALING WITH WORKER STATE CHANGES **** //
@@ -164,9 +157,11 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 				// in the event that the getWorkers call was successful then print to console the available workers
 				case OK: {
 					LOG.info("DISTAPP - Current available # of workers: " + children.size());
+					System.out.print("DISTAPP - WorkerList: ");
 					for (String name: children) {
-						System.out.print("worker: " + name + "| ");
+						System.out.print(name + "|");
 					}
+					System.out.println("");
 					break;
 				} default: {
 					LOG.info("Call to zk.getChildren() failed: " + KeeperException.create(Code.get(rc), path));
@@ -196,13 +191,12 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 		this.zk.create("/dist04/master", this.pInfo.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 	}
 
-	public void runForWorker() throws KeeperException, InterruptedException
+	public void runForWorker(Long pid) throws KeeperException, InterruptedException
 	{
 		this.status = DistProcessStatus.IDLE;
 		// Tries to create an ephemeral znode for a worker and put the hostname and pid of process in it's data field
-		this.zk.create("/dist04/workers", this.status.toString().getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+		this.zk.create("/dist04/workers/worker-" + pid, this.status.toString().getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 	}
-
 
 	public void process(WatchedEvent e)
 	{
