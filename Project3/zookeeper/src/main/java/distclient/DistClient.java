@@ -47,9 +47,12 @@ public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCal
 
 			//Place watch for the result znode which will be created under our task znode.
 			this.zk.exists(this.taskNodeName + "/result", this, this, null);
-		}
-		catch (Exception e) {
+		} catch (IOException e) {
 			System.out.println("DISTCLIENT::startClient()::exception: " + e.getMessage() + "\n");
+		} catch (InterruptedException e) {
+
+		} catch (KeeperException e) {
+
 		}
 	}
 
