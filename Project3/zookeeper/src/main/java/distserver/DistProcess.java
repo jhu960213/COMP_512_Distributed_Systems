@@ -7,6 +7,7 @@ import task.DistTask;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.net.UnknownHostException;
 import java.util.List;
 
 // TODO
@@ -36,11 +37,11 @@ public class DistProcess implements Watcher, AsyncCallback.ChildrenCallback
 		System.out.println("DISTAPP - Process information: " + this.pinfo);
 	}
 
-	void startProcess() {
+	void startProcess() throws IOException {
+		//connect to ZK, installs a watcher to detect changes in its connection with ensemble.
+		this.zk = new ZooKeeper(this.zkServer, 1000, this);
 		try
 		{
-			//connect to ZK, installs a watcher to detect changes in its connection with ensemble.
-			this.zk = new ZooKeeper(this.zkServer, 1000, this);
 
 			// See if you can become the master (i.e, no other master exists)
 			runForMaster();
@@ -51,11 +52,17 @@ public class DistProcess implements Watcher, AsyncCallback.ChildrenCallback
 
 			// TODO monitor for worker tasks?
 
-		} catch(Exception e)  {
+		} catch(NodeExistsException nee)  {
 			isMaster = false;
-			System.out.println("DISTPROCESS::startProcess()::Exception: " + e.getMessage() + "\n");
+			System.out.println("DISTPROCESS::startProcess()::Exception: " + nee.getMessage() + "\n");
 
-		} // TODO: What else will you need if this was a worker process?
+		} catch(InterruptedException nee)  {
+
+		}  catch(KeeperException nee)  {
+
+		}  catch(UnknownHostException nee)  {
+
+		}  // TODO: What else will you need if this was a worker process?
 
 		System.out.println("DISTAPP - Role: " + " I will be functioning as " +(this.isMaster?"master":"worker"));
 	}
@@ -67,14 +74,10 @@ public class DistProcess implements Watcher, AsyncCallback.ChildrenCallback
 	}
 
 	// Try to become the master.
-	void runForMaster() {
-		try {
-			// Try to create an ephemeral node to be the master, put the hostname and pid of this process as the data.
-			// This is an example of Synchronous API invocation as the function waits for the execution and no callback is involved..
-			this.zk.create("/dist04/master", this.pinfo.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-		} catch (Exception e) {
-			System.out.println("DISTPROCESS::runForMaster()::Exception: " + e.getMessage() + "\n");
-		}
+	void runForMaster() throws UnknownHostException, InterruptedException, KeeperException {
+		// Try to create an ephemeral node to be the master, put the hostname and pid of this process as the data.
+		// This is an example of Synchronous API invocation as the function waits for the execution and no callback is involved..
+		this.zk.create("/dist04/master", this.pinfo.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 	}
 
 
