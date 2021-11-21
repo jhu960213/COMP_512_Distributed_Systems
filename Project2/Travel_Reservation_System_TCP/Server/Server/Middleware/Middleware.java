@@ -38,7 +38,7 @@ public class Middleware implements IResourceManager {
     public Middleware() {
         try {
             this.customersList = new RMHashMap();
-            this.transactionManager = new TransactionManager();
+            this.transactionManager = new TransactionManager(this);
             this.lockManager = new LockManager();
             this.transactionDataManager = new TransactionDataManager();
             this.transactionRecordUtil = new TransactionRecordUtil(this.getName());
@@ -72,7 +72,7 @@ public class Middleware implements IResourceManager {
     public void runServerThread() throws IOException
     {
         ServerSocket serverSocket = new ServerSocket(middlewareRegistryPortNum);
-        System.out.println("Server ready...");
+        Trace.info("Middleware::Server ready...");
         while (true)
         {
             Socket socket=serverSocket.accept();
@@ -175,7 +175,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware addFlight response:" + response);
+        Trace.info("Middleware::addFlight response:" + response);
         return response;
     }
 
@@ -186,7 +186,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware addCars response:" + response);
+        Trace.info("Middleware::addCars response:" + response);
         return response;
     }
 
@@ -197,7 +197,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware addRooms response:" + response);
+        Trace.info("Middleware::addRooms response:" + response);
         return response;
     }
 
@@ -242,7 +242,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware deleteFlight response:" + response);
+        Trace.info("Middleware::deleteFlight response:" + response);
         return response;
     }
 
@@ -253,7 +253,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware deleteCars response:" + response);
+        Trace.info("Middleware::deleteCars response:" + response);
         return response;
     }
 
@@ -264,7 +264,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware deleteRooms response:" + response);
+        Trace.info("Middleware::deleteRooms response:" + response);
         return response;
     }
 
@@ -289,7 +289,7 @@ public class Middleware implements IResourceManager {
                 return true;
             }
         } catch (Throwable e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+            Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return false;
     }
@@ -301,7 +301,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware queryFlight response:" + response);
+        Trace.info("Middleware::queryFlight response:" + response);
         return response;
     }
 
@@ -312,7 +312,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware queryCars response:" + response);
+        Trace.info("Middleware::queryCars response:" + response);
         return response;
     }
 
@@ -323,7 +323,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware queryRooms response:" + response);
+        Trace.info("Middleware::queryRooms response:" + response);
         return response;
     }
 
@@ -340,7 +340,7 @@ public class Middleware implements IResourceManager {
         else
         {
             Trace.info("RM::queryCustomerInfo(" + xid + ", " + customerID + ")");
-            System.out.println(customer.getBill());
+            Trace.info(customer.getBill());
             return customer.getBill();
         }
     }
@@ -352,7 +352,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware addFlight queryFlightPrice:" + response);
+        Trace.info("Middleware::addFlight queryFlightPrice:" + response);
         return response;
     }
 
@@ -363,7 +363,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware queryCarsPrice response:" + response);
+        Trace.info("Middleware::queryCarsPrice response:" + response);
         return response;
     }
 
@@ -374,7 +374,7 @@ public class Middleware implements IResourceManager {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Middleware queryRoomsPrice response:" + response);
+        Trace.info("Middleware::queryRoomsPrice response:" + response);
         return response;
     }
 
@@ -506,7 +506,7 @@ public class Middleware implements IResourceManager {
             writeData(xid, customer.getKey(), customer);
             Trace.info("RM::bundle(" + xid + ", " + customerId + ", " + flightNumbers + ", " + location + ", " + car + ", " + room + ") succeeded");
         } catch (Throwable e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+            Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
     }
@@ -556,7 +556,7 @@ public class Middleware implements IResourceManager {
             if (rooms) response += callResourceServerMethod(ResourceServer.Rooms, "queryReservableRooms", new Object[]{Integer.valueOf(xid)});
             Trace.info("RM::queryReservableItems(" + xid + ", " + flights + ", " + cars + ", " + rooms + ") succeed");
         } catch (Throwable e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+            Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
     }
@@ -578,7 +578,7 @@ public class Middleware implements IResourceManager {
             }
             return response;
         } catch (Exception e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+            Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
     }
@@ -601,7 +601,7 @@ public class Middleware implements IResourceManager {
             }
             return response;
         } catch (Exception e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+            Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
     }
@@ -624,7 +624,7 @@ public class Middleware implements IResourceManager {
             }
             return response;
         } catch (Exception e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+            Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
     }
@@ -647,10 +647,9 @@ public class Middleware implements IResourceManager {
                 } else {
                     if (!(Boolean)callResourceServerMethod(type, "commit", new Object[]{Integer.valueOf(xid)})) return false;
                 }
-            transactionRecordUtil.commit(xid);
             return transactionManager.commit(xid);
         } catch (Throwable e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+            Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return false;
     }
@@ -669,11 +668,10 @@ public class Middleware implements IResourceManager {
                 } else {
                     callResourceServerMethod(type, "abort", new Object[]{Integer.valueOf(xid)});
                 }
-            transactionManager.abort(xid);
             transactionRecordUtil.abort(xid);
         } catch (Throwable e) {
-            if (e instanceof InvalidTransactionException || e instanceof TransactionAbortedException) throw (InvalidTransactionException) e;
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+            if (e instanceof InvalidTransactionException || e instanceof TransactionAbortedException) throw new InvalidTransactionException(xid, "abort");
+            Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
     }
 
@@ -691,9 +689,8 @@ public class Middleware implements IResourceManager {
                     callResourceServerMethod(type, "abort", new Object[]{Integer.valueOf(xid)});
                 }
             transactionManager.abort(xid);
-            transactionRecordUtil.abort(xid);
         } catch (Throwable e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
+            Trace.info("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
     }
 
@@ -724,6 +721,16 @@ public class Middleware implements IResourceManager {
         transactionManager.checkTransaction(transactionId, methodName);
     }
 
+
+    public void addExecuteTime(int transactionId, long executeTime) {
+        transactionRecordUtil.addExecuteTime(transactionId, executeTime);
+    }
+
+    public void commitRecord(int transactionId, boolean aborted) {
+        if (aborted) transactionRecordUtil.abort(transactionId);
+        else transactionRecordUtil.commit(transactionId);
+    }
+
     public Object callResourceServerMethod(ResourceServer resourceServer, String methodName, Object[] argList) throws Throwable {
         String host = "";
         int port = 0;
@@ -737,7 +744,7 @@ public class Middleware implements IResourceManager {
         if (argList.length > 0 && !methodName.equals("commit") && !methodName.equals("abort")) {
             transactionManager.addDataOperation((Integer) argList[0], resourceServer);
         }
-
+        long startTime = System.currentTimeMillis();
         Socket socket= new Socket(host, port);
         ObjectOutputStream outToServer = new ObjectOutputStream(socket.getOutputStream());
         ObjectInputStream inFromServer = new ObjectInputStream(socket.getInputStream());
@@ -745,13 +752,15 @@ public class Middleware implements IResourceManager {
         outToServer.writeObject(methodName);
         outToServer.writeObject(argList);
         Object returnObj =  inFromServer.readObject();
-
+        outToServer.writeObject("Quit");
+        socket.close();
         if (returnObj instanceof Throwable) {
             if (returnObj instanceof DeadlockException) {
                 passivelyAbort(((DeadlockException)returnObj).getXId());
             }
             throw (Throwable) returnObj;
         }
+        if (argList.length > 0) transactionRecordUtil.addCallRMTime((Integer) argList[0], System.currentTimeMillis() -startTime);
         return returnObj;
     }
 }

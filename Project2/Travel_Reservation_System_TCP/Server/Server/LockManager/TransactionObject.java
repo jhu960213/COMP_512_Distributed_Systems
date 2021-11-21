@@ -1,8 +1,12 @@
 package Server.LockManager;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class TransactionObject
 {
 	protected int m_xid = 0;
+	private Timer timer;
 
 	TransactionObject()
 	{
@@ -13,7 +17,6 @@ public class TransactionObject
 	public TransactionObject(int xid)
 	{
 		super();
-
 		if (xid > 0) {
 			m_xid = xid;
 		} else {
@@ -71,5 +74,19 @@ public class TransactionObject
 			m_xid = xid;
 		}
 		return;
+	}
+
+	public void setTimeout(int timeout, TimerTask timeoutTask) {
+		this.timer = new Timer();
+		this.timer.schedule(timeoutTask, timeout);
+	}
+
+	public void updateTimer(int timeout, TimerTask timeoutTask) {
+		if (this.timer!=null) this.timer.cancel();
+		setTimeout(timeout, timeoutTask);
+	}
+
+	public void cancelTime() {
+		if (this.timer!=null) this.timer.cancel();
 	}
 }

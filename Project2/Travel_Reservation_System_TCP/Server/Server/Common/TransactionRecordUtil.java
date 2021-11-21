@@ -16,14 +16,16 @@ public class TransactionRecordUtil {
         int state;
         long startTime;
         long endTime;
+        long executeTime;
+        long callRMTime;
         long readTime;
         long writeTime;
 
         public static String columns() { //transactionId,state,startTime,endTime,executeTime,readTime,writeTime,databaseTime
-            return "Xid, State, StartTime, EndTime, ExecuteTime, ReadTime, WriteTime, DBTime\n";
+            return "Xid, State, StartTime, EndTime, TransactionTime, ExecuteTime, CallRMTime, CommunicationTime, ReadTime, WriteTime, DBTime\n";
         }
         public String toString() { //transactionId,state,startTime,endTime,executeTime,readTime,writeTime,databaseTime
-            return transactionId + ", " + state + ", " + startTime + ", " + endTime + ", " + (endTime - startTime) + ", " + readTime + ", " + writeTime + ", " + (readTime + writeTime) + "\n";
+            return transactionId + ", " + state + ", " + startTime + ", " + endTime + ", " + (endTime - startTime) + ", " + executeTime + ", " + callRMTime + ", " + (endTime - startTime - executeTime) + ", " + readTime + ", " + writeTime + ", " + (readTime + writeTime) + "\n";
         }
     }
 
@@ -67,6 +69,13 @@ public class TransactionRecordUtil {
         }
     }
 
+    public void removeRecord(int transactionId)
+    {
+        synchronized (this.hashMap) {
+            this.hashMap.remove(transactionId);
+        }
+    }
+
     public void start(int transactionId)
     {
         TransactionRecord record = readRecord(transactionId);
@@ -84,11 +93,9 @@ public class TransactionRecordUtil {
         if (record != null) {
             record.state = 1;
             record.endTime = System.currentTimeMillis();
-            writeRecord(transactionId, record);
-            try {
-                bufferWriter.write(record.toString());
-            } catch (IOException e) {
-            }
+            writeToFile(record.toString());
+            removeRecord(transactionId);
+
         }
     }
 
@@ -98,11 +105,24 @@ public class TransactionRecordUtil {
         if (record != null) {
             record.state = 2;
             record.endTime = System.currentTimeMillis();
+            writeToFile(record.toString());
+            removeRecord(transactionId);
+        }
+    }
+    public void addExecuteTime(int transactionId, long time)
+    {
+        TransactionRecord record = readRecord(transactionId);
+        if (record != null) {
+            record.executeTime += time;
             writeRecord(transactionId, record);
-            try {
-                bufferWriter.write(record.toString());
-            } catch (IOException e) {
-            }
+        }
+    }
+    public void addCallRMTime(int transactionId, long time)
+    {
+        TransactionRecord record = readRecord(transactionId);
+        if (record != null) {
+            record.callRMTime += time;
+            writeRecord(transactionId, record);
         }
     }
 
@@ -122,6 +142,20 @@ public class TransactionRecordUtil {
             record.writeTime += time;
             writeRecord(transactionId, record);
         }
+    }
+
+    public void writeToFile(String string)
+    {
+        Thread t = new Thread(new Runnable(){
+            public void run(){
+                try {
+                    bufferWriter.write(string);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        t.start();
     }
 
     public void close()
