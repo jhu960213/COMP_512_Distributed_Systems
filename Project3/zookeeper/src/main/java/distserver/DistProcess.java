@@ -4,6 +4,7 @@ import org.apache.zookeeper.*;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.data.Stat;
 import task.DistTask;
 import utils.Logger;
 
@@ -115,12 +116,16 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 			getTasks();
 		}
 		catch(NodeExistsException nee)  {
+
 			System.out.println("DISTAPP - Exception: " + nee.getMessage());
+
 			// Creates worker znode
 			runForWorker(this.pid);
 			this.isMaster = false;
-			// Installs monitoring on new tasks that will be created
+
 			// TODO monitor for worker tasks?
+			getJobs();
+
 			// TODO: What else will you need if this was a worker process?
 		}
 		System.out.println("DISTAPP - ZK Connection information: " + this.zkServer);
@@ -134,6 +139,7 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 	// instantiate and installs a new watcher for when the workers change in the zookeeper system on the workers znode
 	Watcher forWorkersChange = new Watcher()
 	{
+		@Override
 		public void process(WatchedEvent e) {
 			if(e.getType() == Event.EventType.NodeChildrenChanged)
 			{
@@ -146,6 +152,7 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 
 	ChildrenCallback forWorkersChangeChildrenCallback = new ChildrenCallback()
 	{
+		@Override
 		public void processResult(int rc, String path, Object ctx, List<String> children)
 		{
 			switch (Code.get(rc)) {
@@ -175,6 +182,117 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 		zk.getChildren("/dist04/workers", forWorkersChange, forWorkersChangeChildrenCallback, null);
 	}
 
+	// **** DEALING WITH WORKERS' JOB STATE CHANGES **** //
+
+	Watcher forWorkerJobChange = new Watcher()
+	{
+		@Override
+		public void process(WatchedEvent e) {
+			if(e.getType() == Event.EventType.NodeChildrenChanged)
+			{
+				LOG.info("DISTAPP - Event received: " + e);
+				assert ("/dist04/workers/worker-" + pid + "/jobs").equals(e.getPath());
+				getJobs();
+			}
+
+		}
+	};
+
+	ChildrenCallback forWorkerJobChangeCallBack = new ChildrenCallback() {
+		@Override
+		public void processResult(int rc, String path, Object ctx, List<String> jobs) {
+			switch (Code.get(rc)) {
+				// in the event of connection loss we need to re-execute getJobs() with a new watcher and call back
+				case CONNECTIONLOSS: {
+					getJobs();
+					break;
+				}
+				// in the event that the getJob() call was successful, retrieve the job and process it
+				case OK: {
+					LOG.info("DISTAPP - worker-" + pid + " has: " + jobs.size() + " job assigned. Executing now...");
+					Thread thread = new Thread(() -> processJob(jobs));
+					thread.start();
+					break;
+				} default: {
+					LOG.info("Call to zk.getChildren() failed: " + KeeperException.create(Code.get(rc), path));
+				}
+			}
+		}
+	};
+
+	DataCallback jobDataCallBack = new DataCallback() {
+		@Override
+		public void processResult(int rc, String path, Object ctx, byte[] data, Stat stat) {
+			switch (Code.get(rc)) {
+				// in the event of connection loss we need to re-execute getJobData() with a new data call back
+				case CONNECTIONLOSS: {
+					getJobData((String) ctx);
+					break;
+				}
+				// in the event that the getJobData() call was successful, deserialize data and compute pie
+				case OK: {
+					// maybe need to put this in a new thread??? I don't know...
+					try {
+						computePie(data, ctx);
+					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (ClassNotFoundException e) {
+						e.printStackTrace();
+					} catch (KeeperException e) {
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					break;
+				} default: {
+					LOG.info("Call to getJobData() failed: " + KeeperException.create(Code.get(rc), path));
+				}
+			}
+
+		}
+	};
+
+	public void computePie(byte[] data, Object ctx) throws IOException, ClassNotFoundException, KeeperException, InterruptedException
+	{
+		// Re-construct our task object.
+		ByteArrayInputStream bis = new ByteArrayInputStream(data);
+		ObjectInput in = new ObjectInputStream(bis);
+		DistTask dt = (DistTask) in.readObject();
+
+		// Execute the task.
+		// TODO: Again, time consuming stuff. Should be done by some other thread and not inside a callback!
+		dt.compute();
+
+		// Serialize our Task object back to a byte array!
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream oos = new ObjectOutputStream(bos);
+		oos.writeObject(dt);
+		oos.flush();
+		byte[] dataSerial = bos.toByteArray();
+
+		// Store it inside the result node.
+		this.zk.create("/dist04/tasks/" + (String) ctx + "/result", dataSerial, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+	}
+
+	public void processJob(List<String> jobs) {
+		for (String jobName: jobs) {
+			getJobData(jobName);
+		}
+	}
+
+	public void getJobData(String jobName) {
+		zk.getData("/dist04/workers/worker-" + this.pid + "/jobs/" + jobName, false, jobDataCallBack, jobName);
+	}
+
+	public void getJobs() {
+		this.zk.getChildren("/dist04/workers/worker-" + this.pid + "/jobs",
+				forWorkerJobChange,
+				forWorkerJobChangeCallBack,
+				null);
+	}
+
+
+
 
 	// Master fetching tasks under the task znode
 	public void getTasks()
@@ -191,11 +309,22 @@ public class DistProcess extends Thread implements Watcher, AsyncCallback.Childr
 		this.zk.create("/dist04/master", this.pInfo.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 	}
 
+	// Try to become the worker
 	public void runForWorker(Long pid) throws KeeperException, InterruptedException
 	{
+		// Set worker status
 		this.status = DistProcessStatus.IDLE;
-		// Tries to create an ephemeral znode for a worker and put the hostname and pid of process in it's data field
-		this.zk.create("/dist04/workers/worker-" + pid, this.status.toString().getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+
+		// Tries to create an ephemeral znode for a worker with pid and put status enum in it's data field
+		this.zk.create("/dist04/workers/worker-" + pid,
+				this.status.toString().getBytes(),
+				Ids.OPEN_ACL_UNSAFE,
+				CreateMode.EPHEMERAL);
+
+		// Creates another ephemeral znode under each worker denoting the job node keeping track of active tasks assigned
+		this.zk.create("/dist04/workers/worker-" + pid + "/jobs",
+				"active jobs for this worker".getBytes(),
+				Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 	}
 
 	public void process(WatchedEvent e)
