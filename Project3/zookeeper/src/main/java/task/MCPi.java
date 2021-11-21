@@ -1,5 +1,7 @@
 package task;
 
+import utils.Logger;
+
 public class MCPi implements DistTask
 {
 	private long samples;
@@ -16,15 +18,15 @@ public class MCPi implements DistTask
 	// Implementation of the DistTask interface.
 	//  Called at the worker side to perform the computations.
 	public void compute()
-	{ 
-		System.out.println("DistTask - compute: started");
+	{
+		Logger.info("DistTask - compute: started");
 		this.pi = calcPi(this.samples);
-		System.out.println("DistTask - compute: completed");
+		Logger.info("DistTask - compute: completed");
 	}
 
 	private double calcPi(long n)
 	{
-		System.out.println("DistTask: calcPi : number of sample : " + n);
+		Logger.info("DistTask: calcPi : number of sample : " + n);
 		long in = 0; // points that fell inside the circle.
  		for (int i = 0; i < n; i++)
 		{
@@ -36,7 +38,7 @@ public class MCPi implements DistTask
    		}
  		}
  		double pival =  4.0*((double)in)/n;
-		System.out.println("DistTask: calcPi : computed value of pi : " + pival);
+		Logger.info("DistTask: calcPi : computed value of pi : " + pival);
 		return pival;
 	}
 

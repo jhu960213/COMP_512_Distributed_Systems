@@ -25,7 +25,6 @@ public class DistProcess extends Thread
 	HashMap<String, Boolean> tasks;
 	HashMap<String, Boolean> workers;
 	LinkedList<String> pendingTaskList;
-	Logger LOG;
 
 	public DistProcess(String zkhost)
 	{
@@ -69,150 +68,80 @@ public class DistProcess extends Thread
 		isMaster = master;
 	}
 
-	public void stopProcess() throws InterruptedException {
-		if (!isMaster()) this.zk.delete(this.workerNodeName, -1, null, null);
+	public void stopProcess() throws InterruptedException, KeeperException {
+		if (!isMaster()) this.zk.delete(this.workerNodeName, -1);
 		this.zk.close();
 	}
-
-	@Override
-	public void run() {
-		try {
-			startProcess();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (KeeperException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		while (true) {
-		}
-	}
-
-	Watcher connectionWater = new Watcher() {
-		public void process(WatchedEvent watchedEvent) {
-			LOG.info("DISTAPP - Event received: " + watchedEvent);
-		}
-	};
 
 	public void startProcess() throws IOException, KeeperException, InterruptedException {
 		try {
 			//connect to ZK, installs a watcher to detect changes in its connection with ensemble.
-			this.zk = new ZooKeeper(this.zkServer, 1000, connectionWater);
-
-			// See if you can become the master (i.e, no other master exists)
+			this.zk = new ZooKeeper(this.zkServer, 1000, new Watcher() {
+				public void process(WatchedEvent watchedEvent) {
+					Logger.info("DISTAPP - Event received: " + watchedEvent);
+				}
+			});
 			runForMaster();
 			this.isMaster = true;
-
-			// Install monitoring on workers and get changes to the list of available workers
 			getWorkers();
-
-			// Install monitoring on any new tasks that will be created.
 			getTasks();
 		}
 		catch(NodeExistsException nee)  {
-
-			System.out.println("DISTAPP - Exception: " + nee.getMessage());
-
-			// Creates worker znode
 			runForWorker();
 			this.isMaster = false;
-
 			getWorkerTasks();
-
 		}
-		System.out.println("DISTAPP - ZK Connection information: " + this.zkServer);
-		System.out.println("DISTAPP - Role: " + " I will be functioning as " +(this.isMaster?"master":"worker"));
-		System.out.println("DISTAPP - Process information: " + this.pInfo);
-		System.out.println("DISTAPP - New " + (this.isMaster?"master":"worker") + " started...");
+		Logger.info("DISTAPP - ZK Connection information: " + this.zkServer);
+		Logger.info("DISTAPP - Role: " + " I will be functioning as " +(this.isMaster?"master":"worker"));
+		Logger.info("DISTAPP - Process information: " + this.pInfo);
+		Logger.info("DISTAPP - New " + (this.isMaster?"master":"worker") + " started...");
+		while (true) {}	//keep main thread alive
 	}
 
-	// **** DEALING WITH WORKER STATE CHANGES **** //
-
-	// instantiate and installs a new watcher for when the workers change in the zookeeper system on the workers znode
-	Watcher WorkersWatcher = new Watcher()
+	public void runForMaster() throws KeeperException, InterruptedException
 	{
-		public void process(WatchedEvent watchedEvent) {
-			LOG.info("DISTAPP - Event received: " + watchedEvent);
-			getWorkers();
-		}
-	};
+		this.zk.create("/dist04/master", this.pInfo.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+	}
 
-	ChildrenCallback WorkersCallback = new ChildrenCallback()
+	public void runForWorker() throws KeeperException, InterruptedException
 	{
-		public void processResult(int rc, String path, Object ctx, List<String> children)
-		{
-			System.out.println("DISTAPP - forWorkersChangeChildrenCallback called:" + rc + ", " + path + ", " + ctx + ", " + children);
-			switch (Code.get(rc)) {
-				// in the event of connection loss we need to re-execute getWorkers with a new watcher and call back
-				case CONNECTIONLOSS: {
-					getWorkers();
-					break;
-				}
-				// in the event that the getWorkers call was successful then print to console the available workers
-				case OK: {
-					LOG.info("DISTAPP - Current available # of workers: " + children.size());
-					System.out.println("DISTAPP - WorkerList: " + children);
-					HashMap<String, Boolean> newMap = new HashMap<>();
-					for (String worker: children) {
-						newMap.put(worker, workers.getOrDefault(worker, true));
-						zk.getChildren("/dist04/workers/" + worker, WorkerTaskWatcher, WorkerTaskWatcherCallBack, null);
-					}
-					workers = newMap;
-					assign();
-					break;
-				} default: {
-					LOG.info("Call to zk.getChildren() failed: " + KeeperException.create(Code.get(rc), path));
-				}
-			}
-		}
-	};
+		workerNodeName = this.zk.create("/dist04/workers/worker-", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+	}
+
+	public void getTasks()
+	{
+		zk.getChildren("/dist04/tasks", TasksWatcher, TasksCallBack, null);
+	}
 
 	public void getWorkers()
 	{
 		zk.getChildren("/dist04/workers", WorkersWatcher, WorkersCallback, null);
 	}
 
-	// **** DEALING WITH WORKERS' JOB STATE CHANGES **** //
+	public void getWorkerTasks() {
+		this.zk.getChildren(workerNodeName, WorkerTaskWatcher, WorkerTaskWatcherCallBack, null);
+	}
 
-	Watcher WorkerTaskWatcher = new Watcher()
-	{
-		public void process(WatchedEvent e) {
-			LOG.info("DISTAPP - Event received: " + e);
-			zk.getChildren(e.getPath(), WorkerTaskWatcher, WorkerTaskWatcherCallBack, null);
-		}
-	};
-
-	ChildrenCallback WorkerTaskWatcherCallBack = new ChildrenCallback()
-	{
-		public void processResult(int rc, String path, Object ctx, List<String> children) {
-			System.out.println("DISTAPP - WorkerTaskWatcherCallBack called:" + rc + ", " + path + ", " + ctx + ", " + children);
-			if (Code.get(rc) == Code.OK) {
-				if (isMaster) {
-					if (children.size() == 0) {
-						LOG.info("DISTAPP - " + path + " has finished its task.");
-						workers.put(path.substring("/dist04/workers/".length()), true);
-						assign();
+	public void assign() {
+		if (workers.size() == 0 || pendingTaskList.size() == 0) return;
+		for (Map.Entry<String, Boolean> worker:workers.entrySet())
+			if (worker.getValue()) {
+				if (pendingTaskList.isEmpty()) break;
+				String task = pendingTaskList.poll();
+				Logger.info("DISTAPP - assign: " + task + " to " + worker.getKey());
+				this.zk.create("/dist04/workers/" + worker.getKey() + "/" + task, null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, new Create2Callback() {
+					public void processResult(int i, String s, Object o, String s1, Stat stat) {
 					}
-				} else {
-					if (children.size() > 0) {
-						LOG.info("DISTAPP - " + path + " has been assigned: " + children);
-						Thread thread = new Thread(new Runnable() {
-							public void run() {
-								processTasks(children);
-							}
-						});
-						thread.run();
-					}
-				}
+				}, null);
+				tasks.put(task, true);
+				worker.setValue(false);
 			}
-		}
-	};
+	}
 
 	public void processTasks(List<String> tasks) {
 		try {
 			String task = tasks.get(0);
-			System.out.println("DISTAPP - processTask called:" + task);
+			Logger.info("DISTAPP - processTask called:" + task);
 
 			byte[] data = zk.getData("/dist04/tasks/" + task, false, null);
 
@@ -221,7 +150,7 @@ public class DistProcess extends Thread
 			ObjectInput in = new ObjectInputStream(bis);
 			DistTask dt = (DistTask) in.readObject();
 
-			System.out.println("dt = " + dt);
+			Logger.info("dt = " + dt);
 			// Execute the task.
 			dt.compute();
 
@@ -236,22 +165,94 @@ public class DistProcess extends Thread
 			this.zk.create("/dist04/tasks/" + (String) task + "/result", dataSerial, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			this.zk.delete(workerNodeName + "/" + task, -1);
 		}
-		catch(NodeExistsException nee){System.out.println(nee);}
-		catch(KeeperException ke){System.out.println(ke);}
-		catch(InterruptedException ie){System.out.println(ie);}
-		catch(IOException io){System.out.println(io);}
-		catch(ClassNotFoundException cne){System.out.println(cne);}
+		catch(NodeExistsException nee){Logger.error(nee);}
+		catch(KeeperException ke){Logger.error(ke);}
+		catch(InterruptedException ie){Logger.error(ie);}
+		catch(IOException io){Logger.error(io);}
+		catch(ClassNotFoundException cne){Logger.error(cne);}
 	}
 
-	public void getWorkerTasks() {
-		this.zk.getChildren(workerNodeName, WorkerTaskWatcher, WorkerTaskWatcherCallBack, null);
-	}
 
+	// **** DEALING WITH WORKER STATE CHANGES **** //
+	// instantiate and installs a new watcher for when the workers change in the zookeeper system on the workers znode
+	Watcher WorkersWatcher = new Watcher()
+	{
+		public void process(WatchedEvent watchedEvent) {
+			Logger.info("DISTAPP - Event received: " + watchedEvent);
+			getWorkers();
+		}
+	};
+
+	ChildrenCallback WorkersCallback = new ChildrenCallback()
+	{
+		public void processResult(int rc, String path, Object ctx, List<String> children)
+		{
+			Logger.info("DISTAPP - forWorkersChangeChildrenCallback called:" + rc + ", " + path + ", " + ctx + ", " + children);
+			switch (Code.get(rc)) {
+				// in the event of connection loss we need to re-execute getWorkers with a new watcher and call back
+				case CONNECTIONLOSS: {
+					getWorkers();
+					break;
+				}
+				// in the event that the getWorkers call was successful then print to console the available workers
+				case OK: {
+					Logger.info("DISTAPP - Current available # of workers: " + children.size());
+					Logger.info("DISTAPP - WorkerList: " + children);
+					HashMap<String, Boolean> newMap = new HashMap<>();
+					for (String worker: children) {
+						newMap.put(worker, workers.getOrDefault(worker, true));
+						zk.getChildren("/dist04/workers/" + worker, WorkerTaskWatcher, WorkerTaskWatcherCallBack, null);
+					}
+					workers = newMap;
+					assign();
+					break;
+				} default: {
+					Logger.info("Call to zk.getChildren() failed: " + KeeperException.create(Code.get(rc), path));
+				}
+			}
+		}
+	};
+
+	// **** DEALING WITH WORKERS' TASKS STATE CHANGES **** //
+
+	Watcher WorkerTaskWatcher = new Watcher()
+	{
+		public void process(WatchedEvent e) {
+			Logger.info("DISTAPP - Event received: " + e);
+			zk.getChildren(e.getPath(), WorkerTaskWatcher, WorkerTaskWatcherCallBack, null);
+		}
+	};
+
+	ChildrenCallback WorkerTaskWatcherCallBack = new ChildrenCallback()
+	{
+		public void processResult(int rc, String path, Object ctx, List<String> children) {
+			Logger.info("DISTAPP - WorkerTaskWatcherCallBack called:" + rc + ", " + path + ", " + ctx + ", " + children);
+			if (Code.get(rc) == Code.OK) {
+				if (isMaster) {
+					if (children.size() == 0) {
+						Logger.info("DISTAPP - " + path + " has finished its task.");
+						workers.put(path.substring("/dist04/workers/".length()), true);
+						assign();
+					}
+				} else {
+					if (children.size() > 0) {
+						Logger.info("DISTAPP - " + path + " has been assigned: " + children);
+						Thread thread = new Thread(new Runnable() {
+							public void run() {
+								processTasks(children);
+							}
+						});
+						thread.start();
+					}
+				}
+			}
+		}
+	};
 
 	Watcher TasksWatcher = new Watcher()
 	{
 		public void process(WatchedEvent watchedEvent) {
-			LOG.info("DISTAPP - Event received: " + watchedEvent);
+			Logger.info("DISTAPP - Event received: " + watchedEvent);
 			getTasks();
 		}
 	};
@@ -260,9 +261,9 @@ public class DistProcess extends Thread
 	{
 		public void processResult(int rc, String path, Object ctx, List<String> children)
 		{
-			System.out.println("DISTAPP - TasksCallBack called:" + rc + ", " + path + ", " + ctx + ", " + children);
+			Logger.info("DISTAPP - TasksCallBack called:" + rc + ", " + path + ", " + ctx + ", " + children);
 			if (Code.get(rc) == Code.OK) {
-				System.out.println("DISTAPP - TaskList: " + children);
+				Logger.info("DISTAPP - TaskList: " + children);
 				HashMap newMap = new HashMap();
 				for (String task:children) {
 					if (!tasks.containsKey(task)) pendingTaskList.add(task);
@@ -274,31 +275,6 @@ public class DistProcess extends Thread
 		}
 	};
 
-	public void assign() {
-		if (workers.size() == 0 || pendingTaskList.size() == 0) return;
-		System.out.println("DISTAPP - assign: ");
-		System.out.println("~~~~Workers = " + workers);
-		System.out.println("~~~~PendingTasks = " + pendingTaskList);
-		System.out.println("~~~~tasks = " + tasks);
-		for (Map.Entry<String, Boolean> worker:workers.entrySet())
-			if (worker.getValue()) {
-				if (pendingTaskList.isEmpty()) break;
-				String task = pendingTaskList.poll();
-				System.out.println("----" + task + " to " + worker.getKey() + "-----");
-				this.zk.create("/dist04/workers/" + worker.getKey() + "/" + task, null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, new Create2Callback() {
-					public void processResult(int i, String s, Object o, String s1, Stat stat) {
-					}
-				}, null);
-				tasks.put(task, true);
-				worker.setValue(false);
-			}
-	}
-
-	// Master fetching tasks under the task znode
-	public void getTasks()
-	{
-		zk.getChildren("/dist04/tasks", TasksWatcher, TasksCallBack, null);
-	}
 
 //	Watcher TaskResultWatcher = new Watcher() {
 //		public void process(WatchedEvent watchedEvent) {
@@ -320,37 +296,20 @@ public class DistProcess extends Thread
 //		zk.getChildren("/dist04/tasks/" + task, TaskResultWatcher, TaskResultCallBack, null);
 //	}
 
-	// Try to become the master.
-	public void runForMaster() throws KeeperException, InterruptedException
-	{
-		// Try to create an ephemeral node to be the master, put the hostname and pid of this process as the data.
-		// This is an example of Synchronous API invocation as the function waits for the execution and no callback is involved..
-		this.zk.create("/dist04/master", this.pInfo.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-	}
-
-	// Try to become the worker
-	public void runForWorker() throws KeeperException, InterruptedException
-	{
-		workerNodeName = this.zk.create("/dist04/workers/worker-", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-	}
-
 	public static void main(String args[]) throws Exception
 	{
 		// Read the ZooKeeper ensemble information from the environment variable.
 		DistProcess distProcess = new DistProcess(System.getenv("ZKSERVER"));
-		distProcess.start();
 
-		// Replace this with an approach that will make sure that the process is up and running forever.
 		getRuntime().addShutdownHook(new Thread(() -> {
 			try {
 				distProcess.stopProcess();
-				if (distProcess.isMaster())
-					System.out.print("DISTAPP - Shutting down master process... \n");
-				else
-					System.out.println("DISTAPP - Shutting down worker process... \n");
-			} catch (InterruptedException e) {
+				System.out.println("DISTAPP - Shutting down" + (distProcess.isMaster() ? "master process..." : "worker process..."));
+			} catch (InterruptedException | KeeperException e) {
 				e.printStackTrace();
 			}
 		}));
+
+		distProcess.startProcess();
 	}
 }
