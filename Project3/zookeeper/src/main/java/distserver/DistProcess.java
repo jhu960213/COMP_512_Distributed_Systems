@@ -110,14 +110,14 @@ public class DistProcess extends Thread
 	public void cleanUpChildrenNodes(String path) throws KeeperException, InterruptedException
 	{
 		List<String> childrenNodes = getZk().getChildren(path, false);
-		if (childrenNodes != null) {
+		if (!childrenNodes.isEmpty()) {
 			for (String childName : childrenNodes) {
 				getZk().delete(path + "/" + childName, -1);
 			}
-			LOG.info("\nDISTAPP - Cleaned up: " + path);
+			LOG.info("DISTAPP - Cleaned up: " + path);
 		}
 		else {
-			LOG.info("\nDISTAPP - Nothing to clean here: " + path);
+			LOG.info("DISTAPP - Nothing to clean here: " + path);
 		}
 	}
 
@@ -163,7 +163,6 @@ public class DistProcess extends Thread
 
 	public void bootStrap() throws IOException, KeeperException, InterruptedException
 	{
-		LOG.info("\nDISTAPP - Zookeeper Bootstrap process completed: ");
 		try {
 			String dist04 = getZk().create("/dist04",
 					serialize("Top Level Node - dist04"),
@@ -194,12 +193,12 @@ public class DistProcess extends Thread
 		catch (NodeExistsException nee) {
 			LOG.info("/dist04/workers already exists!");
 		}
+		LOG.info("DISTAPP - Zookeeper Bootstrap process completed");
 	}
 
 	public void startProcess() throws IOException, KeeperException, InterruptedException {
 		try {
 			setZk(new ZooKeeper(getZkServer(), 1000, connectionWatcher));
-			bootStrap();
 			runForMaster();
 			setMaster(true);
 			getWorkers();
@@ -314,8 +313,9 @@ public class DistProcess extends Thread
 						LOG.info("\nDISTAPP - worker-" + pid + " has: " + jobs.size() + " jobs assigned, waiting for new jobs...");
 					else
 						LOG.info("\nDISTAPP - worker-" + pid + " has: " + jobs.size() + " jobs assigned. Executing now...");
-						Thread thread = new Thread(() -> processJob(jobs));
-						thread.start();
+						processJob(jobs);
+//						Thread thread = new Thread(() -> processJob(jobs));
+//						thread.start();
 					break;
 				} default: {
 					LOG.info("\nCall to getJobs() failed: " + KeeperException.create(Code.get(rc), path));
@@ -343,6 +343,17 @@ public class DistProcess extends Thread
 				}
 				// in the event that the getJobData() call was successful, deserialize data and compute pie
 				case OK: {
+//					try {
+//						computePie(data, ctx);
+//					} catch (IOException e) {
+//						e.printStackTrace();
+//					} catch (ClassNotFoundException e) {
+//						e.printStackTrace();
+//					} catch (KeeperException e) {
+//						e.printStackTrace();
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
 					// maybe need to put this in a new thread??? I don't know...
 					Thread computePieThread = new Thread(() -> {
 						try {
@@ -410,8 +421,12 @@ public class DistProcess extends Thread
 		setStatus(DistProcessStatus.IDLE);
 		getZk().setData("/dist04/workers/worker-" + getPid(), serialize(getStatus()), -1);
 
-		// Remove from HashMap of assigned workers
-		getAssignedWorkers().remove("worker-" + getPid());
+		// set assigned to false for the current worker
+		synchronized (getAssignedWorkers()) {
+			LOG.info("worker-" + getPid() + ": " + getAssignedWorkers().get("worker-"+getPid()));
+			getAssignedWorkers().put("worker-" + getPid(), false);
+			LOG.info("worker-" + getPid() + ": " + getAssignedWorkers().get("worker-"+getPid()));
+		}
 	}
 
 	public void processJob(List<String> jobs)
@@ -553,12 +568,23 @@ public class DistProcess extends Thread
 	{
 		List<String> workers = getZk().getChildren("/dist04/workers", false);
 		for (String workerName: workers) {
-			byte[] workerState = getZk().getData("/dist04/workers/" + workerName, false, null);
-			if (deserialize(workerState) == DistProcessStatus.IDLE && !getAssignedWorkers().containsKey(workerName)) {
+//			byte[] workerState = getZk().getData("/dist04/workers/" + workerName, false, null);
+			if (!getAssignedWorkers().containsKey(workerName)) {
+				LOG.info("worker name: " + workerName);
 				getAssignedWorkers().put(workerName, true);
 				String assignPath = "/dist04/workers/" + workerName + "/jobs/" + (String) ctx;
 				createAssignment(assignPath, data);
 				return true;
+			}
+			else {
+				System.out.println("worker name: " + workerName);
+				System.out.println(getAssignedWorkers().get(workerName));
+				if (!getAssignedWorkers().get(workerName)) {
+					getAssignedWorkers().put(workerName, true);
+					String assignPath = "/dist04/workers/" + workerName + "/jobs/" + (String) ctx;
+					createAssignment(assignPath, data);
+					return true;
+				}
 			}
 		}
 		return false;
@@ -591,8 +617,9 @@ public class DistProcess extends Thread
 
 	// **** DEALING WITH STARTUP AS EITHER MASTER OR WORKER **** //
 
-	public void runForMaster() throws KeeperException, InterruptedException
+	public void runForMaster() throws KeeperException, InterruptedException, IOException
 	{
+		bootStrap();
 		this.status = DistProcessStatus.MASTER;
 		// Try to create an ephemeral node to be the master, put the hostname and pid of this process as the data.
 		// This is an example of Synchronous API invocation as the function waits for the execution and no callback is involved..
