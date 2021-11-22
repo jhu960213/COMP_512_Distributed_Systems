@@ -15,8 +15,8 @@ public class Customer extends RMItem
 	public Customer(int id)
 	{
 		super();
-		this.m_reservations = new RMHashMap();
-		this.m_ID = id;
+		m_reservations = new RMHashMap();
+		m_ID = id;
 	}
 
 	public void setID(int id)

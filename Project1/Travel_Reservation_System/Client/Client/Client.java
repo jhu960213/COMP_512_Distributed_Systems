@@ -413,44 +413,6 @@ public abstract class Client
 				}
 				break;
 			}
-			case QueryReservableItems: {
-				checkArgumentsCount(5, arguments.size());
-				int id = toInt(arguments.elementAt(1));
-				boolean flights = toBoolean(arguments.elementAt(2));
-				boolean cars = toBoolean(arguments.elementAt(3));
-				boolean rooms = toBoolean(arguments.elementAt(4));
-				String string = m_resourceManager.queryReservableItems(id, flights, cars, rooms);
-				System.out.println("The list of reservable items:\n" + string);
-
-				break;
-			}
-			case QueryFlightReservers: {
-				checkArgumentsCount(2, arguments.size());
-				System.out.println("Querying all customers that have reserved flights...");
-				int id = toInt(arguments.elementAt(1));
-				String string = m_resourceManager.queryFlightReservers(id);
-				System.out.println("FLIGHT ANALYTICS:\n" + string);
-
-				break;
-			}
-			case QueryCarReservers: {
-				checkArgumentsCount(2, arguments.size());
-				System.out.println("Querying all customers that have reserved cars...");
-				int id = toInt(arguments.elementAt(1));
-				String string = m_resourceManager.queryCarReservers(id);
-				System.out.println("CAR ANALYTICS:\n" + string);
-
-				break;
-			}
-			case QueryRoomReservers: {
-				checkArgumentsCount(2, arguments.size());
-				System.out.println("Querying all customers that have reserved rooms...");
-				int id = toInt(arguments.elementAt(1));
-				String string = m_resourceManager.queryRoomReservers(id);
-				System.out.println("ROOM ANALYTICS:\n" + string);
-
-				break;
-			}
 			case Quit:
 				checkArgumentsCount(1, arguments.size());
 

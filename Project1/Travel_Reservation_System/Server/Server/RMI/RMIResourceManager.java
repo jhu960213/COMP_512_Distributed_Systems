@@ -17,7 +17,7 @@ public class RMIResourceManager extends ResourceManager
 {
 	private static String s_serverName = "Server";
 	//TODO: ADD YOUR GROUP NUMBER TO COMPLETE
-	private static String s_rmiPrefix = "group_04_";
+	private static String s_rmiPrefix = "group_xx_";
 
 	public static void main(String args[])
 	{
@@ -25,7 +25,7 @@ public class RMIResourceManager extends ResourceManager
 		{
 			s_serverName = args[0];
 		}
-
+			
 		// Create the RMI server entry
 		try {
 			// Create a new Server object
@@ -55,7 +55,7 @@ public class RMIResourceManager extends ResourceManager
 						e.printStackTrace();
 					}
 				}
-			});
+			});                                       
 			System.out.println("'" + s_serverName + "' resource manager server ready and bound to '" + s_rmiPrefix + s_serverName + "'");
 		}
 		catch (Exception e) {

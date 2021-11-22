@@ -2,77 +2,186 @@ package Server.Middleware;
 
 import Server.Common.*;
 import Server.Interface.IResourceManager;
+import org.graalvm.util.EconomicMap;
+
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Vector;
+import java.util.ArrayList;
+import static Server.Common.Trace.info;
+
 
 public class Middleware implements IResourceManager {
 
-    protected IResourceManager m_flightsResourceManager;
-    protected IResourceManager m_carsResourceManager;
-    protected IResourceManager m_roomsResourceManager;
-    protected RMHashMap customersList;
     protected String middlewareName;
+    private HashMap<String, IResourceManager> resources;
+    protected RMHashMap m_data = new RMHashMap();
 
     public Middleware(String name) {
         try {
             this.middlewareName = name;
-            this.m_flightsResourceManager = null;
-            this.m_carsResourceManager = null;
-            this.m_roomsResourceManager = null;
-            this.customersList = new RMHashMap();
+            resources = new HashMap<String, IResourceManager>();
         } catch (Exception e) {
             System.out.println("\n*** Middleware error: " + e.getMessage() + " ***\n");
         }
     }
 
-    public RMHashMap getCustomersList() {
-        return customersList;
+  // Reads a data item
+  protected RMItem readData(int xid, String key)
+  {
+    synchronized(m_data) {
+      RMItem item = m_data.get(key);
+      if (item != null) {
+        return (RMItem)item.clone();
+      }
+      return null;
     }
+  }
 
-    public void setCustomersList(RMHashMap customersList) {
-        this.customersList = customersList;
+  // Writes a data item
+  protected void writeData(int xid, String key, RMItem value)
+  {
+    synchronized(m_data) {
+      m_data.put(key, value);
     }
+  }
 
-    // Reads a data item
-    protected RMItem readData(int xid, String key)
+  // Remove the item out of storage
+  protected void removeData(int xid, String key)
+  {
+    synchronized(m_data) {
+      m_data.remove(key);
+    }
+  }
+
+  // Deletes the encar item
+  protected boolean deleteItem(int xid, String key)
+  {
+    Trace.info("RM::deleteItem(" + xid + ", " + key + ") called");
+    ReservableItem curObj = (ReservableItem)readData(xid, key);
+    // Check if there is such an item in the storage
+    if (curObj == null)
     {
-        synchronized(this.customersList) {
-            RMItem item = this.customersList.get(key);
-            if (item != null) {
-                return (RMItem)item.clone();
-            }
-            return null;
+      Trace.warn("RM::deleteItem(" + xid + ", " + key + ") failed--item doesn't exist");
+      return false;
+    }
+    else
+    {
+      if (curObj.getReserved() == 0)
+      {
+        removeData(xid, curObj.getKey());
+        Trace.info("RM::deleteItem(" + xid + ", " + key + ") item deleted");
+        return true;
+      }
+      else
+      {
+        Trace.info("RM::deleteItem(" + xid + ", " + key + ") item can't be deleted because some customers have reserved it");
+        return false;
+      }
+    }
+  }
+
+  // Query the number of available seats/rooms/cars
+  protected int queryNum(int xid, String key)
+  {
+    Trace.info("RM::queryNum(" + xid + ", " + key + ") called");
+    ReservableItem curObj = (ReservableItem)readData(xid, key);
+    int value = 0;
+    if (curObj != null)
+    {
+      value = curObj.getCount();
+    }
+    Trace.info("RM::queryNum(" + xid + ", " + key + ") returns count=" + value);
+    return value;
+  }
+
+  // Query the price of an item
+  protected int queryPrice(int xid, String key)
+  {
+    Trace.info("RM::queryPrice(" + xid + ", " + key + ") called");
+    ReservableItem curObj = (ReservableItem)readData(xid, key);
+    int value = 0;
+    if (curObj != null)
+    {
+      value = curObj.getPrice();
+    }
+    Trace.info("RM::queryPrice(" + xid + ", " + key + ") returns cost=$" + value);
+    return value;
+  }
+
+  // Reserve an item
+  protected boolean reserveItem(int xid, int customerID, String key, String location)
+  {
+    Trace.info("RM::reserveItem(" + xid + ", customer=" + customerID + ", " + key + ", " + location + ") called" );
+    // Read customer object if it exists (and read lock it)
+    Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
+    if (customer == null)
+    {
+      Trace.warn("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
+      return false;
+    }
+
+    // Check if the item is available
+    ReservableItem item = (ReservableItem)readData(xid, key);
+    if (item == null)
+    {
+      Trace.warn("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") failed--item doesn't exist");
+      return false;
+    }
+    else if (item.getCount() == 0)
+    {
+      Trace.warn("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") failed--No more items");
+      return false;
+    }
+    else
+    {
+      customer.reserve(key, location, item.getPrice());
+      writeData(xid, customer.getKey(), customer);
+
+      // Decrease the number of available items in the storage
+      item.setCount(item.getCount() - 1);
+      item.setReserved(item.getReserved() + 1);
+      writeData(xid, item.getKey(), item);
+
+      Trace.info("RM::reserveItem(" + xid + ", " + customerID + ", " + key + ", " + location + ") succeeded");
+      return true;
+    }
+  }
+
+    public HashMap<String, IResourceManager> getResources() {
+        return resources;
+    }
+
+    public void setResources(HashMap<String, IResourceManager> resources) {
+        this.resources = resources;
+    }
+
+    public void connectToResourceServer(String serverName, int serverPortNum, String serverProxyName) throws RemoteException, NotBoundException
+    {
+        try {
+            Registry registry = LocateRegistry.getRegistry(serverName, serverPortNum);
+            IResourceManager m_resourceManager = (IResourceManager)registry.lookup(serverProxyName);
+            System.out.println("\nMiddleware connected to '" + serverName + "' server " +
+                    "[" + serverName + ":" + serverPortNum + "/" + serverProxyName + "]");
+            this.getResources().put(serverName, m_resourceManager);
+        }
+        catch (Exception e) {
+            System.out.println("\nRMI middleware connection error with other servers: " + e.getMessage() + "\n");
         }
     }
 
-    // Writes a data item
-    protected void writeData(int xid, String key, RMItem value)
-    {
-        synchronized(this.customersList) {
-            this.customersList.put(key, value);
-        }
-    }
 
-    // Remove the item out of storage
-    protected void removeData(int xid, String key)
-    {
-        synchronized(this.customersList) {
-            this.customersList.remove(key);
-        }
-    }
-
-    public String getName() throws RemoteException
-    {
-        return this.middlewareName;
-    }
-
+    // Create a new flight, or add seats to existing flight
+    // NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
     public boolean addFlight(int xid, int flightNum, int flightSeats, int flightPrice) throws RemoteException
     {
         boolean response = false;
         try {
-            response = m_flightsResourceManager.addFlight(xid, flightNum, flightSeats, flightPrice);
+            response = this.getResources().get("flightServer").addFlight(xid, flightNum, flightSeats, flightPrice);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -80,11 +189,13 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Create a new car location or add cars to an existing location
+    // NOTE: if price <= 0 and the location already exists, it maintains its current price
     public boolean addCars(int xid, String location, int count, int price) throws RemoteException
     {
         boolean response = false;
         try {
-            response = m_carsResourceManager.addCars(xid, location, count, price);
+            response = this.getResources().get("carServer").addCars(xid, location, count, price);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -92,11 +203,13 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Create a new room location or add rooms to an existing location
+    // NOTE: if price <= 0 and the room location already exists, it maintains its current price
     public boolean addRooms(int xid, String location, int count, int price) throws RemoteException
     {
         boolean response = false;
         try {
-            response = m_roomsResourceManager.addRooms(xid, location, count, price);
+            response = this.getResources().get("roomServer").addRooms(xid, location, count, price);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -104,11 +217,12 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Deletes flight
     public boolean deleteFlight(int xid, int flightNum) throws RemoteException
     {
         boolean response = false;
         try {
-            response = m_flightsResourceManager.deleteFlight(xid, flightNum);
+            response = this.getResources().get("flightServer").deleteFlight(xid, flightNum);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -116,11 +230,12 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Delete cars at a location
     public boolean deleteCars(int xid, String location) throws RemoteException
     {
         boolean response = false;
         try {
-            response = m_carsResourceManager.deleteCars(xid, location);
+            response = this.getResources().get("carServer").deleteCars(xid, location);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -128,11 +243,12 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Delete rooms at a location
     public boolean deleteRooms(int xid, String location) throws RemoteException
     {
         boolean response = false;
         try {
-            response = m_roomsResourceManager.deleteRooms(xid, location);
+            response = this.getResources().get("roomServer").deleteRooms(xid, location);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -140,11 +256,12 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Returns the number of empty seats in this flight
     public int queryFlight(int xid, int flightNum) throws RemoteException
     {
         int response = 0;
         try {
-            response = m_flightsResourceManager.queryFlight(xid, flightNum);
+            response = this.getResources().get("flightServer").queryFlight(xid, flightNum);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -152,11 +269,12 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Returns the number of cars available at a location
     public int queryCars(int xid, String location) throws RemoteException
     {
         int response = 0;
         try {
-            response = m_carsResourceManager.queryCars(xid, location);
+            response = this.getResources().get("carServer").queryCars(xid, location);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -164,11 +282,12 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Returns the amount of rooms available at a location
     public int queryRooms(int xid, String location) throws RemoteException
     {
         int response = 0;
         try {
-            response = m_roomsResourceManager.queryRooms(xid, location);
+            response = this.getResources().get("roomServer").queryRooms(xid, location);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -176,11 +295,12 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Returns price of a seat in this flight
     public int queryFlightPrice(int xid, int flightNum) throws RemoteException
     {
         int response = 0;
         try {
-            response = m_flightsResourceManager.queryFlightPrice(xid, flightNum);
+            response = this.getResources().get("flightServer").queryFlightPrice(xid, flightNum);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -188,11 +308,12 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Returns price of cars at this location
     public int queryCarsPrice(int xid, String location) throws RemoteException
     {
         int response = 0;
         try {
-            response = m_carsResourceManager.queryCarsPrice(xid, location);
+            response = this.getResources().get("carServer").queryCarsPrice(xid, location);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -200,11 +321,12 @@ public class Middleware implements IResourceManager {
         return response;
     }
 
+    // Returns room price at this location
     public int queryRoomsPrice(int xid, String location) throws RemoteException
     {
         int response = 0;
         try {
-            response = m_roomsResourceManager. queryRoomsPrice(xid, location);
+            response = this.getResources().get("roomServer"). queryRoomsPrice(xid, location);
         }
         catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
@@ -214,113 +336,104 @@ public class Middleware implements IResourceManager {
 
     public String queryCustomerInfo(int xid, int customerID) throws RemoteException
     {
-        Trace.info("RM::queryCustomerInfo(" + xid + ", " + customerID + ") called");
-        Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-        if (customer == null)
-        {
-            Trace.warn("RM::queryCustomerInfo(" + xid + ", " + customerID + ") failed--customer doesn't exist");
-            // NOTE: don't change this--WC counts on this value indicating a customer does not exist...
-            return "No such customer";
-        }
-        else
-        {
-            Trace.info("RM::queryCustomerInfo(" + xid + ", " + customerID + ")");
-            System.out.println(customer.getBill());
-            return customer.getBill();
-        }
-    }
-
-    public synchronized int newCustomer(int xid) throws RemoteException
-    {
-        int cid = 0; // 0 will be the default value returned if it failed to add customers at middleware
+        String roomBill = "";
+        String carBill = "";
+        String flightBill = "";
         try {
-            Trace.info("RM::newCustomer(" + xid + ") called");
-            cid = Integer.parseInt(String.valueOf(xid) +
-                    String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
-                    String.valueOf(Math.round(Math.random() * 100 + 1)));
-            Customer customer = new Customer(cid);
-            writeData(xid, customer.getKey(), customer);
-            Trace.info("RM::newCustomer(" + cid + ") returns ID=" + cid);
-            return cid;
-        } catch (Exception e) {
+            roomBill = this.getResources().get("roomServer").queryCustomerInfo(xid, customerID);
+            carBill = this.getResources().get("carServer").queryCustomerInfo(xid, customerID);
+            flightBill = this.getResources().get("flightServer").queryCustomerInfo(xid, customerID);
+        }
+        catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
-        return cid;
+        return new String("Total Bill = Room Bill: " + roomBill + " Car Bill: " + carBill + " Flight Bill: " + flightBill);
     }
 
-    public synchronized boolean newCustomer(int xid, int customerID) throws RemoteException
+    // TODO: need to ask prof how we want to add new customers to each resource servers
+    public int newCustomer(int xid) throws RemoteException
     {
-        try {
-            Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") called");
-            Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-            if (customer == null)
-            {
-                customer = new Customer(customerID);
-                writeData(xid, customer.getKey(), customer);
-                Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") created a new customer");
-                return true;
-            }
-            else
-            {
-                Trace.info("INFO: RM::newCustomer(" + xid + ", " + customerID + ") failed--customer already exists");
-                return false;
-            }
-        } catch (Exception e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
-        }
+      Trace.info("RM::newCustomer(" + xid + ") called");
+      // Generate a globally unique ID for the new customer
+      int cid = Integer.parseInt(String.valueOf(xid) +
+        String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
+        String.valueOf(Math.round(Math.random() * 100 + 1)));
+      Customer customer = new Customer(cid);
+      writeData(xid, customer.getKey(), customer);
+      Trace.info("RM::newCustomer(" + cid + ") returns ID=" + cid);
+      //we call the second newcustomer function, in order to ensure the same CustomerID among all servers.
+      //we don't use the same newcustomer(xid) function in the other servers, in order to maintain synchronization.
+      this.getResources().get("roomServer").newCustomer(xid, cid);
+      this.getResources().get("carServer").newCustomer(xid, cid);
+      this.getResources().get("flightServer").newCustomer(xid, cid);
+      return cid;
+    }
+
+    // TODO: need to ask prof how we want to add new customers to each resource servers
+    public boolean newCustomer(int xid, int customerID) throws RemoteException
+    {
+      Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") called");
+      Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
+      if (customer == null)
+      {
+        this.getResources().get("roomServer").newCustomer(xid, customerID);
+        this.getResources().get("carServer").newCustomer(xid, customerID);
+        this.getResources().get("flightServer").newCustomer(xid, customerID);
+        //write to server, obv if customer is not in Middleware, it is not anywhere else.
+        customer = new Customer(customerID);
+        writeData(xid, customer.getKey(), customer);
+        Trace.info("RM::newCustomer(" + xid + ", " + customerID + ") created a new customer");
+        return true;
+      }
+      else
+      {
+        Trace.info("INFO: RM::newCustomer(" + xid + ", " + customerID + ") failed--customer already exists");
         return false;
+      }
     }
 
-    public void cancelReservations(Object customer, int xid, int customerID) throws RemoteException {
-        throw new RemoteException("\n*** Canceling a customer's reservations should be handled by the appropriate resource manager! ***\n");
-    }
-
-    public synchronized boolean deleteCustomer(int xid, int customerID) throws RemoteException
+    // TODO: need to ask prof how to delete customers from each resource servers
+    public boolean deleteCustomer(int xid, int customerID) throws RemoteException
     {
-        try {
-            Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") called");
-            Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-            if (customer == null)
-            {
-                Trace.warn("RM::deleteCustomer(" + xid + ", " + customerID + ") failed--customer doesn't exist");
-                return false;
-            }
-            else
-            {
-                // canceling the reservations in all 3 resource servers
-                this.m_carsResourceManager.cancelReservations(customer, xid, customerID);
-                this.m_flightsResourceManager.cancelReservations(customer, xid, customerID);
-                this.m_roomsResourceManager.cancelReservations(customer, xid, customerID);
-                // Remove the customer from the storage
-                removeData(xid, customer.getKey());
-                Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") succeeded");
-                return true;
-            }
-        } catch (Exception e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
-        }
+      Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") called");
+      Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
+      if (customer == null)
+      {
+        Trace.warn("RM::deleteCustomer(" + xid + ", " + customerID + ") failed--customer doesn't exist");
         return false;
+      }
+      else
+      {
+        this.getResources().get("roomServer").deleteCustomer(xid, customerID);
+        this.getResources().get("carServer").deleteCustomer(xid, customerID);
+        this.getResources().get("flightServer").deleteCustomer(xid, customerID);
+        //Call other functions at the server only if customer exists.
+        // Increase the reserved numbers of all reservable items which the customer reserved.
+        RMHashMap reservations = customer.getReservations();
+        for (String reservedKey : reservations.keySet())
+        {
+          ReservedItem reserveditem = customer.getReservedItem(reservedKey);
+          Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times");
+          ReservableItem item  = (ReservableItem)readData(xid, reserveditem.getKey());
+          Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") has reserved " + reserveditem.getKey() + " which is reserved " +  item.getReserved() +  " times and is still available " + item.getCount() + " times");
+          item.setReserved(item.getReserved() - reserveditem.getCount());
+          item.setCount(item.getCount() + reserveditem.getCount());
+          writeData(xid, item.getKey(), item);
+        }
+
+        // Remove the customer from the storage
+        removeData(xid, customer.getKey());
+        Trace.info("RM::deleteCustomer(" + xid + ", " + customerID + ") succeeded");
+        return true;
+      }
     }
 
     // Adds flight reservation to this customer
-    public synchronized boolean reserveFlight(int xid, int customerID, int flightNum) throws RemoteException
+    public boolean reserveFlight(int xid, int customerID, int flightNum) throws RemoteException
     {
-        Boolean response = false;
-        // Read customer object if it exists (and read lock it)
-        Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-        if (customer == null)
-        {
-            return false;
-        }
-
+        boolean response = false;
         try {
-            int price = m_flightsResourceManager.reserveFlightItem(xid, customerID, flightNum);
-            if (price > -1)
-            {
-                customer.reserve(Flight.getKey(flightNum), String.valueOf(flightNum), price);
-                writeData(xid, customer.getKey(), customer);
-                response = true;
-            }
+            response = this.getResources().get("flightServer").reserveFlight(xid, customerID, flightNum);
         } catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
@@ -328,23 +441,11 @@ public class Middleware implements IResourceManager {
     }
 
     // Adds car reservation to this customer
-    public synchronized boolean reserveCar(int xid, int customerID, String location) throws RemoteException
+    public boolean reserveCar(int xid, int customerID, String location) throws RemoteException
     {
-        Boolean response = false;
-        // Read customer object if it exists (and read lock it)
-        Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-        if (customer == null)
-        {
-            return false;
-        }
+        boolean response = false;
         try {
-            int price = m_carsResourceManager.reserveCarItem(xid, customerID, location);
-            if (price > -1)
-            {
-                customer.reserve(Car.getKey(location), location, price);
-                writeData(xid, customer.getKey(), customer);
-                response = true;
-            }
+            response = this.getResources().get("carServer").reserveCar(xid, customerID, location);
         } catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
@@ -352,194 +453,36 @@ public class Middleware implements IResourceManager {
     }
 
     // Adds room reservation to this customer
-    public synchronized boolean reserveRoom(int xid, int customerID, String location) throws RemoteException
+    public boolean reserveRoom(int xid, int customerID, String location) throws RemoteException
     {
-        // Read customer object if it exists (and read lock it)
-        Customer customer = (Customer)readData(xid, Customer.getKey(customerID));
-        if (customer == null)
-        {
-            return false;
-        }
-        Boolean response = false;
+        boolean response = false;
         try {
-            int price = m_roomsResourceManager.reserveRoomItem(xid, customerID, location);
-            if (price > -1)
-            {
-                customer.reserve(Room.getKey(location), location, price);
-                writeData(xid, customer.getKey(), customer);
-                response = true;
-            }
+            response = this.getResources().get("roomServer").reserveRoom(xid, customerID, location);
         } catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
         return response;
-    }
-
-    public int reserveFlightItem(int id, int customerID, int flightNumber) throws RemoteException {
-        throw new RemoteException("\n*** Reserving Flight Item is handled in the specific ResourceManager! ***\n");
-    }
-
-    public int reserveCarItem(int id, int customerID, String location) throws RemoteException {
-        throw new RemoteException("\n*** Reserving Car Item is handled in the specific ResourceManager! ***\n");
-    }
-
-    public int reserveRoomItem(int id, int customerID, String location) throws RemoteException {
-        throw new RemoteException("\n*** Reserving Room Item is handled in the specific ResourceManager! ***\n");
-    }
-
-    public Map<String, Integer> reserveFlightItemBundle(int id, int customerID, Vector<String> flightNumbers) throws RemoteException {
-        throw new RemoteException("\n*** Reserving Flight Item Bundle is handled in the specific ResourceManager! ***\n");
     }
 
     // Reserve bundle
-    public synchronized boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException
+    // TODO: need to add functionality to this method and ask prof how we want to do this
+    public boolean bundle(int xid, int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException
     {
-        Trace.info("RM::bundle(" + xid + ", " + customerId + ", " + flightNumbers + ", " + location + ", " + car + ", " + room + ") called");
-        // Read customer object if it exists (and read lock it)
-        Customer customer = (Customer)readData(xid, Customer.getKey(customerId));
-        if (customer == null)
-        {
-            return false;
-        }
-        Boolean response = false;
-        try {
-            if (flightNumbers.size() > 0)
-            {
-                Map<String, Integer> prices = m_flightsResourceManager.reserveFlightItemBundle(xid, customerId, flightNumbers);
-                if (prices.size() > 0) {
-                    for (String flightNum : prices.keySet())
-                        customer.reserve(Flight.getKey(Integer.parseInt(flightNum)), flightNum, prices.get(flightNum));
-                    response = true;
-                }
-            }
-            if (car)
-            {
-                int price = m_carsResourceManager.reserveCarItem(xid, customerId, location);
-                if (price > -1)
-                {
-                    customer.reserve(Car.getKey(location), location, price);
-                    response = true;
-                }
-            }
-            if (room)
-            {
-                int price = m_roomsResourceManager.reserveRoomItem(xid, customerId, location);
-                if (price > -1)
-                {
-                    customer.reserve(Room.getKey(location), location, price);
-                    response = true;
-                }
-            }
-            writeData(xid, customer.getKey(), customer);
-            Trace.info("RM::bundle(" + xid + ", " + customerId + ", " + flightNumbers + ", " + location + ", " + car + ", " + room + ") succeeded");
-        } catch (Exception e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
-        }
-        return response;
+        return false;
     }
 
-    public String queryReservableFlights(int xid) throws RemoteException {
-        throw new RemoteException("\n*** queryReservableFlights is handled in the specific ResourceManager! ***\n");
-    }
-
-    public String queryReservableCars(int xid) throws RemoteException {
-        throw new RemoteException("\n*** queryReservableCars is handled in the specific ResourceManager! ***\n");
-    }
-
-    public String queryReservableRooms(int xid) throws RemoteException {
-        throw new RemoteException("\n*** queryReservableRooms is handled in the specific ResourceManager! ***\n");
-    }
-
-    public String queryReservableItems(int xid, boolean flights, boolean cars, boolean rooms) throws RemoteException
+    public String getName() throws RemoteException
     {
-        Trace.info("RM::queryReservableItems(" + xid + ", " + flights + ", " + cars + ", " + rooms + ") called");
-        String response = "";
+        String carManagerName = "";
+        String roomManagerName = "";
+        String flightManagerName = "";
         try {
-            if (flights)
-            {
-                response += "Flights:\n" + m_flightsResourceManager.queryReservableFlights(xid);
-            }
-            if (cars)
-            {
-                response += "Cars:\n" + m_carsResourceManager.queryReservableCars(xid);
-            }
-            if (rooms)
-            {
-                response += "Rooms:\n" + m_roomsResourceManager.queryReservableRooms(xid);
-            }
-            Trace.info("RM::queryReservableItems(" + xid + ", " + flights + ", " + cars + ", " + rooms + ") succeed");
+            carManagerName = this.getResources().get("carServer").getName();
+            roomManagerName = this.getResources().get("roomServer").getName();
+            flightManagerName = this.getResources().get("flightServer").getName();
         } catch (Exception e) {
             System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
         }
-        return response;
-    }
-
-    public String queryFlightReservers(int xid) throws RemoteException {
-        String response = "";
-        try {
-            Trace.info("RM::queryFlightReservers(" + xid + ") called");
-            Collection<RMItem> customersList = this.getCustomersList().values();
-            for (RMItem c : customersList) {
-                Customer currentCustomer = (Customer) c;
-                RMHashMap reservations = currentCustomer.getReservations();
-                for (String reservedKey : reservations.keySet()) {
-                    ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
-                    if (reservedItem.getItemType() == ReservedItem.ItemType.Flight) {
-                        response += "Customer ID:" + currentCustomer.getKey() + "|reserved:" + reservedItem.getCount()
-                                + " seat(s) |flightNum: " + reservedItem.getLocation() + " |at: $" + reservedItem.getPrice() + "|\n";
-                    }
-                }
-            }
-            return response;
-        } catch (Exception e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
-        }
-        return response;
-    }
-
-    public String queryCarReservers(int xid) throws RemoteException {
-        String response = "";
-        try {
-            Trace.info("RM::queryCarReservers(" + xid + ") called");
-            Collection<RMItem> customersList = this.getCustomersList().values();
-            for (RMItem c : customersList) {
-                Customer currentCustomer = (Customer) c;
-                RMHashMap reservations = currentCustomer.getReservations();
-                for (String reservedKey : reservations.keySet()) {
-                    ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
-                    if (reservedItem.getItemType() == ReservedItem.ItemType.Car) {
-                        response += "Customer ID: " + currentCustomer.getKey() + "|reserved: " + reservedItem.getCount()
-                                + "car(s) |location: " + reservedItem.getLocation() + " |at: $" + reservedItem.getPrice() + "|\n";
-                    }
-                }
-            }
-            return response;
-        } catch (Exception e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
-        }
-        return response;
-    }
-
-    public String queryRoomReservers(int xid) throws RemoteException {
-        String response = "";
-        try {
-            Trace.info("RM::queryRoomReservers(" + xid + ") called");
-            Collection<RMItem> customersList = this.getCustomersList().values();
-            for (RMItem c : customersList) {
-                Customer currentCustomer = (Customer) c;
-                RMHashMap reservations = currentCustomer.getReservations();
-                for (String reservedKey : reservations.keySet()) {
-                    ReservedItem reservedItem = currentCustomer.getReservedItem(reservedKey);
-                    if (reservedItem.getItemType() == ReservedItem.ItemType.Room) {
-                        response += "Customer ID: " + currentCustomer.getKey() + "|reserved: " + reservedItem.getCount()
-                                + "room(s) |location: " + reservedItem.getLocation() + " |at: $" + reservedItem.getPrice() + "|\n";
-                    }
-                }
-            }
-            return response;
-        } catch (Exception e) {
-            System.out.println("\nMiddleware server exception: " + e.getMessage() + "\n");
-        }
-        return response;
+        return new String("Resource Managers: " + carManagerName + " | " + roomManagerName + " | " + flightManagerName);
     }
 }

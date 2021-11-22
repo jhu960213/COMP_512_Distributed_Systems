@@ -5,15 +5,11 @@
 
 package Server.Common;
 
-
 // Represents a customer's "reserved item" (e.g. Flight, Car, or Room)
 // NOTE: if a customer reserves more than one item of the same kind, this is stored as a single
 // instance of ReservedItem reflecting the *latest price*
 public class ReservedItem extends RMItem
 {
-	public enum ItemType{
-		Flight, Car, Room
-	}
 	private int m_nCount;
 	private int m_nPrice;
 	private String m_strReservableItemKey;
@@ -71,13 +67,5 @@ public class ReservedItem extends RMItem
 		String s = getReservableItemKey();
 		return s.toLowerCase();
 	}
-
-	public ItemType getItemType()
-	{
-		if (this.getKey().startsWith("flight")) return ItemType.Flight;
-		else if (this.getKey().startsWith("car")) return ItemType.Car;
-		else return ItemType.Room;
-	}
-
 }
 
