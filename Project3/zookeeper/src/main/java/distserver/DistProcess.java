@@ -7,12 +7,14 @@ import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import task.DistTask;
 import utils.Logger;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.util.HashMap;
 import java.util.List;
 
 import static java.lang.Runtime.getRuntime;
@@ -37,14 +39,24 @@ public class DistProcess extends Thread
 	private boolean isMaster;
 	private Long pid;
 	private DistProcessStatus status;
+	private HashMap<String, Boolean> assignedWorkers;
 	private Logger LOG;
 
 	public DistProcess(String zkhost)
 	{
+		this.assignedWorkers = new HashMap<>();
 		this.zkServer = zkhost;
 		this.isMaster = false;
 		this.pInfo = ManagementFactory.getRuntimeMXBean().getName();
 		this.pid = ManagementFactory.getRuntimeMXBean().getPid();
+	}
+
+	public HashMap<String, Boolean> getAssignedWorkers() {
+		return assignedWorkers;
+	}
+
+	public void setAssignedWorkers(HashMap<String, Boolean> assignedWorkers) {
+		this.assignedWorkers = assignedWorkers;
 	}
 
 	public Long getPid() {
@@ -95,13 +107,31 @@ public class DistProcess extends Thread
 		isMaster = master;
 	}
 
-	public void stopProcess() throws InterruptedException, KeeperException {
-		if (isMaster())
-			getZk().close();
-		else
+	public void cleanUpChildrenNodes(String path) throws KeeperException, InterruptedException
+	{
+		List<String> childrenNodes = getZk().getChildren(path, false);
+		if (childrenNodes != null) {
+			for (String childName : childrenNodes) {
+				getZk().delete(path + "/" + childName, -1);
+			}
+			LOG.info("\nDISTAPP - Cleaned up: " + path);
+		}
+		else {
+			LOG.info("\nDISTAPP - Nothing to clean here: " + path);
+		}
+	}
+
+	public void stopProcess() throws InterruptedException, KeeperException
+	{
+		if (isMaster()) {
+			cleanUpChildrenNodes("/dist04/workers");
+			cleanUpChildrenNodes("/dist04/tasks");
+		}
+		else {
 			getZk().delete("/dist04/workers/worker-" + getPid() + "/jobs", -1);
 			getZk().delete("/dist04/workers/worker-" + getPid(), -1);
-			getZk().close();
+		}
+		getZk().close();
 	}
 
 	@Override
@@ -127,27 +157,58 @@ public class DistProcess extends Thread
 	Watcher connectionWatcher = new Watcher() {
 		@Override
 		public void process(WatchedEvent e) {
-			LOG.info("DISTAPP - Event recieved: " + e);
+			LOG.info("\nDISTAPP - Event recieved: " + e);
 		}
 	};
 
+	public void bootStrap() throws IOException, KeeperException, InterruptedException
+	{
+		LOG.info("\nDISTAPP - Zookeeper Bootstrap process completed: ");
+		try {
+			String dist04 = getZk().create("/dist04",
+					serialize("Top Level Node - dist04"),
+					Ids.OPEN_ACL_UNSAFE,
+					CreateMode.PERSISTENT);
+			LOG.info("created - " + dist04);
+		}
+		catch (NodeExistsException nee) {
+			LOG.info("/dist04 already exists!");
+		}
+		try {
+			String tasks = getZk().create("/dist04/tasks",
+					serialize("Keeps track of all client submitted tasks"),
+					Ids.OPEN_ACL_UNSAFE,
+					CreateMode.PERSISTENT);
+			LOG.info("created - " + tasks);
+		}
+		catch (NodeExistsException nee) {
+			LOG.info("/dist04/tasks already exists!");
+		}
+		try {
+			String workers = getZk().create("/dist04/workers",
+					serialize("Keeps track of all active workers and assigned worker jobs"),
+					Ids.OPEN_ACL_UNSAFE,
+					CreateMode.PERSISTENT);
+			LOG.info("created - " + workers);
+		}
+		catch (NodeExistsException nee) {
+			LOG.info("/dist04/workers already exists!");
+		}
+	}
+
 	public void startProcess() throws IOException, KeeperException, InterruptedException {
 		try {
-			this.zk = new ZooKeeper(getZkServer(), 1000, connectionWatcher);
-
+			setZk(new ZooKeeper(getZkServer(), 1000, connectionWatcher));
+			bootStrap();
 			runForMaster();
 			setMaster(true);
-
 			getWorkers();
 			getTasks();
 		}
 		catch(NodeExistsException nee)  {
-
 			System.out.println("DISTAPP - Exception: " + nee.getMessage());
-
 			runForWorker();
 			setMaster(false);
-
 			getJobs();
 		}
 		System.out.println("DISTAPP - ZK Connection information: " + getZkServer());
@@ -171,7 +232,7 @@ public class DistProcess extends Thread
 		}
 	};
 
-	AsyncCallback.ChildrenCallback workersChangeChildrenCallback = new ChildrenCallback()
+	ChildrenCallback workersChangeChildrenCallback = new ChildrenCallback()
 	{
 		@Override
 		public void processResult(int rc, String path, Object ctx, List<String> workers)
@@ -188,12 +249,12 @@ public class DistProcess extends Thread
 				}
 				// in the event that the getWorkers call was successful then print to console the available workers
 				case OK: {
-					LOG.info("DISTAPP - Current available # of workers: " + workers.size());
+					LOG.info("\nDISTAPP - Current available # of workers: " + workers.size());
 					showWorkers(workers);
 					System.out.println("");
 					break;
 				} default: {
-					LOG.info("Call to getWorkers() failed: " + KeeperException.create(Code.get(rc), path));
+					LOG.info("\nCall to getWorkers() failed: " + KeeperException.create(Code.get(rc), path));
 				}
 			}
 		}
@@ -209,7 +270,7 @@ public class DistProcess extends Thread
 
 	public void getWorkers()
 	{
-		zk.getChildren("/dist04/workers",
+		getZk().getChildren("/dist04/workers",
 				workersChangeWatcher,
 				workersChangeChildrenCallback,
 				null);
@@ -243,21 +304,21 @@ public class DistProcess extends Thread
 			switch (Code.get(rc)) {
 				// in the event of connection loss we need to re-execute getJobs() with a new watcher and call back
 				case CONNECTIONLOSS: {
-				    LOG.info("DISTAPP - lost connection...re-executing getJobs()");
+				    LOG.info("\nDISTAPP - lost connection...re-executing getJobs()");
 					getJobs();
 					break;
 				}
 				// in the event that the getJob() call was successful, retrieve the job and process it
 				case OK: {
 					if (jobs.size() == 0)
-						LOG.info("DISTAPP - worker-" + pid + " has: " + jobs.size() + " jobs assigned, waiting for new jobs...");
+						LOG.info("\nDISTAPP - worker-" + pid + " has: " + jobs.size() + " jobs assigned, waiting for new jobs...");
 					else
-						LOG.info("DISTAPP - worker-" + pid + " has: " + jobs.size() + " jobs assigned. Executing now...");
+						LOG.info("\nDISTAPP - worker-" + pid + " has: " + jobs.size() + " jobs assigned. Executing now...");
 						Thread thread = new Thread(() -> processJob(jobs));
 						thread.start();
 					break;
 				} default: {
-					LOG.info("Call to zk.getChildren() failed: " + KeeperException.create(Code.get(rc), path));
+					LOG.info("\nCall to getJobs() failed: " + KeeperException.create(Code.get(rc), path));
 				}
 			}
 		}
@@ -283,57 +344,74 @@ public class DistProcess extends Thread
 				// in the event that the getJobData() call was successful, deserialize data and compute pie
 				case OK: {
 					// maybe need to put this in a new thread??? I don't know...
-					try {
-						computePie(data, ctx);
-					} catch (IOException e) {
-						e.printStackTrace();
-					} catch (ClassNotFoundException e) {
-						e.printStackTrace();
-					} catch (KeeperException e) {
-						e.printStackTrace();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+					Thread computePieThread = new Thread(() -> {
+						try {
+								computePie(data, ctx);
+						} catch (IOException e) {
+								e.printStackTrace();
+						} catch (ClassNotFoundException e) {
+								e.printStackTrace();
+						} catch (KeeperException e) {
+								e.printStackTrace();
+						} catch (InterruptedException e) {
+								e.printStackTrace();
+						}
+					});
+					computePieThread.start();
 					break;
 				} default: {
-					LOG.info("Call to getJobData() failed: " + KeeperException.create(Code.get(rc), path));
+					LOG.info("\nCall to getJobData() failed: " + KeeperException.create(Code.get(rc), path));
 				}
 			}
 
 		}
 	};
 
+	public byte[] serialize(Object obj) throws IOException
+	{
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream oos = new ObjectOutputStream(bos);
+		oos.writeObject(obj);
+		oos.flush();
+		byte[] dataSerial = bos.toByteArray();
+		return dataSerial;
+	}
+
+	public Object deserialize(byte[] data) throws IOException, ClassNotFoundException
+	{
+		ByteArrayInputStream bis = new ByteArrayInputStream(data);
+		ObjectInputStream in = new ObjectInputStream(bis);
+		Object obj = in.readObject();
+		return obj;
+	}
+
 	public void computePie(byte[] data, Object ctx) throws IOException, ClassNotFoundException, KeeperException, InterruptedException
 	{
-		// Set the specific worker to busy
-		this.status = DistProcessStatus.BUSY;
-		this.zk.setData("/dist04/workers/worker-" + this.pid, this.status.toString().getBytes(), -1);
+		// Set the specific worker to busy and serialize it
+		setStatus(DistProcessStatus.BUSY);
+		getZk().setData("/dist04/workers/worker-" + getPid(), serialize(getStatus()), -1);
 
-		// Re-construct our task object.
-		ByteArrayInputStream bis = new ByteArrayInputStream(data);
-		ObjectInput in = new ObjectInputStream(bis);
-		DistTask dt = (DistTask) in.readObject();
+		// Deserialize our task object.
+		DistTask dt = (DistTask) deserialize(data);
 
 		// Execute the task.
-		// TODO: Again, time consuming stuff. Should be done by some other thread and not inside a callback!
 		dt.compute();
 
 		// Serialize our Task object back to a byte array!
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ObjectOutputStream oos = new ObjectOutputStream(bos);
-		oos.writeObject(dt);
-		oos.flush();
-		byte[] dataSerial = bos.toByteArray();
+		byte[] dataSerial = serialize(dt);
 
 		// Store it inside the result node.
-		this.zk.create("/dist04/tasks/" + (String) ctx + "/result", dataSerial, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+		getZk().create("/dist04/tasks/" + (String) ctx + "/result", dataSerial, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
 		// Delete that job node from the specific worker
-		this.zk.delete("/dist04/workers/worker-" + this.pid + "/jobs/" + (String) ctx, -1, null, null);
+		getZk().delete("/dist04/workers/worker-" + getPid() + "/jobs/" + (String) ctx, -1, null, null);
 
 		// Set the specific worker to idle
-		this.status = DistProcessStatus.IDLE;
-		this.zk.setData("/dist04/workers/worker-" + this.pid, this.status.toString().getBytes(), -1);
+		setStatus(DistProcessStatus.IDLE);
+		getZk().setData("/dist04/workers/worker-" + getPid(), serialize(getStatus()), -1);
+
+		// Remove from HashMap of assigned workers
+		getAssignedWorkers().remove("worker-" + getPid());
 	}
 
 	public void processJob(List<String> jobs)
@@ -345,12 +423,12 @@ public class DistProcess extends Thread
 
 	public void getJobData(String jobName)
 	{
-		zk.getData("/dist04/workers/worker-" + this.pid + "/jobs/" + jobName, false, jobDataCallBack, jobName);
+		getZk().getData("/dist04/workers/worker-" + this.pid + "/jobs/" + jobName, false, jobDataCallBack, jobName);
 	}
 
 	public void getJobs()
 	{
-		this.zk.getChildren("/dist04/workers/worker-" + getPid() + "/jobs",
+		getZk().getChildren("/dist04/workers/worker-" + getPid() + "/jobs",
 				workerJobChangeWatcher,
 				workerJobChangeCallBack,
 				null);
@@ -384,22 +462,21 @@ public class DistProcess extends Thread
 			switch (Code.get(rc)) {
 				// in the event of connection loss we need to re-execute getJobs() with a new watcher and call back
 				case CONNECTIONLOSS: {
-					LOG.info("DISTAPP - lost connection...re-executing getTasks()");
+					LOG.info("\nDISTAPP - lost connection...re-executing getTasks()");
 					getTasks();
 					break;
 				}
 				// in the event that the getTasks() call was successful, retrieve the tasks and assign them
 				case OK: {
 					if (tasks.size() == 0)
-						LOG.info("DISTAPP - master-" + getpInfo() + " retrieved " + tasks.size() + " tasks, waiting for tasks to arrive....");
+						LOG.info("\nDISTAPP - master-" + getpInfo() + " retrieved " + tasks.size() + " tasks, waiting for tasks to arrive....");
 					else
-						LOG.info("DISTAPP - master-" + getpInfo() + " retrieved " + tasks.size() + " task(s). Assigning to workers now...");
+						LOG.info("\nDISTAPP - master-" + getpInfo() + " retrieved " + tasks.size() + " task(s). Assigning to workers now...");
 						Thread thread = new Thread(() -> processTasks(tasks));
 						thread.start();
-
 					break;
 				} default: {
-					LOG.info("Call to getTasks() failed: " + KeeperException.create(Code.get(rc), path));
+					LOG.info("\nCall to getTasks() failed: " + KeeperException.create(Code.get(rc), path));
 				}
 			}
 		}
@@ -424,7 +501,6 @@ public class DistProcess extends Thread
 				}
 				// in the event that the getTaskData() call was successful, assign specific task to worker
 				case OK: {
-					System.out.println("REACHED HERE");
 					boolean response = false;
 					try {
 						while (!response) {
@@ -439,7 +515,7 @@ public class DistProcess extends Thread
 					}
 					break;
 				} default: {
-					LOG.info("Call to getJobData() failed: " + KeeperException.create(Code.get(rc), path));
+					LOG.info("\nCall to getJobData() failed: " + KeeperException.create(Code.get(rc), path));
 				}
 			}
 
@@ -461,27 +537,25 @@ public class DistProcess extends Thread
 					break;
 				}
 				 case OK: {
-					 LOG.info("DISTAPP - Task assigned to: " + path);
+					 LOG.info("\nDISTAPP - Task assigned to: " + path);
 					 break;
 				 }
 				case NODEEXISTS: {
-					LOG.info("DISTAPP - Task already assigned");
+					LOG.info("\nDISTAPP - Task already assigned");
 					break;
 				}
-				default: LOG.info("DISTAPP - Error when trying to assign task: " + KeeperException.create(Code.get(rc), path));
+				default: LOG.info("\nDISTAPP - Error when trying to assign task: " + KeeperException.create(Code.get(rc), path));
 			}
 		}
 	};
 
 	public boolean assignTask(byte[] data, Object ctx) throws KeeperException, InterruptedException, IOException, ClassNotFoundException
 	{
-		List<String> workers = this.zk.getChildren("/dist04/workers", false);
+		List<String> workers = getZk().getChildren("/dist04/workers", false);
 		for (String workerName: workers) {
-			byte[] workerState = this.zk.getData("/dist04/workers/" + workerName, false, null);
-			ByteArrayInputStream bis = new ByteArrayInputStream(workerState);
-			ObjectInputStream in = new ObjectInputStream(bis);
-			DistProcessStatus curStatus = (DistProcessStatus) in.readObject();
-			if (curStatus == DistProcessStatus.IDLE) {
+			byte[] workerState = getZk().getData("/dist04/workers/" + workerName, false, null);
+			if (deserialize(workerState) == DistProcessStatus.IDLE && !getAssignedWorkers().containsKey(workerName)) {
+				getAssignedWorkers().put(workerName, true);
 				String assignPath = "/dist04/workers/" + workerName + "/jobs/" + (String) ctx;
 				createAssignment(assignPath, data);
 				return true;
@@ -492,7 +566,7 @@ public class DistProcess extends Thread
 
 	public void createAssignment(String path, byte[] data)
 	{
-		zk.create(path, data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, assignTaskCallback, data);
+		getZk().create(path, data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, assignTaskCallback, data);
 	}
 
 	public void processTasks(List<String> tasks)
@@ -504,12 +578,12 @@ public class DistProcess extends Thread
 
 	public void getTaskData(String taskName)
 	{
-		this.zk.getData("/dist04/tasks/" + taskName, false, taskDataCallBack, taskName);
+		getZk().getData("/dist04/tasks/" + taskName, false, taskDataCallBack, taskName);
 	}
 
 	public void getTasks()
 	{
-		this.zk.getChildren("/dist04/tasks",
+		getZk().getChildren("/dist04/tasks",
 				taskChangeWatcher,
 				taskChangeChildrenCallBack,
 				null);
@@ -522,28 +596,22 @@ public class DistProcess extends Thread
 		this.status = DistProcessStatus.MASTER;
 		// Try to create an ephemeral node to be the master, put the hostname and pid of this process as the data.
 		// This is an example of Synchronous API invocation as the function waits for the execution and no callback is involved..
-		this.zk.create("/dist04/master", this.pInfo.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+		getZk().create("/dist04/master", this.pInfo.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 	}
 
-	public void runForWorker() throws KeeperException, InterruptedException, IOException {
+	public void runForWorker() throws KeeperException, InterruptedException, IOException
+	{
 		// Set worker status
-		this.status = DistProcessStatus.IDLE;
-
-		// serialize status
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ObjectOutputStream oos = new ObjectOutputStream(bos);
-		oos.writeObject(this.status);
-		oos.flush();
-		byte [] statusSerial = bos.toByteArray();
+		setStatus(DistProcessStatus.IDLE);
 
 		// Tries to create an ephemeral znode for a worker with pid and put status enum in it's data field
-		this.zk.create("/dist04/workers/worker-" + getPid(),
-				statusSerial,
+		getZk().create("/dist04/workers/worker-" + getPid(),
+				serialize(getStatus()),
 				Ids.OPEN_ACL_UNSAFE,
 				CreateMode.PERSISTENT);
 
 		// Creates another ephemeral znode under each worker denoting the job node keeping track of active tasks assigned
-		this.zk.create("/dist04/workers/worker-" + getPid() + "/jobs",
+		getZk().create("/dist04/workers/worker-" + getPid() + "/jobs",
 				"Active jobs for this worker".getBytes(),
 				Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 	}
