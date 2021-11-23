@@ -168,7 +168,7 @@ public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCal
 	public static void main(String args[]) throws Exception
 	{
 		// You can accept the number of samples to be used for computing Pi from the command argument.
-		long n = Long.parseLong(args[0]); // Example, pass 400000000
+		long n = Integer.parseInt(args[0]); // Example, pass 400000000
 
 		// Create a distributed task object for Monte Carlo computation of pi.
 		MCPi mcpi = new MCPi(n);
