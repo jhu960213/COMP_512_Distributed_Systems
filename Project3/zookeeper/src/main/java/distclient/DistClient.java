@@ -9,6 +9,8 @@ import task.MCPi;
 
 import java.io.*;
 
+import static java.lang.Runtime.getRuntime;
+
 // You may have to add other interfaces such as for threading, etc., as needed.
 public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCallback.DataCallback
 {
@@ -80,6 +82,10 @@ public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCal
 		}
 	}
 
+	public void stopProcess() throws InterruptedException, KeeperException {
+		this.zk.delete(this.taskNodeName, -1, null, null);
+		this.zk.close();
+	}
 	// Implementing the AsyncCallback.StatCallback interface. This will be invoked by the zk.exists
 	public void processResult(int rc, String path, Object ctx, Stat stat)
 	{
@@ -167,6 +173,7 @@ public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCal
 
 	public static void main(String args[]) throws Exception
 	{
+
 		// You can accept the number of samples to be used for computing Pi from the command argument.
 		long n = Long.parseLong(args[0]); // Example, pass 400000000
 
@@ -176,6 +183,15 @@ public class DistClient implements Watcher, AsyncCallback.StatCallback, AsyncCal
 		// Read the ZooKeeper ensemble information from the environment variable.
 		// Also pass the task object to be send to the distributed platform.
 		DistClient dt = new DistClient(System.getenv("ZKSERVER"), mcpi);
+
+		getRuntime().addShutdownHook(new Thread(() -> {
+			try {
+				dt.stopProcess();
+				System.out.println("DISTAPP - Shutting down the client");
+			} catch (InterruptedException | KeeperException e) {
+				e.printStackTrace();
+			}
+		}));
 
 		// Initiate the zk related workflow.
 		dt.startClient();

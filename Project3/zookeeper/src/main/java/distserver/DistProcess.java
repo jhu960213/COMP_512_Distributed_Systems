@@ -22,19 +22,24 @@ public class DistProcess extends Thread
 	private String pInfo;
 	private boolean isMaster;
 	private String workerNodeName;
-	HashMap<String, Boolean> tasks;
-	HashMap<String, Boolean> workers;
-	LinkedList<String> pendingTaskList;
+
+	HashMap<String, String> assignedTasks;
+	SortedSet<String> pendingTask;
+
+	HashSet<String> idleWorkers;
+	HashSet<String> busyWorkers;
 
 	public DistProcess(String zkhost)
 	{
 		this.zkServer = zkhost;
 		this.isMaster = false;
 		this.pInfo = ManagementFactory.getRuntimeMXBean().getName();
-		pendingTaskList = new LinkedList<>();
-		workers = new HashMap<>();
-		tasks = new HashMap<>();
+		pendingTask = new TreeSet<>();
+		assignedTasks = new HashMap<>();
+		idleWorkers = new HashSet<>();
+		busyWorkers = new HashSet<>();
 	}
+
 
 	public ZooKeeper getZk() {
 		return zk;
@@ -105,7 +110,7 @@ public class DistProcess extends Thread
 
 	public void runForWorker() throws KeeperException, InterruptedException
 	{
-		workerNodeName = this.zk.create("/dist04/workers/worker-", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+		workerNodeName = this.zk.create("/dist04/workers/worker-", null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
 	}
 
 	public void getTasks()
@@ -119,28 +124,37 @@ public class DistProcess extends Thread
 	}
 
 	public void getWorkerTasks() {
-		this.zk.getChildren(workerNodeName, WorkerTaskWatcher, WorkerTaskWatcherCallBack, null);
+		this.zk.getData(workerNodeName, WorkerTaskWatcher, WorkerTaskCallBack, null);
+	}
+
+	public void getTaskResult(String task)
+	{
+		zk.getChildren("/dist04/tasks/" + task, TaskResultWatcher, TaskResultCallBack, null);
 	}
 
 	public void assign() {
-		if (workers.size() == 0 || pendingTaskList.size() == 0) return;
-		for (Map.Entry<String, Boolean> worker:workers.entrySet())
-			if (worker.getValue()) {
-				if (pendingTaskList.isEmpty()) break;
-				String task = pendingTaskList.poll();
-				Logger.info("DISTAPP - assign: " + task + " to " + worker.getKey());
-				this.zk.create("/dist04/workers/" + worker.getKey() + "/" + task, null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, new Create2Callback() {
-					public void processResult(int i, String s, Object o, String s1, Stat stat) {
-					}
-				}, null);
-				tasks.put(task, true);
-				worker.setValue(false);
-			}
+		if (idleWorkers.size() == 0 || pendingTask.size() == 0) return;
+		HashMap<String, String> assigning = new HashMap<>();
+		for (String task: pendingTask) {
+			if (idleWorkers.isEmpty()) break;
+			int rand = new Random().nextInt(idleWorkers.size());
+			String worker = (String) idleWorkers.toArray()[rand];
+			Logger.info("DISTAPP - assigning: " + task + " to " + worker);
+			this.zk.setData("/dist04/workers/" + worker, task.getBytes(), -1, new StatCallback() {
+				public void processResult(int i, String s, Object o, Stat stat) {
+
+				}
+			}, null);
+			idleWorkers.remove(worker);
+			busyWorkers.add(worker);
+			assigning.put(task, worker);
+		}
+		assignedTasks.putAll(assigning);
+		pendingTask.removeAll(assigning.keySet());
 	}
 
-	public void processTasks(List<String> tasks) {
+	public void processTasks(String task) {
 		try {
-			String task = tasks.get(0);
 			Logger.info("DISTAPP - processTask called:" + task);
 
 			byte[] data = zk.getData("/dist04/tasks/" + task, false, null);
@@ -163,7 +177,6 @@ public class DistProcess extends Thread
 
 			// Store it inside the result node.
 			this.zk.create("/dist04/tasks/" + (String) task + "/result", dataSerial, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-			this.zk.delete(workerNodeName + "/" + task, -1);
 		}
 		catch(NodeExistsException nee){Logger.error(nee);}
 		catch(KeeperException ke){Logger.error(ke);}
@@ -198,12 +211,18 @@ public class DistProcess extends Thread
 				case OK: {
 					Logger.info("DISTAPP - Current available # of workers: " + children.size());
 					Logger.info("DISTAPP - WorkerList: " + children);
-					HashMap<String, Boolean> newMap = new HashMap<>();
-					for (String worker: children) {
-						newMap.put(worker, workers.getOrDefault(worker, true));
-						zk.getChildren("/dist04/workers/" + worker, WorkerTaskWatcher, WorkerTaskWatcherCallBack, null);
-					}
-					workers = newMap;
+					HashSet<String> newIdleWorkers = new HashSet<>();
+					HashSet<String> newBusyWorkers = new HashSet<>();
+					for (String worker: children)
+						if (busyWorkers.contains(worker)) {
+							newBusyWorkers.add(worker);
+						} else if (idleWorkers.contains(worker)) {
+							newIdleWorkers.add(worker);
+						} else {
+							newIdleWorkers.add(worker);
+						}
+					busyWorkers = newBusyWorkers;
+					idleWorkers = newIdleWorkers;
 					assign();
 					break;
 				} default: {
@@ -219,32 +238,23 @@ public class DistProcess extends Thread
 	{
 		public void process(WatchedEvent e) {
 			Logger.info("DISTAPP - Event received: " + e);
-			zk.getChildren(e.getPath(), WorkerTaskWatcher, WorkerTaskWatcherCallBack, null);
+			zk.getData(e.getPath(), WorkerTaskWatcher, WorkerTaskCallBack, null);
 		}
 	};
 
-	ChildrenCallback WorkerTaskWatcherCallBack = new ChildrenCallback()
+	DataCallback WorkerTaskCallBack = new DataCallback()
 	{
-		public void processResult(int rc, String path, Object ctx, List<String> children) {
-			Logger.info("DISTAPP - WorkerTaskWatcherCallBack called:" + rc + ", " + path + ", " + ctx + ", " + children);
-			if (Code.get(rc) == Code.OK) {
-				if (isMaster) {
-					if (children.size() == 0) {
-						Logger.info("DISTAPP - " + path + " has finished its task.");
-						workers.put(path.substring("/dist04/workers/".length()), true);
-						assign();
+		public void processResult(int rc, String path, Object o, byte[] bytes, Stat stat) {
+			Logger.info("DISTAPP - WorkerTaskWatcherCallBack called:" + rc + ", " + path + ", " + o + ", " + bytes + ", " + stat);
+			if (Code.get(rc) == Code.OK && bytes!=null && bytes.length > 0) {
+				String taskName = new String(bytes);
+				Logger.info("DISTAPP - " + path + " has been assigned: " + taskName);
+				Thread thread = new Thread(new Runnable() {
+					public void run() {
+						processTasks(taskName);
 					}
-				} else {
-					if (children.size() > 0) {
-						Logger.info("DISTAPP - " + path + " has been assigned: " + children);
-						Thread thread = new Thread(new Runnable() {
-							public void run() {
-								processTasks(children);
-							}
-						});
-						thread.start();
-					}
-				}
+				});
+				thread.start();
 			}
 		}
 	};
@@ -263,38 +273,43 @@ public class DistProcess extends Thread
 		{
 			Logger.info("DISTAPP - TasksCallBack called:" + rc + ", " + path + ", " + ctx + ", " + children);
 			if (Code.get(rc) == Code.OK) {
-				Logger.info("DISTAPP - TaskList: " + children);
 				HashMap newMap = new HashMap();
-				for (String task:children) {
-					if (!tasks.containsKey(task)) pendingTaskList.add(task);
-					newMap.put(task, tasks.getOrDefault(task, false));
-				}
-				tasks = newMap;
+				HashMap<String, String> newAssignedTasks = new HashMap<>();
+				SortedSet<String> newPendingTask = new TreeSet<>();
+				for (String task:children)
+					if (assignedTasks.containsKey(task)) {
+						newAssignedTasks.put(task, assignedTasks.get(task));
+					} else if (pendingTask.contains(task)) {
+						newPendingTask.add(task);
+					} else {
+						newPendingTask.add(task);
+						getTaskResult(task);
+					}
+				assignedTasks = newAssignedTasks;
+				pendingTask = newPendingTask;
+				Logger.info("DISTAPP - AssignedTasks: " + assignedTasks + " PendingTasks:" + pendingTask);
 				assign();
 			}
 		}
 	};
 
 
-//	Watcher TaskResultWatcher = new Watcher() {
-//		public void process(WatchedEvent watchedEvent) {
-//			String taskName = watchedEvent.getPath().substring("/dist04/tasks/".length());
-//			Worker worker = workers.getOrDefault(assignedTasks.get(taskName), null);
-//			if (worker != null) worker.setIdle(true);
-//			assign();
-//		}
-//	};
-//
-//	ChildrenCallback TaskResultCallBack = new ChildrenCallback() {
-//		public void processResult(int rc, String path, Object ctx, List<String> children) {
-//
-//		}
-//	};
-//
-//	public void getTaskResult(String task)
-//	{
-//		zk.getChildren("/dist04/tasks/" + task, TaskResultWatcher, TaskResultCallBack, null);
-//	}
+	Watcher TaskResultWatcher = new Watcher() {
+		public void process(WatchedEvent watchedEvent) {
+			String taskName = watchedEvent.getPath().substring("/dist04/tasks/".length());
+			String worker = assignedTasks.get(taskName);
+			assignedTasks.remove(taskName);
+			busyWorkers.remove(worker);
+			idleWorkers.add(worker);
+			assign();
+		}
+	};
+
+	ChildrenCallback TaskResultCallBack = new ChildrenCallback() {
+		public void processResult(int rc, String path, Object ctx, List<String> children) {
+
+		}
+	};
 
 	public static void main(String args[]) throws Exception
 	{
