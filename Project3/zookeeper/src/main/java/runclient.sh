@@ -20,7 +20,7 @@ if [ $mode -eq $var ]
 then
   export ZKSERVER=localhost:2181,localhost:2182,localhost:2183
 else
-  export ZKSERVER=lab2-10.cs.mcgill.ca:21804,lab2-11.cs.mcgill.ca:21804,lab2-13.cs.mcgill.ca:21804
+  export ZKSERVER=lab2-13.cs.mcgill.ca:21804,lab2-8.cs.mcgill.ca:21804,lab2-23.cs.mcgill.ca:21804
 fi
 
 java -cp "$CLASSPATH":../task:.: distclient.DistClient "$2"
