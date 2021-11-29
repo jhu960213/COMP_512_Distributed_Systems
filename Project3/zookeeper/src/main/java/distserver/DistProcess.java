@@ -139,7 +139,7 @@ public class DistProcess extends Thread
 			if (idleWorkers.isEmpty()) break;
 			int rand = new Random().nextInt(idleWorkers.size());
 			String worker = (String) idleWorkers.toArray()[rand];
-			Logger.info("DISTAPP - assigning: " + task + " to " + worker);
+			Logger.info("\nDISTAPP - assigning: " + task + " to " + worker + "\n");
 			this.zk.setData("/dist04/workers/" + worker, task.getBytes(), -1, new StatCallback() {
 				public void processResult(int i, String s, Object o, Stat stat) {
 
@@ -191,7 +191,7 @@ public class DistProcess extends Thread
 	Watcher WorkersWatcher = new Watcher()
 	{
 		public void process(WatchedEvent watchedEvent) {
-			Logger.info("DISTAPP - Event received: " + watchedEvent);
+//			Logger.info("DISTAPP - Event received: " + watchedEvent);
 			getWorkers();
 		}
 	};
@@ -200,7 +200,7 @@ public class DistProcess extends Thread
 	{
 		public void processResult(int rc, String path, Object ctx, List<String> children)
 		{
-			Logger.info("DISTAPP - forWorkersChangeChildrenCallback called:" + rc + ", " + path + ", " + ctx + ", " + children);
+			Logger.info("DISTAPP - WorkerChangedCallback:" + rc + ", " + path + ", " + ctx + ", " + children);
 			switch (Code.get(rc)) {
 				// in the event of connection loss we need to re-execute getWorkers with a new watcher and call back
 				case CONNECTIONLOSS: {
@@ -209,8 +209,6 @@ public class DistProcess extends Thread
 				}
 				// in the event that the getWorkers call was successful then print to console the available workers
 				case OK: {
-					Logger.info("DISTAPP - Current available # of workers: " + children.size());
-					Logger.info("DISTAPP - WorkerList: " + children);
 					HashSet<String> newIdleWorkers = new HashSet<>();
 					HashSet<String> newBusyWorkers = new HashSet<>();
 					for (String worker: children)
@@ -223,6 +221,9 @@ public class DistProcess extends Thread
 						}
 					busyWorkers = newBusyWorkers;
 					idleWorkers = newIdleWorkers;
+
+					Logger.info("\nDISTAPP - Idle Workers: " + idleWorkers);
+					Logger.info("DISTAPP - Busy Workers: " + busyWorkers + "\n");
 					assign();
 					break;
 				} default: {
@@ -237,7 +238,7 @@ public class DistProcess extends Thread
 	Watcher WorkerTaskWatcher = new Watcher()
 	{
 		public void process(WatchedEvent e) {
-			Logger.info("DISTAPP - Event received: " + e);
+//			Logger.info("DISTAPP - Event received: " + e);
 			zk.getData(e.getPath(), WorkerTaskWatcher, WorkerTaskCallBack, null);
 		}
 	};
@@ -245,10 +246,10 @@ public class DistProcess extends Thread
 	DataCallback WorkerTaskCallBack = new DataCallback()
 	{
 		public void processResult(int rc, String path, Object o, byte[] bytes, Stat stat) {
-			Logger.info("DISTAPP - WorkerTaskWatcherCallBack called:" + rc + ", " + path + ", " + o + ", " + bytes + ", " + stat);
+			Logger.info("DISTAPP - JobCallBack:" + rc + ", " + path );
 			if (Code.get(rc) == Code.OK && bytes!=null && bytes.length > 0) {
 				String taskName = new String(bytes);
-				Logger.info("DISTAPP - " + path + " has been assigned: " + taskName);
+				Logger.info("\nDISTAPP - " + path + " has been assigned: " + taskName + "\n");
 				Thread thread = new Thread(new Runnable() {
 					public void run() {
 						processTasks(taskName);
@@ -262,7 +263,7 @@ public class DistProcess extends Thread
 	Watcher TasksWatcher = new Watcher()
 	{
 		public void process(WatchedEvent watchedEvent) {
-			Logger.info("DISTAPP - Event received: " + watchedEvent);
+//			Logger.info("DISTAPP - Event received: " + watchedEvent);
 			getTasks();
 		}
 	};
@@ -271,7 +272,7 @@ public class DistProcess extends Thread
 	{
 		public void processResult(int rc, String path, Object ctx, List<String> children)
 		{
-			Logger.info("DISTAPP - TasksCallBack called:" + rc + ", " + path + ", " + ctx + ", " + children);
+			Logger.info("\nDISTAPP - TasksCallBack called:" + rc + ", " + path + ", " + children);
 			if (Code.get(rc) == Code.OK) {
 				HashMap newMap = new HashMap();
 				HashMap<String, String> newAssignedTasks = new HashMap<>();
@@ -287,7 +288,7 @@ public class DistProcess extends Thread
 					}
 				assignedTasks = newAssignedTasks;
 				pendingTask = newPendingTask;
-				Logger.info("DISTAPP - AssignedTasks: " + assignedTasks + " PendingTasks:" + pendingTask);
+				Logger.info("DISTAPP - AssignedTasks: " + assignedTasks + " PendingTasks:" + pendingTask + "\n");
 				assign();
 			}
 		}
@@ -297,6 +298,7 @@ public class DistProcess extends Thread
 	Watcher TaskResultWatcher = new Watcher() {
 		public void process(WatchedEvent watchedEvent) {
 			String taskName = watchedEvent.getPath().substring("/dist04/tasks/".length());
+			Logger.info("DISTAPP - TaskCompletionCallBack:" + watchedEvent.getPath() );
 			String worker = assignedTasks.get(taskName);
 			assignedTasks.remove(taskName);
 			busyWorkers.remove(worker);
